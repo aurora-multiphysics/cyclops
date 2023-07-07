@@ -54,14 +54,14 @@ if __name__ == "__main__":
     simulation_file.close()
 
 
-    #Calcualte values for scaling
+    #Calculate values for scaling
     min_T = np.min(temperatures)
     max_T = np.max(temperatures)
     range_T = max_T - min_T
     
 
 
-    #COnsider the front face only
+    #Consider the front face only (where z=0)
     face_x = []
     face_y = []
     face_T = []
@@ -70,8 +70,24 @@ if __name__ == "__main__":
             face_x.append(x_values[i])
             face_y.append(y_values[i])
             face_T.append(temperatures[i])
+
     
     plt.scatter(face_x, face_y, color=T_to_colour(face_T), s=0.1)
+    plt.show()
+    plt.close()
+
+
+    #Consider the line near the edge (where x=0.0115)
+    line_y = []
+    line_T = []
+    uncertainty = 0.0000001
+    for i in range(len(face_y)):
+        if face_x[i] < 0.0115 + uncertainty and face_x[i] > 0.0115 - uncertainty:
+            line_y.append(face_y[i])
+            line_T.append(face_T[i])
+
+
+    plt.scatter(line_y, line_T)
     plt.show()
     plt.close()
     
