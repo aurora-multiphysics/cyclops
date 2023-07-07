@@ -5,4 +5,5 @@ Cyclops includes a set of machine learning models to optimise sensor placement a
 # Contributers
 
 Dom Harrington
+
 Luke Humphrey
