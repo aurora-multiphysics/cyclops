@@ -12,7 +12,7 @@ def f(pos):
 
 class ParticleSwarm():
     def __init__(self, num_dim, borders, num_particles=6, w=0.9, c1=0.2, c2=0.1):
-        #Attributes
+        # Attributes
         self.__swarm = np.random.uniform(borders[0], borders[1], (num_particles, num_dim))
         self.__swarm_v = np.random.uniform(-1, 1, (num_particles, num_dim))
         self.__p_best = np.copy(self.__swarm)
@@ -20,7 +20,7 @@ class ParticleSwarm():
         self.__borders = borders
         self.__num_dim = num_dim
 
-        #Hyperparameters
+        # Hyperparameters
         self.__w = w
         self.__c1 = c1
         self.__c2 = c2
@@ -30,18 +30,18 @@ class ParticleSwarm():
     def run(self, f, repetitions):
         for i in range(repetitions):
             for j in range(len(self.__swarm)):
-                #Updates particle positions
+                # Updates particle positions
                 self.__swarm_v[j] = (self.__w*self.__swarm_v[j] + 
                                     np.random.rand(self.__num_dim)*self.__c1*(self.__p_best[j] - self.__swarm[j]) + 
                                     np.random.rand(self.__num_dim)*self.__c2*(self.__g_best - self.__swarm[j]))
                 self.__swarm[j] += self.__swarm_v[j]
 
-                #Checks the particle is in the correct range
+                # Checks the particle is in the correct range
                 for x in self.__swarm[j]:
                     if x < self.__borders[0] or x > self.__borders[1]:
                         x = np.random.uniform(self.__borders[0], self.__borders[1])
 
-                #Updates swarm parameters
+                # Updates swarm parameters
                 value = f(self.__swarm[j])
                 if value <= f(self.__p_best[j]):
                     self.__p_best[j] = self.__swarm[j]
@@ -92,14 +92,14 @@ class SimulatedAnnealing():
 
 class GeneticAlgorithm():
     def __init__(self, num_dim, borders, population_size=60, beta=0.7, r_mut = 0.5):
-        #Population size should be converted to a multiple of 4
+        # Population size should be converted to a multiple of 4
         self.__size = (population_size * 4)//4
         self.__population = np.random.uniform(borders[0], borders[1], (self.__size, num_dim))
         self.__num_chromosones = len(self.__population[0])
         self.__global_best = np.copy(self.__population[0])
         self.__borders = borders
         
-        #Learning rates
+        # Learning rates
         self.__beta = beta
         self.__r_mut = r_mut
 
@@ -149,11 +149,11 @@ class GeneticAlgorithm():
             parents = self.select_parents(fitness)
             children = self.mate_parents(parents)
 
-            #Find best performing sample from generation
+            # Find best performing sample from generation
             if f(parents[0]) < f(self.__global_best):
                 self.__global_best = parents[0] 
 
-            #Proudce new generation
+            # Proudce new generation
             self.__population = np.concatenate((parents, children), axis=0)
             self.mutate()
         return self.__global_best

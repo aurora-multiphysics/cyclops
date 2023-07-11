@@ -4,18 +4,24 @@ import netCDF4
 import os
 
 
-
+# LAYOUT OF FILE
+# Each array of coordinates as 78,400 points arrayed in a 
+# non-intuitive order. The ith value of each coordinate array
+# will have a temperature as described by the ith value in the
+# temperature array.
+# The face (for initial analysis) contains 2992 points
+# We will not bother modelling the line as this would be trivial
 
 
 class ExodusReader():
     def __init__(self, name):
-        #Load simulation data
+        # Load simulation data
         relative_path = name
         absolute_path = os.path.dirname(__file__)
         full_path = os.path.join(absolute_path, relative_path)
         simulation_file = netCDF4.Dataset(full_path)
 
-        #Get data at time t=1
+        # Get data at time t=1
         self.__x_values = np.array(simulation_file.variables['coordx'])
         self.__y_values = np.array(simulation_file.variables['coordy'])
         self.__z_values = np.array(simulation_file.variables['coordz'])
@@ -24,7 +30,7 @@ class ExodusReader():
 
 
     def calculate_scale(self, arr_T):
-        #Calculate values for scaling
+        # Calculate values for scaling
         max_T = np.max(arr_T)
         min_T = np.min(arr_T)
         range_T = max_T - min_T
@@ -64,7 +70,7 @@ class ExodusReader():
 
 
     def front_only(self):
-        #Consider the front face only (where z=0)
+        # Consider the front face only (where z=0)
         face_x = []
         face_y = []
         face_T = []
@@ -83,7 +89,7 @@ class ExodusReader():
 
 
     def line_only(self, face_x, face_y, face_T):
-        #Consider the line near the edge (where x=0.0115)
+        # Consider the line near the edge (where x=0.0115)
         line_y = []
         line_T = []
         uncertainty = 0.0000001
