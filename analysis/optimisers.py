@@ -53,7 +53,7 @@ class ParticleSwarm():
 
 
 class SimulatedAnnealing():
-    def __init__(self, num_dim, borders, T=10.0, final_T = 1.0, step_size=0.9):
+    def __init__(self, num_dim, borders, T=10.0, step_size=1.0, alpha = 0.9):
         # Attributes
         self.__pos = np.random.uniform(borders[0], borders[1], num_dim)
         self.__g_best = np.copy(self.__pos)
@@ -61,15 +61,12 @@ class SimulatedAnnealing():
 
         # Parameters for optimisation
         self.__temp = T
-        self.__end_temp = final_T
         self.__step = step_size
-
-        self.values = []
+        self.__alpha = alpha
 
 
     def run(self, f, repetitions):
-        self.__alpha = (self.__temp - self.__end_temp)/repetitions
-        while self.__temp > self.__end_temp:
+        for i in range(repetitions):
             # Generates candidate neighbour
             candidate_pos = self.__pos + np.random.uniform(-1, 1)*self.__step
 
@@ -84,9 +81,9 @@ class SimulatedAnnealing():
                 self.__pos = candidate_pos
             if f(candidate_pos) < f(self.__g_best):
                 self.__g_best = candidate_pos
+
             # Update the temperature
-            self.__temp -= self.__alpha
-            self.values.append(f(self.__pos))
+            self.__temp *= self.__alpha
         return self.__g_best
     
 
@@ -165,8 +162,5 @@ class GeneticAlgorithm():
 
 
 if __name__ == "__main__":
-    sa = SimulatedAnnealing(2, (-10, 10))
-    print("\n", f(sa.run(f, 1000)))
-    plt.plot(sa.values)
-    plt.show()
-    plt.close()
+    ga = GeneticAlgorithm(5, (-10, 10))
+    print("\n", f(ga.run(f, 1000)))
