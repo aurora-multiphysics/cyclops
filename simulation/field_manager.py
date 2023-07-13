@@ -1,4 +1,4 @@
-from typing import Any
+from gaussian_model import ExactGPModel
 from exodus_reader import ExodusReader
 from matplotlib import pyplot as plt
 import torch
@@ -37,11 +37,23 @@ class FaceManager():
     def compare_T(self, arr_T):
         return torch.sum(torch.abs(torch.sub(arr_T, self.__face_T)))
 
+
+
+class LineManager():
+    def __init__(self, line_y, line_T):
+        self.__model = ExactGPModel(torch.tensor(line_y), torch.tensor(line_T))
+        self.__model.learn(repetitions=100)
+        self.__model.plot(test_x=torch.linspace(-0.011, 0.019, 100))
+
+
+    def get_T(self, pos):
+        return self.__model.predict(test_x=torch.tensor(pos)).mean.numpy()
+
         
 
 
 if __name__ == "__main__":
     reader = ExodusReader("monoblock_out.e")
     face_x, face_y, face_T = reader.front_only()
-    manager = FaceManager(face_x, face_y, face_T)
-    print(manager.get_T((0, -0.008)))
+    line_y, line_T = reader.line_only(face_x, face_y, face_T)
+    manager = LineManager(line_y, line_T)
