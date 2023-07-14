@@ -1,0 +1,5 @@
+Problems I faced that are unsolved:
+
+
+1. None of the points for the GP model of the line temperature field are actually in the 95% confidence range (just put up with this)
+2. SciKit model does not cope when we extend the data to the entire face (created function to reduce number of training datapoints)
