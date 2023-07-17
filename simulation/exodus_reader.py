@@ -38,6 +38,7 @@ class ExodusReader():
 
 
     def T_to_colour(self, arr_T):
+        # Convert the temperature to a corresponding shade of blue
         colour_T = []
         min_T, range_T = self.calculate_scale(arr_T)
         for T in arr_T:
