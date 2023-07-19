@@ -17,7 +17,7 @@ class FaceManager():
 
         face_pos = np.column_stack((face_x, face_y))
         self.__model = NoiselessGPModel(face_pos, face_T)
-        self.plot_model(face_x_data, face_y_data, face_T_data)
+        #self.plot_model(face_x_data, face_y_data, face_T_data)
 
 
     

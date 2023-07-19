@@ -1,4 +1,5 @@
 from analysis.face_model import PlaneModel
+import numpy as np
 import torch
 
 
@@ -120,15 +121,21 @@ class Loss():
 
 
     def loss_function(self, explorer_pos):
-        temps = self.__face_manager.get_T(explorer_pos)
-        vector_a = 0
-        vector_b = 0
-        vector_c = 0
+        print(explorer_pos)
+        sensor_pos = np.zeros(explorer_pos.size())
+        for y in range(len(explorer_pos)):
+            for x in range(len(explorer_pos[y])):
+                sensor_pos[y, x] = float(explorer_pos[y, x])
+        temps = self.__face_manager.get_T(sensor_pos)
+
+        vector_a = np.cat(sensor_pos[0], np.array([temps[0]]))
+        vector_b = np.cat(sensor_pos[1], np.array([temps[1]]))
+        vector_c = np.cat(sensor_pos[2], np.array([temps[2]]))
 
         plane = PlaneModel(vector_a, vector_b, vector_c)
         real_temp = self.__face_manager.get_T(POINTS)
         pred_temp = plane.get_T(POINTS)
-        return torch.sum(torch.abs(real_temp - pred_temp))
+        return np.sum(np.abs(real_temp - pred_temp))
     
 
 

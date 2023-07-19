@@ -8,6 +8,21 @@ Problems I faced that are unsolved:
 5. Save the model
 6. Pytorch vs numpy problems
 
+7. Line sampler for monoblock
+8. New monoblock gives different values
 
 
 
+
+
+
+Problems to sort out today:
+
+1. Swap the model over to a Gpytorch one to allow for automatic differentiation
+2. Ensure I can actually do the automatic differentiation with the loss function
+
+
+
+Strategy for tomorrow:
+1. Sort out the line sampler to skip all of the super dodgy gaussian models
+2. This allows you to go pytorch only
