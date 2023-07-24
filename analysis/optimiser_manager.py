@@ -1,4 +1,4 @@
-from simulation.exodus_reader import ExodusManager
+from loss_function import LossFunction
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 from torch import nn
@@ -16,7 +16,7 @@ def f(pos):
 
 #Monoblock values
 BORDERS = torch.Tensor([[-0.0135, -0.0135], [0.0135, 0.0215]])
-RADIUS = 0.06
+RADIUS = 0.006
 
 
 class Explorer(nn.Module):
@@ -24,20 +24,28 @@ class Explorer(nn.Module):
         super().__init__()
         positions = torch.distributions.Uniform(low = BORDERS[0], high = BORDERS[1]).sample((num_sensors,))
         self.__positions = nn.Parameter(positions)
-        self.__zeros = torch.zeros(len(positions), 1)
+        self.__best = self.__positions.detach().clone()
         self.f = f       
 
 
     def forward(self):
-        return self.f(torch.cat((self.__positions, self.__zeros), -1))
+        return self.f(self.__positions)
+
+    
+    def ensure_correct_pos(self):
+        with torch.no_grad():
+            for i, sensor_pos in enumerate(self.__positions):
+                if self.check_pos(sensor_pos) == False:
+                    print("Dodgy sensor position")
+                    self.__positions[i] = torch.distributions.Uniform(low = BORDERS[0], high = BORDERS[1]).sample((1,))
+            if self.f(self.__positions) < self.f(self.__best):
+                self.__best = self.__positions.detach().clone()
 
 
     def check_pos(self, pos):
-        if pos[0] < BORDERS[0, 0] or pos[0] > BORDERS[1, 0]:
+        if pos[0] <= BORDERS[0, 0] or pos[0] >= BORDERS[1, 0]:
             return False
-        if pos[1] < BORDERS[0, 1] or pos[1] > BORDERS[1, 1]:
-            return False
-        if pos[0] **2 + pos[1] ** 2 < RADIUS ** 2:
+        if pos[1] <= BORDERS[0, 1] or pos[1] >= BORDERS[1, 1]:
             return False
         return True
 
@@ -46,18 +54,22 @@ class Explorer(nn.Module):
         return "f("+str(self.__positions)+") = "+str(self.f(self.__positions))
 
 
+    def get_best(self):
+        return self.__best.detach(), self.f(self.__best.detach())
 
 
 
-def training_loop(explorer, optimizer, n=100):
+
+
+def training_loop(explorer, optimizer, n = 5000):
     losses = []
     for i in tqdm(range(n)):
         loss = explorer()
-        print(loss)
-        #loss.backward()
+        loss.backward()
         optimizer.step()
         optimizer.zero_grad()
-        losses.append(float(loss))  
+        explorer.ensure_correct_pos()
+        losses.append(float(loss)) 
     return losses
 
 
@@ -65,28 +77,10 @@ def training_loop(explorer, optimizer, n=100):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 if __name__ == "__main__":
-    manager = ExodusManager('monoblock_out11.e')
+    loss = LossFunction()
 
-    explorer = Explorer(1, manager.get_point_temp)
+    explorer = Explorer(3, loss.get_loss)
     opt = torch.optim.Adam(explorer.parameters(), lr=0.001)
 
     print("\n\nOptimising...")
@@ -97,3 +91,6 @@ if __name__ == "__main__":
 
     print("\n\nResult:")
     print(explorer)
+    print("\n", explorer.get_best())
+
+    loss.plot_3D_plane(explorer.get_best()[0])
