@@ -77,6 +77,8 @@ class LossFunction():
         surf1 = ax.plot_trisurf(self.__compare_positions[:,0], self.__compare_positions[:,1], self.__compare_temperatures.reshape(-1), cmap=cm.jet, linewidth=0.1)
         surf2 = ax.plot_trisurf(self.__compare_positions[:,0], self.__compare_positions[:,1], model_temps.reshape(-1))
         
+        for sensor_pos in sensor_positions:
+            ax.scatter(sensor_pos[0], sensor_pos[1], self.__exodus_manager.get_temp(sensor_pos), s=100, color='black')
         plt.show()
         plt.close()
 

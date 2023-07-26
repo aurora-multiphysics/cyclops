@@ -63,7 +63,7 @@ class Explorer(nn.Module):
 
 
 
-def training_loop(explorer, optimizer, n = 1000):
+def training_loop(explorer, optimizer, n = 500):
     losses = []
     for i in tqdm(range(n)):
         loss = explorer()
@@ -82,7 +82,7 @@ def training_loop(explorer, optimizer, n = 1000):
 if __name__ == "__main__":
     loss = LossFunction()
 
-    explorer = Explorer(3, loss.get_loss)
+    explorer = Explorer(20, loss.get_loss)
     opt = torch.optim.Adam(explorer.parameters(), lr=0.001)
 
     print("\n\nOptimising...")
