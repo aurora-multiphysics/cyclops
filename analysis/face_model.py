@@ -4,6 +4,8 @@ import torch
 
 
 
+
+
 class PlaneModel():
     def __init__(self, pos1, pos2, pos3):
         # A plane is defined by Ax + By + CT = D where A, B, C are the components of the normals and D is a constant
@@ -25,11 +27,9 @@ class PlaneModel():
 
 
 
-class ExactGPModel(gpytorch.models.ExactGP):
-    def __init__(self, x_train, y_train, likelihood=gpytorch.likelihoods.GaussianLikelihood(noise_constraint=gpytorch.constraints.GreaterThan(1e-10))):
-        super().__init__(x_train, y_train, likelihood=likelihood)
-        self.__x_train = x_train
-        self.__y_train = y_train
+class ExactGP(gpytorch.models.ExactGP):
+    def __init__(self, x_train, y_train, likelihood):
+        super().__init__(x_train, y_train, likelihood)
 
         self.mean_module = gpytorch.means.ConstantMean()
         self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
@@ -40,8 +40,7 @@ class ExactGPModel(gpytorch.models.ExactGP):
         final_params = list(all_params - {self.likelihood.raw_noise})
         self.optimiser = torch.optim.Adam(final_params, lr=0.1)
 
-        
-    
+
     def forward(self, x):
         # Feed forward the input x
         mean_x = self.mean_module(x)
@@ -49,48 +48,49 @@ class ExactGPModel(gpytorch.models.ExactGP):
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
 
-    def learn(self, repetitions=50):
-        # Train the model
-        print("\nTraining...")
-        self.train()
-        mll = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self)
-        for i in range(repetitions):
-            self.optimiser.zero_grad()
-            output = self(self.__x_train)
-            loss = -mll(output, self.__y_train)
-            loss.backward()
-            self.optimiser.step()
-        print("\nResults")
-        print("Loss: "+str(loss.item()))
-        print("Lengthscale: "+str(self.covar_module.base_kernel.lengthscale.item()))
-        print("Noise: "+str(self.likelihood.noise.item())+"\n")
 
 
-    def predict(self, test_x = torch.linspace(-5, 5, 100)):
-        # Use the model to predict values
-        self.eval()
-        self.likelihood.eval()
-        with torch.no_grad(), gpytorch.settings.fast_pred_var():
-            return self.likelihood(self(test_x))
+
+class GaussianManager():
+    def __init__(self, positions):
+        train_xy = positions[:, :2]
+        train_T = positions[:, 2]
+
+        self.__likelihood = gpytorch.likelihoods.GaussianLikelihood()
+        self.__model = ExactGP(train_xy, train_T, self.__likelihood)
+        self.setup_model(train_xy, train_T)
+        
+
+    def setup_model(self, train_xy, train_T):
+        self.__model.train()
+        self.__likelihood.train()
+        optimizer = torch.optim.Adam(self.__model.parameters(), lr=0.1)
+        mll = gpytorch.mlls.ExactMarginalLogLikelihood(self.__likelihood, self.__model)
+        
+        for i in range(50):
+            optimizer.zero_grad()
+            # Output from model
+            output = self.__model(train_xy)
+            # Calc loss and backprop gradients
+            loss = -mll(output, train_T)
+            loss.backward(retain_graph=True)
+            optimizer.step()
 
 
-    def plot(self, test_x = torch.linspace(-5, 5, 100)):
-        # Plot the results of the model
-        with torch.no_grad():
-            test_y = self.predict(test_x)
-            lower, upper = test_y.confidence_region()
-
-            plt.plot(self.__x_train.numpy(), self.__y_train, 'k*')
-            plt.plot(test_x.numpy(), test_y.mean.numpy(), 'b')
-            plt.fill_between(test_x.numpy(), lower.numpy(), upper.numpy(), alpha=0.5)
-            plt.legend(['Observed Data', 'Mean', 'Confidence'])
-            plt.show()
-            plt.close()
-
-
+    def get_T(self, pos):
+        self.__model.eval()
+        return self.__model(pos).mean
 
 
 
 if __name__ == "__main__":
-    plane = PlaneModel(torch.tensor([1, 2, 3]), torch.tensor([2, 3, 4]), torch.tensor([2, 4, 5]))
-    print(plane.get_T(torch.tensor([[1, 2], [2, 3], [2, 4]])))
+    # plane = PlaneModel(torch.tensor([1, 2, 3]), torch.tensor([2, 3, 4]), torch.tensor([2, 4, 5]))
+    # print(plane.get_T(torch.tensor([[1, 2], [2, 3], [2, 4]])))
+
+    positions = torch.Tensor([
+        [1, 2, 3],
+        [2, 3, 4],
+        [2, 4, 5]
+    ])
+    manager = GaussianManager(positions)
+    print(manager.get_T(torch.Tensor([[1, 2], [2, 3], [2, 5]])))

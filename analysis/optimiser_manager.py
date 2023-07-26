@@ -34,12 +34,14 @@ class Explorer(nn.Module):
     
     def ensure_correct_pos(self):
         with torch.no_grad():
+
+
             for i, sensor_pos in enumerate(self.__positions):
                 if self.check_pos(sensor_pos) == False:
                     print("Dodgy sensor position")
                     self.__positions[i] = torch.distributions.Uniform(low = BORDERS[0], high = BORDERS[1]).sample((1,))
-            if self.f(self.__positions) < self.f(self.__best):
-                self.__best = self.__positions.detach().clone()
+            # if self.f(self.__positions) < self.f(self.__best):
+            #     self.__best = self.__positions.detach().clone()
 
 
     def check_pos(self, pos):
@@ -61,7 +63,7 @@ class Explorer(nn.Module):
 
 
 
-def training_loop(explorer, optimizer, n = 5000):
+def training_loop(explorer, optimizer, n = 1000):
     losses = []
     for i in tqdm(range(n)):
         loss = explorer()
@@ -93,4 +95,4 @@ if __name__ == "__main__":
     print(explorer)
     print("\n", explorer.get_best())
 
-    loss.plot_3D_plane(explorer.get_best()[0])
+    loss.plot_3D_model(explorer.get_best()[0])

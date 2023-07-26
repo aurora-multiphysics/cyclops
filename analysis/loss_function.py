@@ -1,5 +1,5 @@
 from simulation.exodus_manager import ExodusManager
-from analysis.face_model import PlaneModel
+from analysis.face_model import GaussianManager
 from matplotlib import pyplot as plt
 from matplotlib import cm
 import torch
@@ -20,7 +20,6 @@ class LossFunction():
         self.__compare_positions = self.get_comparison_positions()
         self.__compare_temperatures = self.get_comparison_temperatures()
         
-
 
     def get_comparison_positions(self, num_x=40, num_y=40):
         positions = []
@@ -49,16 +48,16 @@ class LossFunction():
 
     
     def get_loss(self, sensor_positions):
-        plane = self.setup_plane(sensor_positions)
-        plane_temps = plane.get_T(self.__compare_positions)
-        return torch.sum(torch.abs(plane_temps - self.__compare_temperatures))
+        gaussian_manager = self.setup_manager(sensor_positions)
+        model_temps = gaussian_manager.get_T(self.__compare_positions)
+        return torch.sum(torch.abs(model_temps - self.__compare_temperatures))
 
 
-    def setup_plane(self, sensor_positions):
-        pos_1 = torch.cat((sensor_positions[0], self.__exodus_manager.get_temp(sensor_positions[0])))
-        pos_2 = torch.cat((sensor_positions[1], self.__exodus_manager.get_temp(sensor_positions[1])))
-        pos_3 = torch.cat((sensor_positions[2], self.__exodus_manager.get_temp(sensor_positions[2])))
-        return PlaneModel(pos_1, pos_2, pos_3)
+    def setup_manager(self, sensor_positions):
+        temp_field_values = torch.zeros(len(sensor_positions), 3)
+        for i, pos in enumerate(sensor_positions):
+            temp_field_values[i] = (torch.cat((pos, self.__exodus_manager.get_temp(pos)), 0))
+        return GaussianManager(temp_field_values)
 
     
     def plot_3D(self):
@@ -70,16 +69,13 @@ class LossFunction():
         plt.close()
 
     
-    def plot_3D_plane(self, sensor_positions):
-        plane = self.setup_plane(sensor_positions)
-        plane_temps = plane.get_T(self.__compare_positions)
-
+    def plot_3D_model(self, sensor_positions):
+        gaussian_manager = self.setup_manager(sensor_positions)
+        with torch.no_grad():
+            model_temps = gaussian_manager.get_T(self.__compare_positions)
         fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
         surf1 = ax.plot_trisurf(self.__compare_positions[:,0], self.__compare_positions[:,1], self.__compare_temperatures.reshape(-1), cmap=cm.jet, linewidth=0.1)
-        surf2 = ax.plot_trisurf(self.__compare_positions[:,0], self.__compare_positions[:,1], plane_temps.reshape(-1))
-        ax.scatter(sensor_positions[0, 0], sensor_positions[0, 1], self.__exodus_manager.get_temp(sensor_positions[0]), s=100, color='black', edgecolor='black')
-        ax.scatter(sensor_positions[1, 0], sensor_positions[1, 1], self.__exodus_manager.get_temp(sensor_positions[1]), s=100, color='black', edgecolor='black')
-        ax.scatter(sensor_positions[2, 0], sensor_positions[2, 1], self.__exodus_manager.get_temp(sensor_positions[2]), s=100, color='black', edgecolor='black')
+        surf2 = ax.plot_trisurf(self.__compare_positions[:,0], self.__compare_positions[:,1], model_temps.reshape(-1))
         
         plt.show()
         plt.close()
@@ -89,4 +85,7 @@ class LossFunction():
 if __name__ == "__main__":
     loss_function = LossFunction()
     #loss_function.plot_3D()
-    loss_function.plot_3D_plane(torch.Tensor([[0, 0], [0, 0.01], [0.01, 0.01]]))
+    #loss_function.plot_3D_plane(torch.Tensor([[0, 0], [0, 0.01], [0.01, 0.01]]))
+    sensor_positions = torch.cat((torch.FloatTensor(10, 1).uniform_(-0.013, 0.013), torch.FloatTensor(10, 1).uniform_(-0.013, 0.025)), 1)
+    loss_function.plot_3D_model(sensor_positions)
+    print(loss_function.get_loss(sensor_positions))
