@@ -38,7 +38,7 @@ class ExodusReader():
         return temp_value
 
 
-    def get_grid(self, num_x = 100, num_y = 100):
+    def get_grid(self, num_x = 30, num_y = 30):
         # Gets a grid of position values and their corresponding temperatures
         x_values = np.linspace(X_BOUNDS[0], X_BOUNDS[1], num_x)
         y_values = np.linspace(Y_BOUNDS[0], Y_BOUNDS[1], num_y)
