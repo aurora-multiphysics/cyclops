@@ -45,12 +45,11 @@ class GPModel():
         scaled_x_train = self.__scaler.transform(x_train)
 
         self.__gp.fit(scaled_x_train, sensor_temps)
-        self.__x_train = scaled_x_train
-        self.__y_train = sensor_temps
 
     
     def get_temp(self, pos_xy):
-        return self.__gp.predict(pos_xy.reshape(1, 2))[0]
+        scaled_pos_xy = self.__scaler.transform(pos_xy.reshape(1, 2))
+        return self.__gp.predict(scaled_pos_xy)[0]
         
 
 
