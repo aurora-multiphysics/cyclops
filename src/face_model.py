@@ -1,3 +1,6 @@
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RationalQuadratic
+from sklearn import preprocessing
 import numpy as np
 
 
@@ -29,8 +32,34 @@ class PlaneModel():
 
 
 
+class GPModel():
+    def __init__(self, sensor_pos, sensor_temps):
+        x_train = np.zeros((len(sensor_pos)//2, 2))
+        for i in range(0, len(sensor_pos), 2):
+            x_train[i//2] = sensor_pos[i:i+2]
+
+        kernel = RationalQuadratic()
+        self.__gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=10)
+
+        self.__scaler = preprocessing.StandardScaler().fit(x_train)
+        scaled_x_train = self.__scaler.transform(x_train)
+
+        self.__gp.fit(scaled_x_train, sensor_temps)
+        self.__x_train = scaled_x_train
+        self.__y_train = sensor_temps
+
+    
+    def get_temp(self, pos_xy):
+        return self.__gp.predict(pos_xy.reshape(1, 2))[0]
+        
+
+
+
+
+
 if __name__ == "__main__":
     sensor_positions = np.array([-0.0001364,-0.0064293,-0.0001364,-0.0092576,-0.0001364,0.0084192])
     sensor_temperatures = np.array([160.5637951542764, 167.201582353572, 371.40222295188596])
-    plane = PlaneModel(sensor_positions, sensor_temperatures)
-    print(plane.get_temp(np.array([0, 0.1])))
+
+    gp_model = GPModel(sensor_positions, sensor_temperatures)
+    print(gp_model.get_temp(np.array([0.01, 0.01])))

@@ -1,5 +1,5 @@
-from face_model import PlaneModel
 from matplotlib import pyplot as plt
+from face_model import GPModel
 from matplotlib import cm
 import pandas as pd
 import numpy as np
@@ -65,12 +65,45 @@ class CSVReader():
 
         for i in range(0, len(sensor_positions), 2):
             sensor_temperatures[i//2] = self.get_temp(sensor_positions[i:i+2])
-        model = PlaneModel(sensor_positions, sensor_temperatures)
+        model = GPModel(sensor_positions, sensor_temperatures)
 
         loss = 0
         for pos in self.__positions:
             loss += np.square(self.__pos_to_temp[tuple(pos)] - model.get_temp(pos))
         return loss
+
+
+    def plot_model(self, sensor_positions):
+        sensor_temperatures = np.zeros(len(sensor_positions)//2)
+
+        # Setup the model
+        for i in range(0, len(sensor_positions), 2):
+            sensor_temperatures[i//2] = self.get_temp(sensor_positions[i:i+2])
+        model = GPModel(sensor_positions, sensor_temperatures)
+
+        # Plot the real temperatures
+        fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+        surf = ax.plot_trisurf(
+            self.__positions[:,0].reshape(-1), 
+            self.__positions[:,1].reshape(-1), 
+            self.__temp_values, 
+            cmap=cm.jet, linewidth=0.1
+        )
+        fig.colorbar(surf, shrink=0.5, aspect=5)
+
+        # Plot the model's temperatures
+        predicted_temperatures = []
+        for pos in self.__positions:
+            predicted_temperatures.append(model.get_temp(pos))
+        
+        surf = ax.plot_trisurf(
+            self.__positions[:,0].reshape(-1), 
+            self.__positions[:,1].reshape(-1), 
+            predicted_temperatures
+        )
+        
+        plt.show()
+        plt.close()
 
 
 
@@ -80,5 +113,5 @@ if __name__ == "__main__":
     csv_reader = CSVReader('temperature_field.csv')
     print(csv_reader.get_temp([-0.0132273,-0.0092576]))
     csv_reader.plot_3D()
-    print(csv_reader.get_loss([-0.0132273,-0.0092576, 0.01, 0.01, -0.01, -0.01]))
+    csv_reader.plot_model([-0.0132273,-0.0092576, 0.01, 0.01, -0.01, -0.01])
 
