@@ -1,10 +1,10 @@
 from pymoo.algorithms.soo.nonconvex.pso import PSO
 from pymoo.algorithms.soo.nonconvex.ga import GA
-from pymoo.visualization.scatter import Scatter
 from pymoo.termination import get_termination
 from pymoo.core.problem import Problem
-from pymoo.optimize import minimize
+from matplotlib import pyplot as plt
 from src.csv_reader import CSVReader
+from pymoo.optimize import minimize
 import numpy as np
 
 
@@ -12,7 +12,7 @@ import numpy as np
 
 
 # CONSTANTS
-NUM_SENSORS = 10
+NUM_SENSORS = 20
 LOW_BORDER = [-0.0135, -0.0135] * NUM_SENSORS
 HIGH_BORDER = [0.0135, 0.0215] * NUM_SENSORS
 
@@ -54,8 +54,9 @@ def optimise_with_GA(problem):
                 algorithm,
                 termination,
                 seed=1,
+                save_history=True,
                 verbose=True)
-    return res.X
+    return res
 
 
 
@@ -64,14 +65,36 @@ def optimise_with_PSO(problem):
         pop_size=20,
         adaptive = True
     )
-    termination = get_termination("time", "00:10:00")
+    termination = get_termination("time", "00:20:00")
 
     res = minimize(problem,
                 algorithm,
                 termination,
                 seed=1,
+                save_history=True,
                 verbose=True)
-    return res.X
+    return res
+
+
+
+def plot_optimsiation(history):
+    n_evals = []
+    average_loss = []
+    min_loss = []
+
+    for algo in history:
+        n_evals.append(algo.evaluator.n_eval)
+        opt = algo.opt
+
+        min_loss.append(opt.get("F").min())
+        average_loss.append(algo.pop.get("F").mean())
+
+    plt.plot(n_evals, average_loss)
+    plt.plot(n_evals, min_loss)
+    plt.xlabel('Function evaluations')
+    plt.ylabel('Function loss')
+    plt.show()
+    plt.close()
 
 
 
@@ -80,11 +103,13 @@ def optimise_with_PSO(problem):
 
 
 if __name__ == '__main__':
-    print("\nOptimising...")
-    best_setup = optimise_with_PSO(LossFunction())
-    csv_reader = CSVReader('temperature_field.csv')
-    
+    plt.style.use('science')
 
+    print("\nOptimising...")
+    res = optimise_with_PSO(LossFunction())
+    plot_optimsiation(res.history)
+    best_setup = res.X
+    csv_reader = CSVReader('temperature_field.csv')
 
     print("\nBest setup:")
     sensor_positions = []
@@ -94,4 +119,5 @@ if __name__ == '__main__':
     sensor_positions = np.array(sensor_positions)
     print(sensor_positions)
     print(csv_reader.get_loss(best_setup))
-    csv_reader.plot_model(best_setup.reshape(-1))
+    csv_reader.plot_model(sensor_positions.reshape(-1))
+    csv_reader.plot_2D(sensor_positions.reshape(-1))

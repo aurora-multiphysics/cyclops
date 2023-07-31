@@ -54,6 +54,35 @@ class GPModel():
 
 
 
+class IDWModel():
+    def __init__(self, sensor_pos, sensor_temps):
+        self.__x_train = np.zeros((len(sensor_pos)//2, 2))
+        for i in range(0, len(sensor_pos), 2):
+            self.__x_train[i//2] = sensor_pos[i:i+2]
+        
+        self.__sensor_temps = sensor_temps
+
+        self.__pos_to_temp = {}
+        for i, pos in enumerate(self.__x_train):
+            self.__pos_to_temp[tuple(pos)] = self.__sensor_temps[i]
+
+
+    def get_temp(self, pos_xy):
+        if tuple(pos_xy) in self.__pos_to_temp:
+            return self.__pos_to_temp[set(pos_xy)]
+        else:
+            weights = np.zeros(len(self.__x_train))
+            for i, temp in enumerate(self.__sensor_temps):
+                weights[i] = 1/np.linalg.norm(self.__x_train[i] - pos_xy)
+            temp_xy = np.sum(weights * self.__sensor_temps)/np.sum(weights)
+            return temp_xy
+
+
+
+
+
+
+
 
 
 if __name__ == "__main__":

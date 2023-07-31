@@ -1,5 +1,5 @@
+from src.face_model import GPModel, IDWModel
 from matplotlib import pyplot as plt
-from src.face_model import GPModel
 from matplotlib import tri as tri
 from matplotlib import cm
 import scienceplots
@@ -117,7 +117,7 @@ class CSVReader():
         plt.style.use('science')
 
         # Plot the real temperatures
-        fig, (ax_1, ax_2, ax_3) = plt.subplots(1,3)
+        fig, (ax_1, ax_2, ax_3) = plt.subplots(1,3, figsize=(18, 7))
         cp_1 = ax_1.tricontourf(
             self.__positions[:,0].reshape(-1), 
             self.__positions[:,1].reshape(-1), 
@@ -192,14 +192,38 @@ if __name__ == "__main__":
     best_sensor_positions = np.array([
         [-0.0097759,  0.0202931],
         [ 0.0107069,  0.0202931],
-        [-0.0060517,  0.0130517],
+        [-0.0032586,  0.0130517],
         [ 0.012569,   0.0166724],
-        [ 0.0088448,  0.0021897],
+        [ 0.0097759,  0.0021897],
         [-0.012569,   0.0106379],
-        [-0.0023276,  0.0058103],
-        [-0.012569,   0.0033966],
-        [ 0.0041897,  0.0106379],
+        [-0.0041897,  0.0058103],
+        [-0.012569,   0.0021897],
+        [ 0.0023276,  0.0106379],
         [ 0.0116379,  0.0082241]
     ]).reshape(-1)
+    # best_sensor_positions = np.array([
+    #     [-0.0097759,  0.0070172],
+    #     [-0.012569,   0.0130517],
+    #     [-0.0051207,  0.0070172],
+    #     [ 0.0079138,  0.0046034],
+    #     [ 0.0060517,  0.0142586],
+    #     [ 0.0107069, -0.0038448],
+    #     [ 0.0116379,  0.0202931],
+    #     [ 0.0041897,  0.0070172],
+    #     [-0.012569,  -0.0002241],
+    #     [ 0.0051207, -0.0050517],
+    #     [-0.0069828,  0.0021897],
+    #     [ 0.0004655,  0.0106379],
+    #     [-0.0041897,  0.0142586],
+    #     [-0.012569,   0.0202931],
+    #     [ 0.0004655,  0.0082241],
+    #     [ 0.012569,   0.009431 ],
+    #     [-0.0004655, -0.0122931],
+    #     [-0.0079138,  0.0046034],
+    #     [ 0.0023276,  0.0202931],
+    #     [-0.0051207,  0.0202931]
+    # ]).reshape(-1)
+    csv_reader.plot_model(best_sensor_positions)
     csv_reader.plot_2D(best_sensor_positions)
+
 

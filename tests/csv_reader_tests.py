@@ -10,9 +10,9 @@ import os
 class TestCSVReader(unittest.TestCase):
     def setUp(self):
         # We produce the temperature field below
-        # 2.0   2.1     2.2
-        # 1.0           1.2
-        # 0     0.1     0.2
+        # 0.2   1.2     2.2
+        # 0.1           2.1
+        # 0     1.0     2.0
         df = pd.DataFrame({
             'X': [0, 0, 0, 1, 1, 2, 2, 2],
             'Y': [0, 1, 2, 0, 2, 0, 1, 2],
@@ -45,7 +45,14 @@ class TestCSVReader(unittest.TestCase):
 
     
     def test_get_temp(self):
-        pass
+        csv_temp = self.__csv_reader.get_temp(np.array([0.0, 2.0]))
+        self.assertEqual(csv_temp, 0.2)
+
+        csv_temp = self.__csv_reader.get_temp(np.array([0.01, 2.01]))
+        self.assertEqual(csv_temp, 0.2)
+
+        csv_temp = self.__csv_reader.get_temp(np.array([1.001, 1.01]))
+        self.assertEqual(csv_temp, 1.2)
 
 
     def test_get_loss(self):
