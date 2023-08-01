@@ -65,17 +65,26 @@ class CSVReader():
 
     def setup_model(self, sensor_positions):
         # Returns the model from the sensor positions
-        sensor_temperatures = np.zeros(len(sensor_positions)//2)
+        sensor_temperatures = np.zeros(len(sensor_positions))
 
-        for i in range(0, len(sensor_positions), 2):
-            sensor_temperatures[i//2] = self.get_temp(sensor_positions[i:i+2])
+        for i in range(0, len(sensor_positions)):
+            sensor_temperatures[i] = self.get_temp(sensor_positions[i])
+
         model = GPModel(sensor_positions, sensor_temperatures)
         return model
 
 
+    def reflect_position(self, sensor_coordinates):
+        # Add all of the sensor coordinates that need to be reflected in the x-axis onto the monoblock
+        sensor_coordinates = sensor_coordinates.reshape(-1, 2)
+        multiplier = np.array([[-1, 1]]*sensor_coordinates.shape[0])
+        return np.concatenate((sensor_coordinates, multiplier * sensor_coordinates), axis=0)
+
+
     def get_loss(self, sensor_positions):
         # Calculate the loss of a configuration of sensor positions
-        model = self.setup_model(sensor_positions)
+        sensor_coordinates = self.reflect_position(sensor_positions)
+        model = self.setup_model(sensor_coordinates)
 
         loss = 0
         for pos in self.__positions:
@@ -85,6 +94,7 @@ class CSVReader():
 
     def plot_model(self, sensor_positions):
         # Setup the model
+        sensor_positions = self.reflect_position(sensor_positions)
         model = self.setup_model(sensor_positions)
 
         # Plot the real temperatures
@@ -113,6 +123,7 @@ class CSVReader():
 
 
     def plot_2D(self, sensor_positions):
+        sensor_positions = self.reflect_position(sensor_positions)
         model = self.setup_model(sensor_positions)
         plt.style.use('science')
 
@@ -150,10 +161,8 @@ class CSVReader():
         sensor_x = []
         sensor_y = []
         for i in range(len(sensor_positions)):
-            if i%2 == 0:
-                sensor_x.append(sensor_positions[i])
-            else:
-                sensor_y.append(sensor_positions[i])
+            sensor_x.append(sensor_positions[i, 0])
+            sensor_y.append(sensor_positions[i, 1])
         ax_2.scatter(
             sensor_x, 
             sensor_y,
@@ -176,10 +185,25 @@ class CSVReader():
             color='black'
         )
 
+        #Plot the differences
+        differences = np.zeros(len(self.__temp_values))
+        for i in range(len(differences)):
+            differences[i] = abs(self.__temp_values[i] - predicted_temperatures[i])
 
+        fig, ax = plt.subplots(layout='constrained', figsize=(5, 6))
+        cp = ax.tricontourf(
+            self.__positions[:,0].reshape(-1), 
+            self.__positions[:,1].reshape(-1), 
+            differences, 
+            cmap=cm.jet, levels = 30
+        )
+        ax.set_title('Absolute differences')
+        ax.set_xlabel('x (m)')
+        ax.set_ylabel('y (m)')
+
+        cbar = fig.colorbar(cp)
         plt.show()
         plt.close()
-
 
 
 
@@ -225,5 +249,6 @@ if __name__ == "__main__":
     # ]).reshape(-1)
     csv_reader.plot_model(best_sensor_positions)
     csv_reader.plot_2D(best_sensor_positions)
+    print(csv_reader.get_loss(best_sensor_positions))
 
 

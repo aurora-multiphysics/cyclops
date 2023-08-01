@@ -12,16 +12,16 @@ import numpy as np
 
 
 # CONSTANTS
-NUM_SENSORS = 20
-LOW_BORDER = [-0.0135, -0.0135] * NUM_SENSORS
-HIGH_BORDER = [0.0135, 0.0215] * NUM_SENSORS
+HALF_NUM_SENSORS = 5
+LOW_BORDER = [0, -0.0135] * HALF_NUM_SENSORS
+HIGH_BORDER = [0.0135, 0.0215] * HALF_NUM_SENSORS
 
 
 
 
 class TestFunction(Problem):
     def __init__(self):
-        super().__init__(n_var=2*NUM_SENSORS, n_obj=1, n_ieq_constr=0, xl=LOW_BORDER, xu=HIGH_BORDER)
+        super().__init__(n_var=2*HALF_NUM_SENSORS, n_obj=1, n_ieq_constr=0, xl=LOW_BORDER, xu=HIGH_BORDER)
 
 
     def _evaluate(self, positions, out, *args, **kwargs):
@@ -33,7 +33,7 @@ class TestFunction(Problem):
 
 class LossFunction(Problem):
     def __init__(self):
-        super().__init__(n_var=2*NUM_SENSORS, n_obj=1, n_ieq_constr=0, xl=LOW_BORDER, xu=HIGH_BORDER)
+        super().__init__(n_var=2*HALF_NUM_SENSORS, n_obj=1, n_ieq_constr=0, xl=LOW_BORDER, xu=HIGH_BORDER)
         self.__csv_reader = CSVReader('temperature_field.csv')
 
 
@@ -65,7 +65,7 @@ def optimise_with_PSO(problem):
         pop_size=20,
         adaptive = True
     )
-    termination = get_termination("time", "00:20:00")
+    termination = get_termination("time", "00:10:00")
 
     res = minimize(problem,
                 algorithm,
@@ -89,8 +89,8 @@ def plot_optimsiation(history):
         min_loss.append(opt.get("F").min())
         average_loss.append(algo.pop.get("F").mean())
 
-    plt.plot(n_evals, average_loss)
-    plt.plot(n_evals, min_loss)
+    plt.plot(n_evals, average_loss, label='average loss')
+    plt.plot(n_evals, min_loss, label = 'minimum loss')
     plt.xlabel('Function evaluations')
     plt.ylabel('Function loss')
     plt.show()

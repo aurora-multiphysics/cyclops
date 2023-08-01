@@ -7,42 +7,13 @@ import numpy as np
 
 
 
-class PlaneModel():
-    def __init__(self, sensor_pos, sensor_temps):
-        # A plane is defined by Ax + By + CT = D where A, B, C are the components of the normals and D is a constant
-        # Hence to find the T at a specific position in the plane all we need is T = (D - Ax - By)/C
-        sensor_temps = sensor_temps.reshape(-1, 1)
-
-        pos1 = np.concatenate((sensor_pos[0:2], sensor_temps[0]))
-        pos2 = np.concatenate((sensor_pos[2:4], sensor_temps[1]))
-        pos3 = np.concatenate((sensor_pos[4:6], sensor_temps[2]))
-
-        normal = np.cross(pos2 - pos1, pos3 - pos1)
-        self.__A = normal[0]
-        self.__B = normal[1]
-        self.__C = normal[2]
-        self.__D = np.dot(normal, pos1)
-    
-
-    def get_temp(self, pos_xy):
-        # We return the temperature at a specific x and y position
-        temperature_tensor = (self.__D - self.__A * pos_xy[0] - self.__B * pos_xy[1])/self.__C
-        return temperature_tensor
-
-
-
-
 class GPModel():
     def __init__(self, sensor_pos, sensor_temps):
-        x_train = np.zeros((len(sensor_pos)//2, 2))
-        for i in range(0, len(sensor_pos), 2):
-            x_train[i//2] = sensor_pos[i:i+2]
-
         kernel = RationalQuadratic()
         self.__gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=10)
 
-        self.__scaler = preprocessing.StandardScaler().fit(x_train)
-        scaled_x_train = self.__scaler.transform(x_train)
+        self.__scaler = preprocessing.StandardScaler().fit(sensor_pos)
+        scaled_x_train = self.__scaler.transform(sensor_pos)
 
         self.__gp.fit(scaled_x_train, sensor_temps)
 
@@ -56,10 +27,7 @@ class GPModel():
 
 class IDWModel():
     def __init__(self, sensor_pos, sensor_temps):
-        self.__x_train = np.zeros((len(sensor_pos)//2, 2))
-        for i in range(0, len(sensor_pos), 2):
-            self.__x_train[i//2] = sensor_pos[i:i+2]
-        
+        self.__x_train = sensor_pos
         self.__sensor_temps = sensor_temps
 
         self.__pos_to_temp = {}
