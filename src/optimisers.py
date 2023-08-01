@@ -19,18 +19,6 @@ HIGH_BORDER = [0.0135, 0.0215] * HALF_NUM_SENSORS
 
 
 
-class TestFunction(Problem):
-    def __init__(self):
-        super().__init__(n_var=2*HALF_NUM_SENSORS, n_obj=1, n_ieq_constr=0, xl=LOW_BORDER, xu=HIGH_BORDER)
-
-
-    def _evaluate(self, positions, out, *args, **kwargs):
-        out['F'] = np.sum(np.sin(positions), axis=1)
-
-
-
-
-
 class LossFunction(Problem):
     def __init__(self):
         super().__init__(n_var=2*HALF_NUM_SENSORS, n_obj=1, n_ieq_constr=0, xl=LOW_BORDER, xu=HIGH_BORDER)
@@ -48,7 +36,7 @@ def optimise_with_GA(problem):
     algorithm = GA(
         pop_size=50,
         eliminate_duplicates=True)
-    termination = get_termination("time", "00:10:00")
+    termination = get_termination("time", "00:20:00")
 
     res = minimize(problem,
                 algorithm,

@@ -1,5 +1,5 @@
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RationalQuadratic
+from sklearn.gaussian_process.kernels import Matern, RBF
 from sklearn import preprocessing
 import numpy as np
 
@@ -9,8 +9,8 @@ import numpy as np
 
 class GPModel():
     def __init__(self, sensor_pos, sensor_temps):
-        kernel = RationalQuadratic()
-        self.__gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=10)
+        kernel = RBF()
+        self.__gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=10, normalize_y=True)
 
         self.__scaler = preprocessing.StandardScaler().fit(sensor_pos)
         scaled_x_train = self.__scaler.transform(sensor_pos)
@@ -54,8 +54,8 @@ class IDWModel():
 
 
 if __name__ == "__main__":
-    sensor_positions = np.array([-0.0001364,-0.0064293,-0.0001364,-0.0092576,-0.0001364,0.0084192])
-    sensor_temperatures = np.array([160.5637951542764, 167.201582353572, 371.40222295188596])
+    sensor_positions = np.array([-0.0001364,-0.0064293,-0.0001364,-0.0092576,-0.0001364,0.0084192]).reshape(-1, 2)
+    sensor_temperatures = np.array([160.5637951542764, 167.201582353572, 371.40222295188596]).reshape(-1)
 
     gp_model = GPModel(sensor_positions, sensor_temperatures)
     print(gp_model.get_temp(np.array([0.01, 0.01])))
