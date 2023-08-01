@@ -49,20 +49,6 @@ class CSVReader():
         return self.__pos_to_temp[rounded_pos]
 
 
-    def plot_3D(self):
-        # Plot a smart 3D graph of the temperature at various points of the monoblock
-        fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
-        surf = ax.plot_trisurf(
-            self.__positions[:,0].reshape(-1), 
-            self.__positions[:,1].reshape(-1), 
-            self.__temp_values, 
-            cmap=cm.jet, linewidth=0.1)
-
-        fig.colorbar(surf, shrink=0.5, aspect=5)
-        plt.show()
-        plt.close()
-
-
     def setup_model(self, sensor_positions):
         # Returns the model from the sensor positions
         sensor_temperatures = np.zeros(len(sensor_positions))
@@ -125,7 +111,6 @@ class CSVReader():
     def plot_2D(self, sensor_positions):
         sensor_positions = self.reflect_position(sensor_positions)
         model = self.setup_model(sensor_positions)
-        plt.style.use('science')
 
         # Plot the real temperatures
         fig, (ax_1, ax_2, ax_3) = plt.subplots(1,3, figsize=(18, 7))
@@ -195,7 +180,7 @@ class CSVReader():
             self.__positions[:,0].reshape(-1), 
             self.__positions[:,1].reshape(-1), 
             differences, 
-            cmap=cm.jet, levels = 30
+            cmap=cm.Blues, levels = 30
         )
         ax.set_title('Absolute differences')
         ax.set_xlabel('x (m)')
@@ -210,16 +195,16 @@ class CSVReader():
 
 if __name__ == "__main__":
     csv_reader = CSVReader('temperature_field.csv')
-
-
+    plt.style.use('science')
 
     best_sensor_positions = np.array([
-        [0.0060517, 0.0106379],
-        [0.0097759, 0.0082241],
-        [0.0116379, 0.0106379],
-        [0.0107069, 0.0202931],
-        [0.0079138, 0.0033966]
+        [0.0041897, 0.0202931],
+        [0.0107069, 0.0118448],
+        [0.0060517, 0.0166724],
+        [0.0023276, 0.0058103],
+        [0.012569,  0.0202931]
     ]).reshape(-1)
+
     # best_sensor_positions = np.array([
         # [ 0.012569,   0.0082241],
         # [ 0.0079138, -0.0002241],
@@ -244,6 +229,7 @@ if __name__ == "__main__":
         # [ 0.0060517,  0.0202931],
         # [ 0.0107069,  0.0202931]
     # ]).reshape(-1)
+
     csv_reader.plot_model(best_sensor_positions)
     csv_reader.plot_2D(best_sensor_positions)
     print(csv_reader.get_loss(best_sensor_positions))
