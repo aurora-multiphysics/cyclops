@@ -12,7 +12,7 @@ import numpy as np
 
 
 # CONSTANTS
-HALF_NUM_SENSORS = 5
+HALF_NUM_SENSORS = 22
 LOW_BORDER = [0, -0.0135] * HALF_NUM_SENSORS
 HIGH_BORDER = [0.0135, 0.0215] * HALF_NUM_SENSORS
 
@@ -46,7 +46,7 @@ class LossFunction(Problem):
 
 def optimise_with_GA(problem):
     algorithm = GA(
-        pop_size=100,
+        pop_size=50,
         eliminate_duplicates=True)
     termination = get_termination("time", "00:10:00")
 
@@ -93,6 +93,7 @@ def plot_optimsiation(history):
     plt.plot(n_evals, min_loss, label = 'minimum loss')
     plt.xlabel('Function evaluations')
     plt.ylabel('Function loss')
+    plt.legend()
     plt.show()
     plt.close()
 
@@ -106,7 +107,7 @@ if __name__ == '__main__':
     plt.style.use('science')
 
     print("\nOptimising...")
-    res = optimise_with_PSO(LossFunction())
+    res = optimise_with_GA(LossFunction())
     plot_optimsiation(res.history)
     best_setup = res.X
     csv_reader = CSVReader('temperature_field.csv')
