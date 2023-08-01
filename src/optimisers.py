@@ -65,6 +65,7 @@ def optimise_with_PSO(problem):
 
 
 
+
 def plot_optimsiation(history):
     n_evals = []
     average_loss = []
@@ -77,6 +78,7 @@ def plot_optimsiation(history):
         min_loss.append(opt.get("F").min())
         average_loss.append(algo.pop.get("F").mean())
 
+    plt.yscale('log')
     plt.plot(n_evals, average_loss, label='average loss')
     plt.plot(n_evals, min_loss, label = 'minimum loss')
     plt.xlabel('Function evaluations')
@@ -95,7 +97,7 @@ if __name__ == '__main__':
     plt.style.use('science')
 
     print("\nOptimising...")
-    res = optimise_with_GA(LossFunction())
+    res = optimise_with_PSO(LossFunction())
     plot_optimsiation(res.history)
     best_setup = res.X
     csv_reader = CSVReader('temperature_field.csv')
