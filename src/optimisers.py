@@ -6,7 +6,9 @@ from pymoo.core.problem import Problem
 from matplotlib import pyplot as plt
 from src.csv_reader import CSVReader
 from pymoo.optimize import minimize
+import scienceplots
 import numpy as np
+
 
 
 
@@ -37,13 +39,13 @@ def optimise_with_GA(problem):
     algorithm = GA(
         pop_size=50,
         eliminate_duplicates=True)
-    termination = get_termination("time", "00:20:00")
+    termination = get_termination("time", "00:10:00")
 
     res = minimize(problem,
                 algorithm,
                 termination,
-                seed=1,
-                save_history=True,
+                seed=3,
+                save_history=False,
                 verbose=True)
     return res
 

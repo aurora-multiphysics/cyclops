@@ -1,6 +1,10 @@
 from matplotlib import pyplot as plt
+import scienceplots
 import numpy as np
 import os
+
+
+plt.style.use('science')
 
 
 class ResultsManager():
@@ -47,7 +51,7 @@ class ResultsManager():
 
 
     def plot_pareto(self):
-        plt.scatter(self.__setup_numbers, self.__setup_results, facecolors='none', edgecolors='b')
+        plt.scatter(self.__setup_numbers[1:], self.__setup_results[1:], facecolors='none', edgecolors='b')
         plt.xlabel('Number of sensors')
         plt.ylabel('Loss')
         plt.title('Pareto front')
@@ -58,6 +62,4 @@ class ResultsManager():
 
 if __name__ == '__main__':
     manager = ResultsManager()
-    manager.write_file(10, 5, [0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.011])
-    print(manager.read_file(10))
-    manager.save_updates()
+    manager.plot_pareto()

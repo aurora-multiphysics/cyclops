@@ -29,7 +29,7 @@ class CustomLossFunction(Problem):
 
 if __name__ == '__main__':
     results_manager = ResultsManager()
-    sensor_nums = [6, 8, 10, 12, 14, 16, 18, 20, 22, 24]
+    sensor_nums = [16, 22]
     sensor_setups = []
     sensor_performance = []
 
@@ -39,7 +39,7 @@ if __name__ == '__main__':
         high_border = [0.0135, 0.0215] * half_num_sensors
 
         print("\nOptimising...")
-        res = optimise_with_PSO(CustomLossFunction(half_num_sensors, low_border, high_border))
+        res = optimise_with_GA(CustomLossFunction(half_num_sensors, low_border, high_border))
         best_setup = res.X
         csv_reader = CSVReader('temperature_field.csv')
 
@@ -56,4 +56,5 @@ if __name__ == '__main__':
     print("\n\n")
     print(sensor_setups)
     print(sensor_performance)
+    results_manager.plot_pareto()
 
