@@ -36,41 +36,42 @@ class CSVReader():
 
 
     def find_nearest_pos(self, pos):
-        # Return the nearest position to the pos given
+        # Return the nearest potential sensor position to the pos given
         difference_array = np.square(self.__positions - pos)
         index = np.apply_along_axis(np.sum, 1, difference_array).argmin()
         return self.__positions[index]
 
 
-    def get_temp(self, pos):
+    def get_temp(self, rounded_pos):
         # Return the temperature at the recorded position nearest pos
-        rounded_pos = self.find_nearest_pos(pos)
-        rounded_pos = tuple(rounded_pos)
-        return self.__pos_to_temp[rounded_pos]
+        hashable_pos = tuple(rounded_pos)
+        return self.__pos_to_temp[hashable_pos]
 
 
-    def setup_model(self, sensor_positions):
+    def setup_model(self, symmetric_sensor_layout):
         # Returns the model from the sensor positions
-        sensor_temperatures = np.zeros(len(sensor_positions))
+        num_sensors = len(symmetric_sensor_layout)
+        sensor_temperatures = np.zeros(num_sensors)
 
-        for i in range(0, len(sensor_positions)):
-            sensor_temperatures[i] = self.get_temp(sensor_positions[i])
+        for i in range(0, num_sensors):
+            rounded_pos = self.find_nearest_pos(symmetric_sensor_layout[i])
+            sensor_temperatures[i] = self.get_temp(rounded_pos)
 
-        model = GPModel(sensor_positions, sensor_temperatures)
+        model = GPModel(symmetric_sensor_layout, sensor_temperatures)
         return model
 
 
-    def reflect_position(self, sensor_coordinates):
+    def reflect_position(self, proposed_sensor_layout):
         # Add all of the sensor coordinates that need to be reflected in the x-axis onto the monoblock
-        sensor_coordinates = sensor_coordinates.reshape(-1, 2)
-        multiplier = np.array([[-1, 1]]*sensor_coordinates.shape[0])
-        return np.concatenate((sensor_coordinates, multiplier * sensor_coordinates), axis=0)
+        proposed_sensor_layout = proposed_sensor_layout.reshape(-1, 2)
+        multiplier = np.array([[-1, 1]]*proposed_sensor_layout.shape[0])
+        return np.concatenate((proposed_sensor_layout, multiplier * proposed_sensor_layout), axis=0)
 
 
-    def get_loss(self, sensor_positions):
+    def get_loss(self, proposed_sensor_layout):
         # Calculate the loss of a configuration of sensor positions
-        sensor_coordinates = self.reflect_position(sensor_positions)
-        model = self.setup_model(sensor_coordinates)
+        symmetric_sensor_layout = self.reflect_position(proposed_sensor_layout)
+        model = self.setup_model(symmetric_sensor_layout)
 
         loss = 0
         for pos in self.__positions:
@@ -78,10 +79,19 @@ class CSVReader():
         return loss
 
 
-    def plot_model(self, sensor_positions):
+
+
+    # Below are the visualisation functions. I seriously though about creating an extra class to 
+    # hold them to improve the simplicity of the architecture, but this would have been super
+    # unnecessary and over the top so I didn't.
+
+
+
+
+    def plot_model(self, proposed_sensor_layout):
         # Setup the model
-        sensor_positions = self.reflect_position(sensor_positions)
-        model = self.setup_model(sensor_positions)
+        symmetric_sensor_layout = self.reflect_position(proposed_sensor_layout)
+        model = self.setup_model(symmetric_sensor_layout)
 
         # Plot the real temperatures
         fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
@@ -205,30 +215,6 @@ if __name__ == "__main__":
         [ 0.012569,  -0.0086724]
     ]).reshape(-1)
 
-    # best_sensor_positions = np.array([
-        # [ 0.012569,   0.0082241],
-        # [ 0.0079138, -0.0002241],
-        # [ 0.0013966,  0.0070172],
-        # [ 0.0116379,  0.0033966],
-        # [ 0.012569,   0.0058103],
-        # [ 0.0004655, -0.0074655],
-        # [ 0.0051207,  0.0082241],
-        # [ 0.0023276,  0.0202931],
-        # [ 0.0004655,  0.0070172],
-        # [ 0.0079138,  0.0190862],
-        # [ 0.0069828, -0.0062586],
-        # [ 0.0013966,  0.0130517],
-        # [ 0.0116379,  0.0058103],
-        # [ 0.0060517,  0.0046034],
-        # [ 0.0116379, -0.0062586],
-        # [ 0.0088448,  0.0082241],
-        # [ 0.012569,  -0.0062586],
-        # [ 0.0060517,  0.0178793],
-        # [ 0.0088448,  0.0118448],
-        # [ 0.0060517, -0.0002241],
-        # [ 0.0060517,  0.0202931],
-        # [ 0.0107069,  0.0202931]
-    # ]).reshape(-1)
 
     csv_reader.plot_model(best_sensor_positions)
     csv_reader.plot_2D(best_sensor_positions)
