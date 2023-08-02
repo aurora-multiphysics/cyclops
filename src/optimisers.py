@@ -44,7 +44,7 @@ def optimise_with_GA(problem):
     res = minimize(problem,
                 algorithm,
                 termination,
-                seed=3,
+                seed=4,
                 save_history=False,
                 verbose=True)
     return res

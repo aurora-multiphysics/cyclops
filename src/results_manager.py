@@ -60,6 +60,7 @@ class ResultsManager():
 
 
 
+
 if __name__ == '__main__':
     manager = ResultsManager()
     manager.plot_pareto()
