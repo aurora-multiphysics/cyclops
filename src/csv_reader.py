@@ -94,7 +94,7 @@ class CSVReader():
         model = self.setup_model(symmetric_sensor_layout)
 
         # Plot the real temperatures
-        fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+        fig, ax = plt.subplots(subplot_kw={"projection": "3d"}, figsize=(8, 6))
         surf = ax.plot_trisurf(
             self.__positions[:,0].reshape(-1), 
             self.__positions[:,1].reshape(-1), 

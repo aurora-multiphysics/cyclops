@@ -29,7 +29,7 @@ class CustomLossFunction(Problem):
 
 if __name__ == '__main__':
     results_manager = ResultsManager()
-    sensor_nums = [16, 22]
+    sensor_nums = [24]
     sensor_setups = []
     sensor_performance = []
 

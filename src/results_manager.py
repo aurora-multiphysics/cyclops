@@ -51,6 +51,7 @@ class ResultsManager():
 
 
     def plot_pareto(self):
+        plt.figure(figsize=(8,6))
         plt.scatter(self.__setup_numbers[1:], self.__setup_results[1:], facecolors='none', edgecolors='b')
         plt.xlabel('Number of sensors')
         plt.ylabel('Loss')
