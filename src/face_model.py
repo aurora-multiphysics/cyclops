@@ -50,9 +50,6 @@ class IDWModel():
 
 
 
-
-
-
 if __name__ == "__main__":
     sensor_positions = np.array([-0.0001364,-0.0064293,-0.0001364,-0.0092576,-0.0001364,0.0084192]).reshape(-1, 2)
     sensor_temperatures = np.array([160.5637951542764, 167.201582353572, 371.40222295188596]).reshape(-1)

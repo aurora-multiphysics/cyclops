@@ -1,5 +1,6 @@
 from pymoo.algorithms.soo.nonconvex.pso import PSO
 from pymoo.algorithms.soo.nonconvex.ga import GA
+from src.results_manager import ResultsManager
 from pymoo.termination import get_termination
 from pymoo.core.problem import Problem
 from matplotlib import pyplot as plt
@@ -53,12 +54,12 @@ def optimise_with_PSO(problem):
         pop_size=20,
         adaptive = True
     )
-    termination = get_termination("time", "00:10:00")
+    termination = get_termination("time", "00:00:05")
 
     res = minimize(problem,
                 algorithm,
                 termination,
-                seed=1,
+                seed=2,
                 save_history=True,
                 verbose=True)
     return res
@@ -96,6 +97,7 @@ def plot_optimsiation(history):
 
 if __name__ == '__main__':
     plt.style.use('science')
+    results_manager = ResultsManager()
 
     print("\nOptimising...")
     res = optimise_with_PSO(LossFunction())
@@ -103,11 +105,16 @@ if __name__ == '__main__':
     best_setup = res.X
     csv_reader = CSVReader('temperature_field.csv')
 
+    if res.F[0] < results_manager.read_file(HALF_NUM_SENSORS*2)[0]:
+        print('\nSaving new record...')
+        results_manager.write_file(HALF_NUM_SENSORS*2, res.F[0], list(res.X))
+        results_manager.save_updates()
+
     print("\nBest setup:")
     sensor_positions = []
     for i in range(0, len(best_setup), 2):
         sensor_positions.append(csv_reader.find_nearest_pos(best_setup[i:i+2]))
-
+    
     sensor_positions = np.array(sensor_positions)
     print(sensor_positions)
     print(csv_reader.get_loss(best_setup))
