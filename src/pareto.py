@@ -95,7 +95,7 @@ def plot_optimsiation(history):
 if __name__ == '__main__':
     plt.style.use('science')
 
-    sensor_nums = [6, 8, 10, 12, 14, 16, 18, 20, 22, 24]
+    sensor_nums = [6, 8, 12, 14, 16, 18, 20, 22, 24]
     sensor_setups = []
     sensor_performance = []
 
@@ -105,7 +105,7 @@ if __name__ == '__main__':
         high_border = [0.0135, 0.0215] * half_num_sensors
 
         print("\nOptimising...")
-        res = optimise_with_GA(LossFunction(half_num_sensors, low_border, high_border))
+        res = optimise_with_PSO(LossFunction(half_num_sensors, low_border, high_border))
         best_setup = res.X
         csv_reader = CSVReader('temperature_field.csv')
 
