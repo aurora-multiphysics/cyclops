@@ -56,7 +56,7 @@ def optimise_with_PSO(problem):
         pop_size=20,
         adaptive = True
     )
-    termination = get_termination("time", "00:00:05")
+    termination = get_termination("time", "00:10:00")
 
     res = minimize(problem,
                 algorithm,
