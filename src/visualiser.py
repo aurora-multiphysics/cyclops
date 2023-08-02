@@ -22,4 +22,4 @@ def show_setup(num_sensors):
 
 
 if __name__=='__main__':
-    show_setup(18)
+    show_setup(12)

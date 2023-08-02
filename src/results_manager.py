@@ -56,6 +56,7 @@ class ResultsManager():
         plt.xlabel('Number of sensors')
         plt.ylabel('Loss')
         plt.title('Pareto front')
+        plt.ylim(ymin=0)
         plt.show()
         plt.close()
 
