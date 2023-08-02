@@ -12,16 +12,14 @@ import numpy as np
 
 
 # CONSTANTS
-HALF_NUM_SENSORS = 5
-LOW_BORDER = [0, -0.0135] * HALF_NUM_SENSORS
-HIGH_BORDER = [0.0135, 0.0215] * HALF_NUM_SENSORS
+
 
 
 
 
 class LossFunction(Problem):
-    def __init__(self):
-        super().__init__(n_var=2*HALF_NUM_SENSORS, n_obj=1, n_ieq_constr=0, xl=LOW_BORDER, xu=HIGH_BORDER)
+    def __init__(self, half_num_sensors, low_border, high_border):
+        super().__init__(n_var=2*half_num_sensors, n_obj=1, n_ieq_constr=0, xl=low_border, xu=high_border)
         self.__csv_reader = CSVReader('temperature_field.csv')
 
 
@@ -36,7 +34,7 @@ def optimise_with_GA(problem):
     algorithm = GA(
         pop_size=50,
         eliminate_duplicates=True)
-    termination = get_termination("time", "00:20:00")
+    termination = get_termination("time", "00:00:02")
 
     res = minimize(problem,
                 algorithm,
@@ -97,19 +95,32 @@ def plot_optimsiation(history):
 if __name__ == '__main__':
     plt.style.use('science')
 
-    print("\nOptimising...")
-    res = optimise_with_PSO(LossFunction())
-    plot_optimsiation(res.history)
-    best_setup = res.X
-    csv_reader = CSVReader('temperature_field.csv')
+    sensor_nums = [6, 8, 10, 12, 14, 16, 18, 20, 22, 24]
+    sensor_setups = []
+    sensor_performance = []
 
-    print("\nBest setup:")
-    sensor_positions = []
-    for i in range(0, len(best_setup), 2):
-        sensor_positions.append(csv_reader.find_nearest_pos(best_setup[i:i+2]))
+    for num in sensor_nums:
+        half_num_sensors = num//2
+        low_border = [0, -0.0135] * half_num_sensors
+        high_border = [0.0135, 0.0215] * half_num_sensors
 
-    sensor_positions = np.array(sensor_positions)
-    print(sensor_positions)
-    print(csv_reader.get_loss(best_setup))
-    csv_reader.plot_model(sensor_positions.reshape(-1))
-    csv_reader.plot_2D(sensor_positions.reshape(-1))
+        print("\nOptimising...")
+        res = optimise_with_GA(LossFunction(half_num_sensors, low_border, high_border))
+        best_setup = res.X
+        csv_reader = CSVReader('temperature_field.csv')
+
+        sensor_setups.append(best_setup)
+        sensor_performance.append(res.F)
+        print(best_setup)
+        print(res.F)
+    
+    print("\n\n")
+    print(sensor_setups)
+    print(sensor_performance)
+
+    plt.scatter(sensor_nums, sensor_performance, facecolors='none', edgecolors='b')
+    plt.xlabel('Number of sensors')
+    plt.ylabel('Loss')
+    plt.title('Pareto front')
+    plt.show()
+    plt.close()
