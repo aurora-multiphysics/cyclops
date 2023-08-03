@@ -57,7 +57,7 @@ class CSVReader():
             rounded_pos = self.find_nearest_pos(symmetric_sensor_layout[i])
             sensor_temperatures[i] = self.get_temp(rounded_pos)
 
-        model = RBFModel(symmetric_sensor_layout, sensor_temperatures)
+        model = GPModel(symmetric_sensor_layout, sensor_temperatures)
         return model
 
 

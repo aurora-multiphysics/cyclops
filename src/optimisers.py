@@ -99,7 +99,7 @@ def plot_optimsiation(history):
 
 if __name__ == '__main__':
     plt.style.use('science')
-    results_manager = ResultsManager()
+    results_manager = ResultsManager('best_symmmetric_setups.txt')
 
     print("\nOptimising...")
     res = optimise_with_PSO(LossFunction())

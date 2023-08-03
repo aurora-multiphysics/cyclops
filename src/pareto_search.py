@@ -21,7 +21,7 @@ class CustomLossFunction(Problem):
 
 
 if __name__ == '__main__':
-    results_manager = ResultsManager()
+    results_manager = ResultsManager('best_symmetric_setups.txt')
     sensor_nums = [8, 10, 12, 14, 16, 18, 20, 22, 24]
     sensor_setups = []
     sensor_performance = []

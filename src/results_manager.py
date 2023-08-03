@@ -8,10 +8,10 @@ plt.style.use('science')
 
 
 class ResultsManager():
-    def __init__(self):
+    def __init__(self, file_name):
         script_path = os.path.realpath(__file__)
         parent_path = os.path.dirname(os.path.dirname(script_path))
-        self.__setups_path = os.path.join(os.path.sep,parent_path,"results","best_setups.txt")
+        self.__setups_path = os.path.join(os.path.sep,parent_path,"results", file_name)
 
         # Read the file
         self.__setup_numbers = []
@@ -67,5 +67,5 @@ class ResultsManager():
 
 
 if __name__ == '__main__':
-    manager = ResultsManager()
+    manager = ResultsManager('best_symmetric_setups.txt')
     manager.plot_pareto()

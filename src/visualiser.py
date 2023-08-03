@@ -4,7 +4,7 @@ import numpy as np
 
 
 def show_setup(num_sensors):
-    results_manager = ResultsManager()
+    results_manager = ResultsManager('best_symmetric_setups.txt')
     csv_reader = CSVReader('temperature_field.csv')
     loss, layout = results_manager.read_file(num_sensors)
 
