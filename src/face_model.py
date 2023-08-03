@@ -1,5 +1,6 @@
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import Matern, RBF
+from sklearn.gaussian_process.kernels import RBF
+from scipy.interpolate import RBFInterpolator
 from sklearn import preprocessing
 import numpy as np
 
@@ -34,7 +35,6 @@ class IDWModel():
 
         self.__pos_to_temp = {}
         for i, pos in enumerate(self.__scaled_x_train):
-            print(tuple(pos))
             self.__pos_to_temp[tuple(pos)] = self.__sensor_temps[i]
 
 
@@ -52,16 +52,17 @@ class IDWModel():
 
 
 
-class PolynomialFit():
+class RBFModel():
     def __init__(self, sensor_pos, sensor_temps):
         self.__scaler = preprocessing.StandardScaler().fit(sensor_pos)
         scaled_x_train = self.__scaler.transform(sensor_pos)
 
+        self.__interpolater = RBFInterpolator(scaled_x_train, sensor_temps)
 
 
     def get_temp(self, pos_xy):
         scaled_pos_xy = self.__scaler.transform(pos_xy.reshape(1, 2))
-
+        return self.__interpolater(scaled_pos_xy)[0]
 
 
 

@@ -15,7 +15,7 @@ import numpy as np
 
 
 # CONSTANTS
-HALF_NUM_SENSORS = 5
+HALF_NUM_SENSORS = 2
 LOW_BORDER = [0, -0.0135] * HALF_NUM_SENSORS
 HIGH_BORDER = [0.0135, 0.0215] * HALF_NUM_SENSORS
 
@@ -56,7 +56,7 @@ def optimise_with_PSO(problem):
         pop_size=20,
         adaptive = True
     )
-    termination = get_termination("time", "00:05:00")
+    termination = get_termination("time", "00:00:30")
 
     res = minimize(problem,
                 algorithm,
