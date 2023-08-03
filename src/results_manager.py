@@ -9,8 +9,7 @@ plt.style.use('science')
 
 class ResultsManager():
     def __init__(self, file_name):
-        script_path = os.path.realpath(__file__)
-        parent_path = os.path.dirname(os.path.dirname(script_path))
+        parent_path = os.path.dirname(os.path.dirname(__file__))
         self.__setups_path = os.path.join(os.path.sep,parent_path,"results", file_name)
 
         # Read the file

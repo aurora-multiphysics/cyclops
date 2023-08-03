@@ -16,10 +16,10 @@ RADIUS = 0.006
 
 
 class CSVReader():
-    def __init__(self, relative_path_to_csv):
+    def __init__(self, csv_name):
         # Load the file
-        absolute_path = os.path.dirname(__file__)
-        full_path = os.path.join(absolute_path, relative_path_to_csv)
+        parent_path = os.path.dirname(os.path.dirname(__file__))
+        full_path = os.path.join(os.path.sep,parent_path,'simulation', csv_name)
         dataframe = pd.read_csv(full_path)
 
         # Get the position and temperature vectors from the file
@@ -67,16 +67,26 @@ class CSVReader():
         multiplier = np.array([[-1, 1]]*proposed_sensor_layout.shape[0])
         return np.concatenate((proposed_sensor_layout, multiplier * proposed_sensor_layout), axis=0)
 
-
-    def get_loss(self, proposed_sensor_layout):
-        # Calculate the loss of a configuration of sensor positions
-        symmetric_sensor_layout = self.reflect_position(proposed_sensor_layout)
-        model = self.setup_model(symmetric_sensor_layout)
-
+    
+    def compare_fields(self, model):
         loss = 0
         for pos in self.__positions:
             loss += np.square(self.__pos_to_temp[tuple(pos)] - model.get_temp(pos))
         return loss
+
+
+    def get_symmetric_loss(self, proposed_sensor_layout):
+        symmetric_sensor_layout = self.reflect_position(proposed_sensor_layout)
+        model = self.setup_model(symmetric_sensor_layout)
+        return self.compare_fields(model)
+
+
+
+    def get_uniform_loss(self, proposed_sensor_layout):
+        uniform_sensor_layout = proposed_sensor_layout.reshape(-1, 2)
+        model = self.setup_model(uniform_sensor_layout)
+        return self.compare_fields(model)
+
 
 
 
@@ -216,6 +226,5 @@ if __name__ == "__main__":
 
     csv_reader.plot_model(best_sensor_positions)
     csv_reader.plot_2D(best_sensor_positions)
-    print(csv_reader.get_loss(best_sensor_positions))
 
 

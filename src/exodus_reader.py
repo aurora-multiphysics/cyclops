@@ -18,21 +18,31 @@ RADIUS = 0.006
 
 
 class ExodusReader():
-    def __init__(self, relative_path):
+    def __init__(self, file_name):
         # Load the file
-        absolute_path = os.path.dirname(__file__)
-        full_path = os.path.join(absolute_path, relative_path)
+        parent_path = os.path.dirname(os.path.dirname(__file__))
+        full_path = os.path.join(os.path.sep,parent_path,'simulation', file_name)
+
         reader = chigger.exodus.ExodusReader(full_path)
         reader.update()
 
         # __source stores the exodus file's data
-        self.__source = chigger.exodus.ExodusSource(reader, variable='temperature', viewport=[0,0,0.5,1])
+        self.__source = chigger.exodus.ExodusSource(
+            reader, 
+            variable='temperature', 
+            viewport=[0,0,0.5,1]
+        )
         self.__source.update()
 
     
     def get_point_temp(self, pos):
         # Get the temperature from a specified
-        sample = chigger.exodus.ExodusSourceLineSampler(self.__source, resolution=1, point1 = pos, point2 = pos)
+        sample = chigger.exodus.ExodusSourceLineSampler(
+            self.__source, 
+            resolution=1, 
+            point1 = pos, 
+            point2 = pos
+        )
         sample.update()
         temp_value = sample.getSample('temperature')[0]
         return temp_value
@@ -70,8 +80,8 @@ class ExodusReader():
         dataframe = pd.DataFrame(data)
         print('\n', dataframe)
 
-        absolute_path = os.path.dirname(__file__)
-        full_path = os.path.join(absolute_path, 'temperature_field.csv')
+        parent_path = os.path.dirname(os.path.dirname(__file__))
+        full_path = os.path.join(os.path.sep,parent_path,'simulation', 'temperature_field.csv')
         dataframe.to_csv(full_path, index=False)
 
 
