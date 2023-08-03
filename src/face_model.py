@@ -10,13 +10,15 @@ import numpy as np
 
 class GPModel():
     def __init__(self, sensor_pos, sensor_temps):
-        kernel = RBF()
-        self.__gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=10, normalize_y=True)
-
         self.__scaler = preprocessing.StandardScaler().fit(sensor_pos)
-        scaled_x_train = self.__scaler.transform(sensor_pos)
+        scaled_pos = self.__scaler.transform(sensor_pos)
 
-        self.__gp.fit(scaled_x_train, sensor_temps)
+        self.__gp = GaussianProcessRegressor(
+            kernel=RBF(), 
+            n_restarts_optimizer=10, 
+            normalize_y=True
+        )
+        self.__gp.fit(scaled_pos, sensor_temps)
 
     
     def get_temp(self, pos_xy):
@@ -29,12 +31,11 @@ class GPModel():
 class IDWModel():
     def __init__(self, sensor_pos, sensor_temps):
         self.__scaler = preprocessing.StandardScaler().fit(sensor_pos)
-        self.__scaled_x_train = self.__scaler.transform(sensor_pos)
+        self.__scaled_pos = self.__scaler.transform(sensor_pos)
 
         self.__sensor_temps = sensor_temps
-
         self.__pos_to_temp = {}
-        for i, pos in enumerate(self.__scaled_x_train):
+        for i, pos in enumerate(self.__scaled_pos):
             self.__pos_to_temp[tuple(pos)] = self.__sensor_temps[i]
 
 
@@ -43,9 +44,9 @@ class IDWModel():
         if tuple(scaled_pos_xy[0]) in self.__pos_to_temp:
             return self.__pos_to_temp[tuple(scaled_pos_xy[0])]
         else:
-            weights = np.zeros(len(self.__scaled_x_train))
+            weights = np.zeros(len(self.__scaled_pos))
             for i, temp in enumerate(self.__sensor_temps):
-                weights[i] = 1/(5 * np.linalg.norm(self.__scaled_x_train[i] - scaled_pos_xy))
+                weights[i] = 1/(5 * np.linalg.norm(self.__scaled_pos[i] - scaled_pos_xy))
             temp_xy = np.sum(weights * self.__sensor_temps)/np.sum(weights)
             return temp_xy
 
@@ -55,14 +56,59 @@ class IDWModel():
 class RBFModel():
     def __init__(self, sensor_pos, sensor_temps):
         self.__scaler = preprocessing.StandardScaler().fit(sensor_pos)
-        scaled_x_train = self.__scaler.transform(sensor_pos)
+        scaled_pos = self.__scaler.transform(sensor_pos)
 
-        self.__interpolater = RBFInterpolator(scaled_x_train, sensor_temps)
+        self.__interpolater = RBFInterpolator(scaled_pos, sensor_temps)
 
 
     def get_temp(self, pos_xy):
         scaled_pos_xy = self.__scaler.transform(pos_xy.reshape(1, 2))
         return self.__interpolater(scaled_pos_xy)[0]
+
+
+
+
+class UniformGPModle():
+    def __init__(self, sensor_pos, sensor_temps):
+        y_values = sensor_pos[:, 1].reshape(-1, 1)
+        self.__scaler = preprocessing.StandardScaler().fit(y_values)
+        scaled_y_values = self.__scaler.transform(y_values)
+
+        kernel = RBF()
+        self.__gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=10, normalize_y=True)
+        self.__gp.fit(scaled_y_values, sensor_temps)
+
+
+    def get_temp(self, pos_xy):
+        scaled_pos_xy = self.__scaler.transform(pos_xy[1].reshape(1, 1))
+        return self.__gp.predict(scaled_pos_xy)[0]
+   
+
+
+
+
+
+class UniformRBFModel():
+    def __init__(self, sensor_pos, sensor_temps):
+        y_values = sensor_pos[:, 1].reshape(-1, 1)
+        self.__scaler = preprocessing.StandardScaler().fit(y_values)
+        scaled_y_values = self.__scaler.transform(y_values)
+
+        self.__interpolater = RBFInterpolator(scaled_y_values, sensor_temps)
+
+
+    def get_temp(self, pos_xy):
+        scaled_pos_xy = self.__scaler.transform(pos_xy[1].reshape(1, 1))
+        return self.__interpolater(scaled_pos_xy)[0]
+
+
+
+
+
+
+
+
+
 
 
 

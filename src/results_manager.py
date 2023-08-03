@@ -10,7 +10,7 @@ plt.style.use('science')
 class ResultsManager():
     def __init__(self, file_name):
         parent_path = os.path.dirname(os.path.dirname(__file__))
-        self.__setups_path = os.path.join(os.path.sep,parent_path,"results", file_name)
+        self.__setups_path = os.path.join(os.path.sep,parent_path, 'results', file_name)
 
         # Read the file
         self.__setup_numbers = []

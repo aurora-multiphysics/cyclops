@@ -1,4 +1,4 @@
-from src.face_model import GPModel, IDWModel, RBFModel
+from src.face_model import GPModel, IDWModel, RBFModel, UniformRBFModel, UniformGPModle
 from matplotlib import pyplot as plt
 from matplotlib import tri as tri
 from matplotlib import cm
@@ -12,7 +12,8 @@ import os
 
 
 RADIUS = 0.006
-
+SYMMETRIC_MODEL = GPModel
+UNIFORM_MODEL = UniformGPModle
 
 
 class CSVReader():
@@ -48,16 +49,16 @@ class CSVReader():
         return self.__pos_to_temp[hashable_pos]
 
 
-    def setup_model(self, symmetric_sensor_layout):
+    def setup_model(self, ModelType, sensor_layout):
         # Returns the model from the sensor positions
-        num_sensors = len(symmetric_sensor_layout)
+        num_sensors = len(sensor_layout)
         sensor_temperatures = np.zeros(num_sensors)
 
         for i in range(0, num_sensors):
-            rounded_pos = self.find_nearest_pos(symmetric_sensor_layout[i])
+            rounded_pos = self.find_nearest_pos(sensor_layout[i])
             sensor_temperatures[i] = self.get_temp(rounded_pos)
 
-        model = GPModel(symmetric_sensor_layout, sensor_temperatures)
+        model = ModelType(sensor_layout, sensor_temperatures)
         return model
 
 
@@ -77,31 +78,35 @@ class CSVReader():
 
     def get_symmetric_loss(self, proposed_sensor_layout):
         symmetric_sensor_layout = self.reflect_position(proposed_sensor_layout)
-        model = self.setup_model(symmetric_sensor_layout)
+        model = self.setup_model(SYMMETRIC_MODEL, symmetric_sensor_layout)
         return self.compare_fields(model)
-
 
 
     def get_uniform_loss(self, proposed_sensor_layout):
         uniform_sensor_layout = proposed_sensor_layout.reshape(-1, 2)
-        model = self.setup_model(uniform_sensor_layout)
+        model = self.setup_model(UNIFORM_MODEL, uniform_sensor_layout)
         return self.compare_fields(model)
 
 
 
 
 
-    # Below are the visualisation functions. I seriously though about creating an extra class to 
+    # Below are the visualisation functions. I seriously thought about creating an extra class to 
     # hold them to improve the simplicity of the architecture, but this would have been super
     # unnecessary and over the top so I didn't.
 
 
 
 
-    def plot_model(self, proposed_sensor_layout):
+
+    def plot_model(self, proposed_sensor_layout, symmetric=True):
         # Setup the model
-        symmetric_sensor_layout = self.reflect_position(proposed_sensor_layout)
-        model = self.setup_model(symmetric_sensor_layout)
+        if symmetric == True:
+            symmetric_sensor_layout = self.reflect_position(proposed_sensor_layout)
+            model = self.setup_model(SYMMETRIC_MODEL, symmetric_sensor_layout)
+        else:
+            uniform_sensor_layout = proposed_sensor_layout.reshape(-1, 2)
+            model = self.setup_model(UNIFORM_MODEL, uniform_sensor_layout)
 
         # Plot the real temperatures
         fig, ax = plt.subplots(subplot_kw={"projection": "3d"}, figsize=(8, 6))
@@ -128,9 +133,13 @@ class CSVReader():
         plt.close()
 
 
-    def plot_2D(self, sensor_positions):
-        sensor_positions = self.reflect_position(sensor_positions)
-        model = self.setup_model(sensor_positions)
+    def plot_2D(self, sensor_positions, symmetric=True):
+        if symmetric == True:
+            sensor_positions = self.reflect_position(sensor_positions)
+            model = self.setup_model(SYMMETRIC_MODEL, sensor_positions)
+        else:
+            sensor_positions = sensor_positions.reshape(-1, 2)
+            model = self.setup_model(UNIFORM_MODEL, sensor_positions)
 
         # Plot the real temperatures
         fig, (ax_1, ax_2, ax_3) = plt.subplots(1,3, figsize=(18, 7))
@@ -224,7 +233,7 @@ if __name__ == "__main__":
     ]).reshape(-1)
 
 
-    csv_reader.plot_model(best_sensor_positions)
-    csv_reader.plot_2D(best_sensor_positions)
+    csv_reader.plot_model(best_sensor_positions, symmetric=False)
+    csv_reader.plot_2D(best_sensor_positions, symmetric=False)
 
 

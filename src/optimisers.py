@@ -15,7 +15,7 @@ import numpy as np
 
 
 # CONSTANTS
-HALF_NUM_SENSORS = 2
+HALF_NUM_SENSORS = 3
 LOW_BORDER = [0, -0.0135] * HALF_NUM_SENSORS
 HIGH_BORDER = [0.0135, 0.0215] * HALF_NUM_SENSORS
 
@@ -29,7 +29,7 @@ class LossFunction(Problem):
 
 
     def _evaluate(self, swarm_values, out, *args, **kwargs):
-        out['F'] = np.apply_along_axis(self.__csv_reader.get_loss, 1, swarm_values)
+        out['F'] = np.apply_along_axis(self.__csv_reader.get_symmetric_loss, 1, swarm_values)
 
 
 
@@ -99,7 +99,7 @@ def plot_optimsiation(history):
 
 if __name__ == '__main__':
     plt.style.use('science')
-    results_manager = ResultsManager('best_symmmetric_setups.txt')
+    results_manager = ResultsManager('best_symmetric_setups.txt')
 
     print("\nOptimising...")
     res = optimise_with_PSO(LossFunction())
