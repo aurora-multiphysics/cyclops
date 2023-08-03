@@ -14,22 +14,44 @@ import numpy as np
 
 
 
-# CONSTANTS
-HALF_NUM_SENSORS = 3
-LOW_BORDER = [0, -0.0135] * HALF_NUM_SENSORS
-HIGH_BORDER = [0.0135, 0.0215] * HALF_NUM_SENSORS
 
+class SymmetricLossFunction(Problem):
+    def __init__(self, num_sensors):
+        low_border = [0, -0.0135] * (num_sensors//2)
+        high_border = [0.0135, 0.0215] * (num_sensors//2)
 
-
-
-class LossFunction(Problem):
-    def __init__(self):
-        super().__init__(n_var=2*HALF_NUM_SENSORS, n_obj=1, n_ieq_constr=0, xl=LOW_BORDER, xu=HIGH_BORDER)
+        super().__init__(
+            n_var=num_sensors, 
+            n_obj=1, 
+            n_ieq_constr=0, 
+            xl=low_border, 
+            xu=high_border
+        )
         self.__csv_reader = CSVReader('temperature_field.csv')
 
 
     def _evaluate(self, swarm_values, out, *args, **kwargs):
         out['F'] = np.apply_along_axis(self.__csv_reader.get_symmetric_loss, 1, swarm_values)
+
+
+
+class UniformLossFunction(Problem):
+    def __init__(self, num_sensors):
+        low_border = [-0.0135, -0.0135] * num_sensors
+        high_border = [0.0135, 0.0215] * num_sensors
+
+        super().__init__(
+            n_var=num_sensors*2,
+            n_obj=1, 
+            n_ieq_constr=0, 
+            xl=low_border, 
+            xu=high_border
+        )
+        self.__csv_reader = CSVReader('temperature_field.csv')
+
+
+    def _evaluate(self, swarm_values, out, *args, **kwargs):
+        out['F'] = np.apply_along_axis(self.__csv_reader.get_uniform_loss, 1, swarm_values)
 
 
 
@@ -93,32 +115,51 @@ def plot_optimsiation(history):
 
 
 
+def check_results(res, is_symmetric, num_sensors):
+    if is_symmetric == True:
+        results_manager = ResultsManager('best_symmetric_setups.txt')
+    else:
+        results_manager = ResultsManager('best_uniform_setups.txt')
+
+    if res.F[0] < results_manager.read_file(num_sensors)[0]:
+        print('\nSaving new record...')
+        results_manager.write_file(num_sensors, res.F[0], list(res.X))
+        results_manager.save_updates()
+
+
+
+def show_results(res, is_symmetric):
+    plot_optimsiation(res.history)
+    csv_reader = CSVReader('temperature_field.csv')
+
+    sensor_positions = []
+    for i in range(0, len(res.X), 2):
+        sensor_positions.append(csv_reader.find_nearest_pos(res.X[i:i+2]))
+    sensor_positions = np.array(sensor_positions)
+
+    print(sensor_positions)
+    csv_reader.plot_model(sensor_positions.reshape(-1), symmetric=is_symmetric)
+    csv_reader.plot_2D(sensor_positions.reshape(-1), symmetric=is_symmetric)
 
 
 
 
 if __name__ == '__main__':
     plt.style.use('science')
-    results_manager = ResultsManager('best_symmetric_setups.txt')
+    num_sensors = 3
+    symmetric_approach = False
 
-    print("\nOptimising...")
-    res = optimise_with_PSO(LossFunction())
-    plot_optimsiation(res.history)
-    best_setup = res.X
-    csv_reader = CSVReader('temperature_field.csv')
+    if symmetric_approach == True:
+        res = optimise_with_PSO(SymmetricLossFunction(num_sensors))
+        check_results(res, True, num_sensors)
+        show_results(res, True)
+    else:
+        res = optimise_with_PSO(UniformLossFunction(num_sensors))
+        check_results(res, False, num_sensors)
+        show_results(res, False)
 
-    if res.F[0] < results_manager.read_file(HALF_NUM_SENSORS*2)[0]:
-        print('\nSaving new record...')
-        results_manager.write_file(HALF_NUM_SENSORS*2, res.F[0], list(res.X))
-        results_manager.save_updates()
 
-    print("\nBest setup:")
-    sensor_positions = []
-    for i in range(0, len(best_setup), 2):
-        sensor_positions.append(csv_reader.find_nearest_pos(best_setup[i:i+2]))
+
+
     
-    sensor_positions = np.array(sensor_positions)
-    print(sensor_positions)
-    print(csv_reader.get_loss(best_setup))
-    csv_reader.plot_model(sensor_positions.reshape(-1))
-    csv_reader.plot_2D(sensor_positions.reshape(-1))
+

@@ -68,7 +68,7 @@ class RBFModel():
 
 
 
-class UniformGPModle():
+class UniformGPModel():
     def __init__(self, sensor_pos, sensor_temps):
         y_values = sensor_pos[:, 1].reshape(-1, 1)
         self.__scaler = preprocessing.StandardScaler().fit(y_values)

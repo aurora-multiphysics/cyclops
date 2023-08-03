@@ -1,4 +1,4 @@
-from src.face_model import GPModel, IDWModel, RBFModel, UniformRBFModel, UniformGPModle
+from src.face_model import GPModel, IDWModel, RBFModel, UniformRBFModel, UniformGPModel
 from matplotlib import pyplot as plt
 from matplotlib import tri as tri
 from matplotlib import cm
@@ -13,7 +13,7 @@ import os
 
 RADIUS = 0.006
 SYMMETRIC_MODEL = GPModel
-UNIFORM_MODEL = UniformGPModle
+UNIFORM_MODEL = UniformGPModel
 
 
 class CSVReader():
@@ -227,9 +227,11 @@ if __name__ == "__main__":
     plt.style.use('science')
 
     best_sensor_positions = np.array([
-        [ 0.012569,   0.0058103],
-        [ 0.0088448,  0.0202931],
-        [ 0.0041897,  -0.0118448]
+        [ 0.012569,  0.0058103],
+        [ 0.0088448, 0.0202931], 
+        [ 0.0041897, 0.0118448], 
+        [ 0.0079138, 0.0046034], 
+        [ 0.0088448, -0.0074655]
     ]).reshape(-1)
 
 
