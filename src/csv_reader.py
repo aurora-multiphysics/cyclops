@@ -7,7 +7,7 @@ import os
 
 
 class CSVReader():
-    def __init__(self, csv_name, model_type):
+    def __init__(self, csv_name):
         # Load the file
         parent_path = os.path.dirname(os.path.dirname(__file__))
         full_path = os.path.join(os.path.sep,parent_path,'simulation', csv_name)
@@ -24,9 +24,14 @@ class CSVReader():
         for i, x_value in enumerate(x_values):
             hashable_pos = (x_value, y_values[i])
             self._pos_to_temp[hashable_pos] = self._temp_values[i]
+    
 
-        # Setup the model
-        self._default_model_type = model_type
+    def get_all_positions(self):
+        return self._positions
+
+
+    def get_all_temp_values(self):
+        return self._temp_values
 
 
     def find_nearest_pos(self, pos):
@@ -42,7 +47,7 @@ class CSVReader():
         return self._pos_to_temp[hashable_pos]
 
 
-    def calculate_training_temperatures(self, sensor_layout):
+    def find_train_temps(self, sensor_layout):
         num_sensors = len(sensor_layout)
         sensor_temperatures = np.zeros(num_sensors)
 
@@ -52,28 +57,53 @@ class CSVReader():
         return sensor_temperatures
 
 
+
+
+class ModelUser():
+    def get_loss(self, proposed_sensor_layout):
+        model = self.get_trained_model(proposed_sensor_layout)
+        return self.compare_fields(model)
+
+    
+    def get_trained_model(self, proposed_sensor_layout):
+        return None
+
+
+    def get_model_temp(self, pos, model):
+        return None
+
+    
+    def get_all_model_temperatures(self, sensor_layout):
+        model = self.get_trained_model(sensor_layout)
+        model_temperatures = np.zeros(len(self._positions))
+
+        for i in range(len(self._positions)):
+            model_temperatures[i] = self.get_model_temp(self._positions[i], model)
+        return model_temperatures
+
+
     def compare_fields(self, model):
         loss = 0
         for pos in self._positions:
-            loss += np.square(self._pos_to_temp[tuple(pos)] - model.get_temp(pos))
+            loss += np.square(self._pos_to_temp[tuple(pos)] - self.get_model_temp(pos, model))
         return loss
 
 
-    def get_all_positions(self):
-        return self._positions
-
-
-    def get_all_temp_values(self):
-        return self._temp_values
 
 
 
-
-
-
-class SymmetricReader(CSVReader):
+class SymmetricReader(CSVReader, ModelUser):
     def __init__(self, csv_name, model_type):
-        super().__init__(csv_name, model_type)
+        super().__init__(csv_name)
+        self._default_model_type = model_type
+    
+    
+    def is_symmetric(self):
+        return True
+
+
+    def get_model_temp(self, pos, model):
+        return model.get_temp(pos)
 
 
     def reflect_position(self, proposed_sensor_layout):
@@ -83,27 +113,36 @@ class SymmetricReader(CSVReader):
         return np.concatenate((proposed_sensor_layout, multiplier * proposed_sensor_layout), axis=0)
 
 
-    def get_symmetric_loss(self, proposed_sensor_layout):
+    def get_trained_model(self, proposed_sensor_layout):
         symmetric_sensor_layout = self.reflect_position(proposed_sensor_layout)
-        training_temperatures = self.calculate_training_temperatures(symmetric_sensor_layout)
-        model = self._default_model_type(symmetric_sensor_layout, training_temperatures)
-        return self.compare_fields(model)
+        training_temperatures = self.find_train_temps(symmetric_sensor_layout)
+        return self._default_model_type(symmetric_sensor_layout, training_temperatures)
+
+    
 
 
-
-
-
-class UniformReader(CSVReader):
+class UniformReader(CSVReader, ModelUser):
     def __init__(self, csv_name, model_type):
-        super().__init__(csv_name, model_type)
+        super().__init__(csv_name)
+        self._default_model_type = model_type
 
 
-    def get_uniform_loss(self, proposed_sensor_layout):
+    def is_symmetric(self):
+        return False
+
+    
+    def get_model_temp(self, pos, model):
+        return model.get_temp(pos[1])
+
+
+    def get_trained_model(self, proposed_sensor_layout):
         uniform_sensor_layout = proposed_sensor_layout.reshape(-1, 2)
-        training_temperatures = self.calculate_training_temperatures(uniform_sensor_layout)
+        training_temperatures = self.find_train_temps(uniform_sensor_layout)
         sensor_y_values = uniform_sensor_layout[:,1].reshape(-1, 1)
-        model = self._default_model_type(sensor_y_values, training_temperatures)
-        return self.compare_fields(model)
+        return self._default_model_type(sensor_y_values, training_temperatures)
+
+    
+
 
 
 

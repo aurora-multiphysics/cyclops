@@ -18,13 +18,10 @@ class GraphManager():
         plt.style.use('science')
 
 
-    def plot_double_3D_temp_field(self, positions, true_temps, model_temps):
+    def draw_double_3D_temp_field(self, positions, true_temps, model_temps):
         fig, ax = plt.subplots(subplot_kw={"projection": "3d"}, figsize=(8, 6))
-        
-        ax.set_title('x (m)')
-        ax.set_title('y (m)')
-        ax.set_title('T (C)')
 
+        ax.set_title('Model and simulation temperature fields')
         surf_1 = ax.plot_trisurf(
             positions[:,0].reshape(-1), 
             positions[:,1].reshape(-1), 
@@ -36,12 +33,11 @@ class GraphManager():
             positions[:,1].reshape(-1), 
             model_temps
         )
-        fig.colorbar(surf_1, ax)
         plt.show()
         plt.close()
     
 
-    def plot_comparison_pane(self, all_positions, sensor_positions, true_temps, model_temps):
+    def draw_comparison_pane(self, all_positions, sensor_positions, true_temps, model_temps):
         fig_1, (ax_1, ax_2, ax_3) = plt.subplots(1,3, figsize=(18, 7))
 
         ax_1.set_title('Simulation temperature field')
@@ -49,7 +45,7 @@ class GraphManager():
 
         ax_2.set_title('Predicted temperature field')
         cp_2 = self.plot_contour_temp_field(ax_2, all_positions, model_temps)
-        self.scatter_sensor_positions(ax_3, sensor_positions)
+        self.scatter_sensor_positions(ax_2, sensor_positions)
 
         ax_3.set_title('Sensor layout')
         self.plot_monoblock_grid(ax_3, all_positions)
@@ -57,10 +53,14 @@ class GraphManager():
 
         fig_1.colorbar(cp_2, ax=[ax_1, ax_2])
         
-        differences = np.abs(model_temps - true_temps)
+        differences = np.zeros(len(true_temps))
+        for i in range(len(true_temps)):
+            differences[i] = np.abs(true_temps[i] - model_temps[i])
         fig_2, ax_4 = plt.subplots(layout='constrained', figsize=(5, 6))
-        cp_4 = self.plot_contour_temp_field(ax_4, all_positions, differences)
-        fig_2.colorbar()
+        cp_4 = self.plot_field_errors(ax_4, all_positions, differences)
+
+        fig_2.colorbar(cp_4)
+        
         plt.show()
         plt.close()
 
@@ -104,9 +104,12 @@ class GraphManager():
 
 
     def plot_field_errors(self, ax, positions, differences):
-        ax.tricontourf(
-            self._positions[:,0].reshape(-1), 
-            self._positions[:,1].reshape(-1), 
+        ax.set_xlabel('x (m)')
+        ax.set_ylabel('y (m)')
+
+        return ax.tricontourf(
+            positions[:,0].reshape(-1), 
+            positions[:,1].reshape(-1), 
             differences, 
             cmap=cm.Blues, levels = 30
         )
