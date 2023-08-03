@@ -1,25 +1,26 @@
+from src.face_model import GPModel, IDWModel, RBFModel, UniformRBFModel, UniformGPModel
 from results_manager import ResultsManager
 from csv_reader import CSVReader
 import numpy as np
 
 
-def show_setup(num_sensors):
-    results_manager = ResultsManager('best_symmetric_setups.txt')
-    csv_reader = CSVReader('temperature_field.csv')
-    loss, layout = results_manager.read_file(num_sensors)
 
-    sensor_positions = np.zeros(num_sensors)
-    for i in range(0, len(layout), 2):
-        rounded_pos = csv_reader.find_nearest_pos(layout[i:i+2])
-        sensor_positions[i] = rounded_pos[0]
-        sensor_positions[i+1] = rounded_pos[1]
-   
-    sensor_positions = np.array(sensor_positions)
-    results_manager.plot_pareto() 
-    csv_reader.plot_model(sensor_positions.reshape(-1))
-    csv_reader.plot_2D(sensor_positions.reshape(-1))
+
+
+
+def show_symmetric_setup(num_sensors, csv_reader, model_type):
+    pass
+
+
+def show_uniform_setup(num_sensors):
+    pass
 
 
 
 if __name__=='__main__':
-    show_setup(10)
+    csv_reader = CSVReader(
+        'temperature_field.csv',
+        GPModel,
+        UniformRBFModel
+    )
+    show_symmetric_setup(10, csv_reader)

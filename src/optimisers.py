@@ -1,3 +1,4 @@
+from src.face_model import GPModel, IDWModel, RBFModel, UniformRBFModel, UniformGPModel
 from pymoo.algorithms.soo.nonconvex.pso import PSO
 from pymoo.algorithms.soo.nonconvex.ga import GA
 from src.results_manager import ResultsManager
@@ -14,6 +15,11 @@ import numpy as np
 
 
 
+SYMMETRIC_MODEL = GPModel
+UNIFORM_MODEL = UniformRBFModel
+
+
+
 
 class SymmetricLossFunction(Problem):
     def __init__(self, num_sensors):
@@ -27,7 +33,11 @@ class SymmetricLossFunction(Problem):
             xl=low_border, 
             xu=high_border
         )
-        self.__csv_reader = CSVReader('temperature_field.csv')
+        self.__csv_reader = CSVReader(
+            'temperature_field.csv', 
+            symmetric_model=SYMMETRIC_MODEL, 
+            uniform_model=UNIFORM_MODEL
+        )
 
 
     def _evaluate(self, swarm_values, out, *args, **kwargs):
@@ -47,7 +57,11 @@ class UniformLossFunction(Problem):
             xl=low_border, 
             xu=high_border
         )
-        self.__csv_reader = CSVReader('temperature_field.csv')
+        self.__csv_reader = CSVReader(
+            'temperature_field.csv', 
+            symmetric_model=SYMMETRIC_MODEL, 
+            uniform_model=UNIFORM_MODEL
+        )
 
 
     def _evaluate(self, swarm_values, out, *args, **kwargs):
@@ -130,7 +144,10 @@ def check_results(res, is_symmetric, num_sensors):
 
 def show_results(res, is_symmetric):
     plot_optimsiation(res.history)
-    csv_reader = CSVReader('temperature_field.csv')
+    csv_reader = CSVReader('temperature_field.csv',
+            symmetric_model=SYMMETRIC_MODEL, 
+            uniform_model=UNIFORM_MODEL
+        )
 
     sensor_positions = []
     for i in range(0, len(res.X), 2):
