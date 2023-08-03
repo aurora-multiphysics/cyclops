@@ -32,7 +32,7 @@ if __name__ == '__main__':
         high_border = [0.0135, 0.0215] * half_num_sensors
 
         print("\nOptimising...")
-        res = optimise_with_GA(CustomLossFunction(half_num_sensors, low_border, high_border))
+        res = optimise_with_PSO(CustomLossFunction(half_num_sensors, low_border, high_border))
         best_setup = res.X
         csv_reader = CSVReader('temperature_field.csv')
 
