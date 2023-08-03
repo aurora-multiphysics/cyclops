@@ -57,7 +57,7 @@ class CSVReader():
             rounded_pos = self.find_nearest_pos(symmetric_sensor_layout[i])
             sensor_temperatures[i] = self.get_temp(rounded_pos)
 
-        model = GPModel(symmetric_sensor_layout, sensor_temperatures)
+        model = IDWModel(symmetric_sensor_layout, sensor_temperatures)
         return model
 
 
@@ -210,9 +210,7 @@ if __name__ == "__main__":
     best_sensor_positions = np.array([
         [ 0.012569,   0.0058103],
         [ 0.0088448,  0.0202931],
-        [ 0.0041897,  0.0118448],
-        [ 0.0079138,  0.0046034],
-        [ 0.0088448, -0.0074655]
+        [ 0.0041897,  0.0118448]
     ]).reshape(-1)
 
 

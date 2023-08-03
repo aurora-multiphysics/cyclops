@@ -30,17 +30,20 @@ class ResultsManager():
 
 
     def write_file(self, write_num, write_result, write_layout):
+        # Update the best result & setup for a certain number of sensors
         index = self.__setup_numbers.index(write_num)
         self.__setup_results[index] = write_result
         self.__setup_layout[index] = write_layout
 
     
     def read_file(self, read_num):
+        # Return the best result & setup for a certain number of sensors
         index = self.__setup_numbers.index(read_num)
         return self.__setup_results[index], self.__setup_layout[index]
 
 
     def save_updates(self):
+        # Save any updates into the file by rewriting to it
         f = open(self.__setups_path, "w")
         for i, num in enumerate(self.__setup_numbers):
             line = str(num)+':'+str(self.__setup_results[i])+':'+str(self.__setup_layout[i])
@@ -51,12 +54,12 @@ class ResultsManager():
 
 
     def plot_pareto(self):
+        # Plot the pareto front
         plt.figure(figsize=(8,6))
-        plt.scatter(self.__setup_numbers[1:], self.__setup_results[1:], facecolors='none', edgecolors='b')
+        plt.scatter(self.__setup_numbers, self.__setup_results, facecolors='none', edgecolors='b')
         plt.xlabel('Number of sensors')
         plt.ylabel('Loss')
         plt.title('Pareto front')
-        plt.ylim(ymin=0)
         plt.show()
         plt.close()
 
