@@ -146,7 +146,7 @@ def show_results(res, is_symmetric):
 
 if __name__ == '__main__':
     plt.style.use('science')
-    num_sensors = 3
+    num_sensors = 8
     symmetric_approach = False
 
     if symmetric_approach == True:
@@ -154,7 +154,7 @@ if __name__ == '__main__':
         check_results(res, True, num_sensors)
         show_results(res, True)
     else:
-        res = optimise_with_PSO(UniformLossFunction(num_sensors))
+        res = optimise_with_GA(UniformLossFunction(num_sensors))
         check_results(res, False, num_sensors)
         show_results(res, False)
 

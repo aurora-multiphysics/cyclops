@@ -13,7 +13,7 @@ import os
 
 RADIUS = 0.006
 SYMMETRIC_MODEL = GPModel
-UNIFORM_MODEL = UniformGPModel
+UNIFORM_MODEL = UniformRBFModel
 
 
 class CSVReader():
