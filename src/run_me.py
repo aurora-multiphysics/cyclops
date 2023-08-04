@@ -48,7 +48,7 @@ def show_pareto(graph_manager, is_symmetric=True):
 
 
 
-def check_results(res, is_symmetric, num_sensors):
+def check_results(res, is_symmetric, num_sensors, model_name):
     if is_symmetric == True:
         results_manager = ResultsManager('best_symmetric_setups.txt')
     else:
@@ -56,7 +56,7 @@ def check_results(res, is_symmetric, num_sensors):
 
     if res.F[0] < results_manager.read_file(num_sensors)[0]:
         print('\nSaving new record...')
-        results_manager.write_file(num_sensors, res.F[0], list(res.X))
+        results_manager.write_file(num_sensors, res.F[0], list(res.X), model_name)
         results_manager.save_updates()
 
 
@@ -65,11 +65,16 @@ def optimise_sensor_layout(model_manager, graph_manager, num_sensors=10, time_li
     # Optimises the sensor placement
     problem = LossFunction(num_sensors, model_manager)
     res = optimise_with_PSO(problem, time_limit)
+    model_type_to_name = {
+        GPModel:'GP',
+        RBFModel:'RBF'
+    }
 
     check_results(
         res, 
         model_manager.is_symmetric(), 
-        num_sensors
+        num_sensors,
+        model_type_to_name[model_manager.get_model_type()]
     )
     graph_manager.draw_optimisation(res.history)
     show_sensor_layout(
@@ -88,7 +93,7 @@ def show_best(graph_manager, model_manager, num):
     else:
         results_manager = ResultsManager('best_uniform_setups.txt')
     
-    loss, layout = results_manager.read_file(num)
+    loss, layout, model_name = results_manager.read_file(num)
     show_sensor_layout(
         np.array(layout), 
         model_manager, 
@@ -112,6 +117,6 @@ if __name__ == '__main__':
 
     layout = np.array([0.012569, 0.0058103, 0.0088448, 0.0202931, 0.0041897, 0.0118448, 0.0079138, 0.0046034, 0.0088448, -0.0074655])
     #show_sensor_layout(layout, symmetric_manager, graph_manager)
-    #optimise_sensor_layout(uniform_manager, graph_manager, 5, '00:10:00')
+    optimise_sensor_layout(uniform_manager, graph_manager, 5, '00:00:30')
     #show_pareto(graph_manager, False)
     show_best(graph_manager, uniform_manager, 5)

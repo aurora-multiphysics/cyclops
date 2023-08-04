@@ -60,6 +60,9 @@ class CSVReader():
 
 
 class ModelUser():
+    def __init__(self, model_type):
+        self._default_model_type = model_type
+
     def get_loss(self, proposed_sensor_layout):
         model = self.get_trained_model(proposed_sensor_layout)
         return self.compare_fields(model)
@@ -87,6 +90,10 @@ class ModelUser():
         for pos in self._positions:
             loss += np.square(self._pos_to_temp[tuple(pos)] - self.get_model_temp(pos, model))
         return loss
+    
+    
+    def get_model_type(self):
+        return self._default_model_type
 
 
 
@@ -94,9 +101,9 @@ class ModelUser():
 
 class SymmetricManager(CSVReader, ModelUser):
     def __init__(self, csv_name, model_type):
-        super().__init__(csv_name)
-        self._default_model_type = model_type
-    
+        CSVReader.__init__(self, csv_name)
+        ModelUser.__init__(self, model_type)
+        
     
     def is_symmetric(self):
         return True
@@ -122,8 +129,8 @@ class SymmetricManager(CSVReader, ModelUser):
 
 class UniformManager(CSVReader, ModelUser):
     def __init__(self, csv_name, model_type):
-        super().__init__(csv_name)
-        self._default_model_type = model_type
+        CSVReader.__init__(self, csv_name)
+        ModelUser.__init__(self, model_type)
 
 
     def is_symmetric(self):
