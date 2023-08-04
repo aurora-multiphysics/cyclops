@@ -44,7 +44,7 @@ def optimise_with_GA(problem, time_limit):
     res = minimize(problem,
                 algorithm,
                 termination,
-                seed=5,
+                seed=1,
                 save_history=True,
                 verbose=True)
     return res
@@ -61,7 +61,7 @@ def optimise_with_PSO(problem, time_limit):
     res = minimize(problem,
                 algorithm,
                 termination,
-                seed=2,
+                seed=1,
                 save_history=True,
                 verbose=True)
     return res

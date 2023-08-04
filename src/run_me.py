@@ -65,11 +65,11 @@ def optimise_sensor_layout(model_manager, graph_manager, num_sensors=10, time_li
     # Optimises the sensor placement
     problem = LossFunction(num_sensors, model_manager)
     res = optimise_with_PSO(problem, time_limit)
+
     model_type_to_name = {
         GPModel:'GP',
         RBFModel:'RBF'
     }
-
     check_results(
         res, 
         model_manager.is_symmetric(), 
@@ -99,9 +99,31 @@ def show_best(graph_manager, model_manager, num):
         model_manager, 
         graph_manager
     )
+    
 
 
 
+def find_pareto(model_manager, time_limit='00:10:00', sensor_nums=[3, 4, 5, 6, 7, 8]):
+    setups = []
+    for num in sensor_nums:
+        problem = LossFunction(num, model_manager)
+        print('\nOptimising...')
+        res = optimise_with_PSO(problem, time_limit)
+
+        model_type_to_name = {
+        GPModel:'GP',
+        RBFModel:'RBF'
+        }
+        check_results(
+            res, 
+            model_manager.is_symmetric(), 
+            num,
+            model_type_to_name[model_manager.get_model_type()]
+        )
+        print('\nResult:')
+        print(res.X)
+        setups.append(res.X)
+    print('\nSetups:\n',setups)
 
 
 
@@ -117,6 +139,7 @@ if __name__ == '__main__':
 
     layout = np.array([0.012569, 0.0058103, 0.0088448, 0.0202931, 0.0041897, 0.0118448, 0.0079138, 0.0046034, 0.0088448, -0.0074655])
     #show_sensor_layout(layout, symmetric_manager, graph_manager)
-    optimise_sensor_layout(uniform_manager, graph_manager, 5, '00:00:30')
+    #optimise_sensor_layout(uniform_manager, graph_manager, 5, '00:00:30')
     #show_pareto(graph_manager, False)
-    show_best(graph_manager, uniform_manager, 3)
+    #show_best(graph_manager, uniform_manager, 3)
+    find_pareto(uniform_manager)
