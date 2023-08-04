@@ -119,4 +119,4 @@ if __name__ == '__main__':
     #show_sensor_layout(layout, symmetric_manager, graph_manager)
     optimise_sensor_layout(uniform_manager, graph_manager, 5, '00:00:30')
     #show_pareto(graph_manager, False)
-    show_best(graph_manager, uniform_manager, 5)
+    show_best(graph_manager, uniform_manager, 3)

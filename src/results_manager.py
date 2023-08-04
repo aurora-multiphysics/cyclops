@@ -48,8 +48,6 @@ class ResultsManager():
         # Save any updates into the file by rewriting to it
         f = open(self.__setups_path, "w")
         for i, num in enumerate(self.__setup_numbers):
-            line = str(num)+':'+str(self.__setup_results[i])+':'+str(self.__setup_layout[i])+':'+self.__setup_models([i])
-            if num != self.__setup_numbers[-1]:
-                line += '\n'
+            line = str(num)+':'+str(self.__setup_results[i])+':'+str(self.__setup_layout[i])+':'+self.__setup_models[i]
             f.writelines(line)
         f.close()
