@@ -61,3 +61,24 @@ class CTModel():
             return value
 
 
+
+
+class CTRBFModel():
+    def __init__(self, sensor_pos, sensor_temps):
+        # IMPORTANT: Can only be used with the symmetric model_manager
+        self.__scaler = preprocessing.StandardScaler().fit(sensor_pos)
+        scaled_pos = self.__scaler.transform(sensor_pos)
+
+        self.__interpolater = CloughTocher2DInterpolator(scaled_pos, sensor_temps)
+        self.__extrapolater = RBFInterpolator(scaled_pos, sensor_temps)
+
+    
+    def get_temp(self, pos_xy):
+        scaled_pos_xy = self.__scaler.transform(pos_xy.reshape(1, -1))
+        value = self.__interpolater(scaled_pos_xy)[0]
+        if value != value:
+            return self.__extrapolater(scaled_pos_xy)[0]
+        else:
+            return value
+
+

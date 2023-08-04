@@ -1,6 +1,6 @@
 from src.optimisers import LossFunction, optimise_with_GA, optimise_with_PSO
 from src.model_management import SymmetricManager, UniformManager
-from src.face_model import GPModel, RBFModel, CTModel
+from src.face_model import GPModel, RBFModel, CTModel, CTRBFModel
 from src.results_manager import ResultsManager
 from src.graph_manager import GraphManager
 import numpy as np
@@ -66,12 +66,13 @@ def optimise_sensor_layout(model_manager, graph_manager, num_sensors=10, time_li
     # Optimises the sensor placement
     print('\nOptimising...')
     problem = LossFunction(num_sensors, model_manager)
-    res = optimise_with_PSO(problem, time_limit)
+    res = optimise_with_GA(problem, time_limit)
 
     model_type_to_name = {
         GPModel:'GP',
         RBFModel:'RBF',
-        CTModel:'CT'
+        CTModel:'CT',
+        CTRBFModel:'CTRBF'
     }
     check_results(
         res, 
@@ -115,7 +116,9 @@ def find_pareto(model_manager, time_limit='00:10:00', sensor_nums=[3, 4, 5, 6, 7
 
         model_type_to_name = {
         GPModel:'GP',
-        RBFModel:'RBF'
+        RBFModel:'RBF',
+        CTModel:'CT',
+        CTRBFModel:'CTRBF'
         }
         check_results(
             res, 
@@ -138,12 +141,12 @@ def find_pareto(model_manager, time_limit='00:10:00', sensor_nums=[3, 4, 5, 6, 7
 if __name__ == '__main__':
     graph_manager = GraphManager()
     # Note that the uniform manager can never manage the CTModel
-    symmetric_manager = SymmetricManager('temperature_field.csv', CTModel)
+    symmetric_manager = SymmetricManager('temperature_field.csv', CTRBFModel)
     uniform_manager = UniformManager('temperature_field.csv', RBFModel)
 
     layout = np.array([0.012569, 0.0058103, 0.0088448, 0.0202931, 0.0041897, 0.0118448, 0.0079138, 0.0046034, 0.0088448, -0.0074655])
     #show_sensor_layout(layout, symmetric_manager, graph_manager)
-    optimise_sensor_layout(symmetric_manager, graph_manager, 24, '00:00:10')
+    optimise_sensor_layout(symmetric_manager, graph_manager, 6, '00:10:00')
     #show_pareto(graph_manager, False)
     #show_best(graph_manager, symmetric_manager, 6)
     #find_pareto(uniform_manager)
