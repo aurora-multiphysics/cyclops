@@ -13,9 +13,12 @@ def show_sensor_layout(layout, model_manager, graph_manager):
     true_temperatures = model_manager.get_all_temp_values()
     model_temperatures = model_manager.get_all_model_temperatures(layout)
     
-    layout = model_manager.find_nearest_pos(layout)
     if model_manager.is_symmetric():
         layout = model_manager.reflect_position(layout)
+    else:
+        layout = layout.reshape(-1, 2)
+    for i, pos in enumerate(layout):
+        layout[i] = model_manager.find_nearest_pos(pos)
 
     graph_manager.draw_double_3D_temp_field(
         positions, 
@@ -28,6 +31,7 @@ def show_sensor_layout(layout, model_manager, graph_manager):
         true_temperatures, 
         model_temperatures
     )
+
 
 
 def show_pareto(graph_manager, is_symmetric=True):
@@ -43,6 +47,7 @@ def show_pareto(graph_manager, is_symmetric=True):
     graph_manager.draw_pareto(numbers, results)
 
 
+
 def check_results(res, is_symmetric, num_sensors):
     if is_symmetric == True:
         results_manager = ResultsManager('best_symmetric_setups.txt')
@@ -55,17 +60,40 @@ def check_results(res, is_symmetric, num_sensors):
         results_manager.save_updates()
 
 
+
 def optimise_sensor_layout(model_manager, graph_manager, num_sensors=10, time_limit='00:00:30'):
     # Optimises the sensor placement
     problem = LossFunction(num_sensors, model_manager)
     res = optimise_with_PSO(problem, time_limit)
-    check_results(res, model_manager.is_symmetric(), num_sensors)
-    graph_manager.draw_optimisation(res.history)
-    show_sensor_layout(res.X, model_manager, graph_manager)
 
+    check_results(
+        res, 
+        model_manager.is_symmetric(), 
+        num_sensors
+    )
+    graph_manager.draw_optimisation(res.history)
+    show_sensor_layout(
+        res.X, 
+        model_manager, 
+        graph_manager
+    )
     print('\nResult:')
     print(res.X)
 
+
+
+def show_best(graph_manager, model_manager, num):
+    if model_manager.is_symmetric() == True:
+        results_manager = ResultsManager('best_symmetric_setups.txt')
+    else:
+        results_manager = ResultsManager('best_uniform_setups.txt')
+    
+    loss, layout = results_manager.read_file(num)
+    show_sensor_layout(
+        np.array(layout), 
+        model_manager, 
+        graph_manager
+    )
 
 
 
@@ -79,10 +107,11 @@ def optimise_sensor_layout(model_manager, graph_manager, num_sensors=10, time_li
 
 if __name__ == '__main__':
     graph_manager = GraphManager()
-    symmetric_manager = SymmetricManager('temperature_field.csv', GPModel)
+    symmetric_manager = SymmetricManager('temperature_field.csv', RBFModel)
     uniform_manager = UniformManager('temperature_field.csv', RBFModel)
 
     layout = np.array([0.012569, 0.0058103, 0.0088448, 0.0202931, 0.0041897, 0.0118448, 0.0079138, 0.0046034, 0.0088448, -0.0074655])
-    #show_sensor_layout(layout, uniform_manager, graph_manager)
-    optimise_sensor_layout(uniform_manager, graph_manager, 5, '00:10:00')
+    #show_sensor_layout(layout, symmetric_manager, graph_manager)
+    #optimise_sensor_layout(uniform_manager, graph_manager, 5, '00:10:00')
     #show_pareto(graph_manager, False)
+    show_best(graph_manager, uniform_manager, 5)

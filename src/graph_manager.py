@@ -39,14 +39,16 @@ class GraphManager():
 
     def draw_comparison_pane(self, all_positions, sensor_positions, true_temps, model_temps):
         # Draw the first plot
-        fig_1, (ax_1, ax_2, ax_3) = plt.subplots(1,3, figsize=(18, 7))
+        fig_1, (ax_1, ax_2, ax_3) = plt.subplots(1,3, figsize=(18, 5))
 
         ax_1.set_title('Simulation temperature field')
         cp_1 = self.plot_contour_temp_field(ax_1, all_positions, true_temps)
+        self.plot_circle(ax_1)
 
         ax_2.set_title('Predicted temperature field')
         cp_2 = self.plot_contour_temp_field(ax_2, all_positions, model_temps)
         self.scatter_sensor_positions(ax_2, sensor_positions)
+        self.plot_circle(ax_2)
 
         ax_3.set_title('Sensor layout')
         self.plot_monoblock_grid(ax_3, all_positions)
@@ -54,10 +56,11 @@ class GraphManager():
         fig_1.colorbar(cp_2, ax=[ax_1, ax_2])
         
         # Draw the second plot
-        fig_2, ax_4 = plt.subplots(figsize=(8, 6))
+        fig_2, ax_4 = plt.subplots(figsize=(5, 5))
 
         differences = np.abs(true_temps - model_temps)
         cp_4 = self.plot_field_errors(ax_4, all_positions, differences)
+        self.plot_circle(ax_4)
         fig_2.colorbar(cp_4)
         
         plt.show()
@@ -91,6 +94,11 @@ class GraphManager():
             s=20,
             color='black'
         )
+
+    
+    def plot_circle(self, ax):
+        circle1 = plt.Circle((0, 0), RADIUS, color='w')
+        ax.add_patch(circle1)
 
 
     def plot_monoblock_grid(self, ax, positions):
