@@ -38,6 +38,7 @@ class GraphManager():
     
 
     def draw_comparison_pane(self, all_positions, sensor_positions, true_temps, model_temps):
+        # Draw the first plot
         fig_1, (ax_1, ax_2, ax_3) = plt.subplots(1,3, figsize=(18, 7))
 
         ax_1.set_title('Simulation temperature field')
@@ -50,15 +51,13 @@ class GraphManager():
         ax_3.set_title('Sensor layout')
         self.plot_monoblock_grid(ax_3, all_positions)
         self.scatter_sensor_positions(ax_3, sensor_positions)
-
         fig_1.colorbar(cp_2, ax=[ax_1, ax_2])
         
-        differences = np.zeros(len(true_temps))
-        for i in range(len(true_temps)):
-            differences[i] = np.abs(true_temps[i] - model_temps[i])
-        fig_2, ax_4 = plt.subplots(layout='constrained', figsize=(5, 6))
-        cp_4 = self.plot_field_errors(ax_4, all_positions, differences)
+        # Draw the second plot
+        fig_2, ax_4 = plt.subplots(figsize=(8, 6))
 
+        differences = np.abs(true_temps - model_temps)
+        cp_4 = self.plot_field_errors(ax_4, all_positions, differences)
         fig_2.colorbar(cp_4)
         
         plt.show()
@@ -114,3 +113,36 @@ class GraphManager():
             cmap=cm.Blues, levels = 30
         )
     
+
+    def draw_optimisation(self, history):
+        n_evals = []
+        average_loss = []
+        min_loss = []
+
+        for algo in history:
+            n_evals.append(algo.evaluator.n_eval)
+            opt = algo.opt
+
+            min_loss.append(opt.get("F").min())
+            average_loss.append(algo.pop.get("F").mean())
+
+        fig, ax = plt.subplots(figsize=(8, 6))
+        plt.yscale('log')
+        plt.plot(n_evals, average_loss, label='average loss')
+        plt.plot(n_evals, min_loss, label = 'minimum loss')
+        plt.xlabel('Function evaluations')
+        plt.ylabel('Function loss')
+        plt.legend()
+        plt.show()
+        plt.close()
+    
+
+    def draw_pareto(self, numbers, results):
+        # Plot the pareto front
+        fig, ax = plt.subplots(figsize=(8, 6))
+        plt.scatter(numbers, results, facecolors='none', edgecolors='b')
+        plt.xlabel('Number of sensors')
+        plt.ylabel('Loss')
+        plt.title('Pareto front')
+        plt.show()
+        plt.close()

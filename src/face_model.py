@@ -41,10 +41,3 @@ class RBFModel():
         return self.__interpolater(scaled_pos_xy)[0]
 
 
-
-
-
-
-
-
-

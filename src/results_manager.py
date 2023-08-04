@@ -1,10 +1,6 @@
-from matplotlib import pyplot as plt
-import scienceplots
 import numpy as np
 import os
 
-
-plt.style.use('science')
 
 
 class ResultsManager():
@@ -26,6 +22,10 @@ class ResultsManager():
             layout_list = cropped_layout.split(',')
             self.__setup_layout.append([float(i) for i in layout_list])
         f.close()
+
+    
+    def get_nums(self):
+        return self.__setup_numbers
 
 
     def write_file(self, write_num, write_result, write_layout):
@@ -50,21 +50,3 @@ class ResultsManager():
                 line += '\n'
             f.writelines(line)
         f.close()
-
-
-    def plot_pareto(self):
-        # Plot the pareto front
-        plt.figure(figsize=(8,6))
-        plt.scatter(self.__setup_numbers, self.__setup_results, facecolors='none', edgecolors='b')
-        plt.xlabel('Number of sensors')
-        plt.ylabel('Loss')
-        plt.title('Pareto front')
-        plt.show()
-        plt.close()
-
-
-
-
-if __name__ == '__main__':
-    manager = ResultsManager('best_symmetric_setups.txt')
-    manager.plot_pareto()

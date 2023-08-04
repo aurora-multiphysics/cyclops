@@ -1,81 +1,45 @@
-from src.face_model import GPModel, IDWModel, RBFModel, UniformRBFModel, UniformGPModel
 from pymoo.algorithms.soo.nonconvex.pso import PSO
 from pymoo.algorithms.soo.nonconvex.ga import GA
-from src.results_manager import ResultsManager
 from pymoo.termination import get_termination
 from pymoo.core.problem import Problem
-from matplotlib import pyplot as plt
-from src.csv_reader import CSVReader
 from pymoo.optimize import minimize
-import scienceplots
 import numpy as np
 
 
 
 
-
-
-SYMMETRIC_MODEL = GPModel
-UNIFORM_MODEL = UniformRBFModel
-
-
-
-
-class SymmetricLossFunction(Problem):
-    def __init__(self, num_sensors):
-        low_border = [0, -0.0135] * (num_sensors//2)
-        high_border = [0.0135, 0.0215] * (num_sensors//2)
+class LossFunction(Problem):
+    def __init__(self, num_sensors, model_manager):
+        if model_manager.is_symmetric():
+            low_border = [0, -0.0135] * (num_sensors//2)
+            high_border = [0.0135, 0.0215] * (num_sensors//2)
+            num_dimensions = num_sensors
+        else:
+            low_border = [-0.0135, 0.0135] * num_sensors
+            high_border = [0.0135, 0.0215] * num_sensors
+            num_dimensions = 2*num_sensors
 
         super().__init__(
-            n_var=num_sensors, 
+            n_var=num_dimensions, 
             n_obj=1, 
             n_ieq_constr=0, 
             xl=low_border, 
             xu=high_border
         )
-        self.__csv_reader = CSVReader(
-            'temperature_field.csv', 
-            symmetric_model=SYMMETRIC_MODEL, 
-            uniform_model=UNIFORM_MODEL
-        )
+        self.__model_manager = model_manager
 
 
     def _evaluate(self, swarm_values, out, *args, **kwargs):
-        out['F'] = np.apply_along_axis(self.__csv_reader.get_symmetric_loss, 1, swarm_values)
-
-
-
-class UniformLossFunction(Problem):
-    def __init__(self, num_sensors):
-        low_border = [-0.0135, -0.0135] * num_sensors
-        high_border = [0.0135, 0.0215] * num_sensors
-
-        super().__init__(
-            n_var=num_sensors*2,
-            n_obj=1, 
-            n_ieq_constr=0, 
-            xl=low_border, 
-            xu=high_border
-        )
-        self.__csv_reader = CSVReader(
-            'temperature_field.csv', 
-            symmetric_model=SYMMETRIC_MODEL, 
-            uniform_model=UNIFORM_MODEL
-        )
-
-
-    def _evaluate(self, swarm_values, out, *args, **kwargs):
-        out['F'] = np.apply_along_axis(self.__csv_reader.get_uniform_loss, 1, swarm_values)
+        out['F'] = np.apply_along_axis(self.__model_manager.get_loss, 1, swarm_values)
 
 
 
 
-
-def optimise_with_GA(problem):
+def optimise_with_GA(problem, time_limit):
     algorithm = GA(
         pop_size=50,
         eliminate_duplicates=True)
-    termination = get_termination("time", "00:10:00")
+    termination = get_termination("time", time_limit)
 
     res = minimize(problem,
                 algorithm,
@@ -87,12 +51,12 @@ def optimise_with_GA(problem):
 
 
 
-def optimise_with_PSO(problem):
+def optimise_with_PSO(problem, time_limit):
     algorithm = PSO(
         pop_size=20,
         adaptive = True
     )
-    termination = get_termination("time", "00:00:30")
+    termination = get_termination("time", time_limit)
 
     res = minimize(problem,
                 algorithm,
@@ -103,80 +67,4 @@ def optimise_with_PSO(problem):
     return res
 
 
-
-
-def plot_optimsiation(history):
-    n_evals = []
-    average_loss = []
-    min_loss = []
-
-    for algo in history:
-        n_evals.append(algo.evaluator.n_eval)
-        opt = algo.opt
-
-        min_loss.append(opt.get("F").min())
-        average_loss.append(algo.pop.get("F").mean())
-
-    plt.yscale('log')
-    plt.plot(n_evals, average_loss, label='average loss')
-    plt.plot(n_evals, min_loss, label = 'minimum loss')
-    plt.xlabel('Function evaluations')
-    plt.ylabel('Function loss')
-    plt.legend()
-    plt.show()
-    plt.close()
-
-
-
-
-def check_results(res, is_symmetric, num_sensors):
-    if is_symmetric == True:
-        results_manager = ResultsManager('best_symmetric_setups.txt')
-    else:
-        results_manager = ResultsManager('best_uniform_setups.txt')
-
-    if res.F[0] < results_manager.read_file(num_sensors)[0]:
-        print('\nSaving new record...')
-        results_manager.write_file(num_sensors, res.F[0], list(res.X))
-        results_manager.save_updates()
-
-
-
-def show_results(res, is_symmetric):
-    plot_optimsiation(res.history)
-    csv_reader = CSVReader('temperature_field.csv',
-            symmetric_model=SYMMETRIC_MODEL, 
-            uniform_model=UNIFORM_MODEL
-        )
-
-    sensor_positions = []
-    for i in range(0, len(res.X), 2):
-        sensor_positions.append(csv_reader.find_nearest_pos(res.X[i:i+2]))
-    sensor_positions = np.array(sensor_positions)
-
-    print(sensor_positions)
-    csv_reader.plot_model(sensor_positions.reshape(-1), symmetric=is_symmetric)
-    csv_reader.plot_2D(sensor_positions.reshape(-1), symmetric=is_symmetric)
-
-
-
-
-if __name__ == '__main__':
-    plt.style.use('science')
-    num_sensors = 8
-    symmetric_approach = False
-
-    if symmetric_approach == True:
-        res = optimise_with_PSO(SymmetricLossFunction(num_sensors))
-        check_results(res, True, num_sensors)
-        show_results(res, True)
-    else:
-        res = optimise_with_GA(UniformLossFunction(num_sensors))
-        check_results(res, False, num_sensors)
-        show_results(res, False)
-
-
-
-
-    
 

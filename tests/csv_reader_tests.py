@@ -1,4 +1,4 @@
-from src.csv_reader import CSVReader
+from model_management import CSVReader
 import pandas as pd
 import numpy as np
 import unittest

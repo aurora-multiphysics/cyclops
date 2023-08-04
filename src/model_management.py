@@ -92,7 +92,7 @@ class ModelUser():
 
 
 
-class SymmetricReader(CSVReader, ModelUser):
+class SymmetricManager(CSVReader, ModelUser):
     def __init__(self, csv_name, model_type):
         super().__init__(csv_name)
         self._default_model_type = model_type
@@ -120,8 +120,7 @@ class SymmetricReader(CSVReader, ModelUser):
 
     
 
-
-class UniformReader(CSVReader, ModelUser):
+class UniformManager(CSVReader, ModelUser):
     def __init__(self, csv_name, model_type):
         super().__init__(csv_name)
         self._default_model_type = model_type
