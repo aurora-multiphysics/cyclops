@@ -16,6 +16,7 @@ class ResultsManager():
 
         f = open(self.__setups_path, "r")
         for line in f:
+            line = line.rstrip()
             num, result, layout, model = line.split(':')
             self.__setup_numbers.append(int(num))
             self.__setup_results.append(float(result))
@@ -49,5 +50,7 @@ class ResultsManager():
         f = open(self.__setups_path, "w")
         for i, num in enumerate(self.__setup_numbers):
             line = str(num)+':'+str(self.__setup_results[i])+':'+str(self.__setup_layout[i])+':'+self.__setup_models[i]
+            if i != len(self.__setup_numbers)-1:
+                line += '\n'
             f.writelines(line)
         f.close()

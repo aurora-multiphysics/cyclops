@@ -1,7 +1,7 @@
 from src.optimisers import LossFunction, optimise_with_GA, optimise_with_PSO
 from src.model_management import SymmetricManager, UniformManager
+from src.face_model import GPModel, RBFModel, CTModel
 from src.results_manager import ResultsManager
-from src.face_model import GPModel, RBFModel
 from src.graph_manager import GraphManager
 import numpy as np
 
@@ -12,6 +12,7 @@ def show_sensor_layout(layout, model_manager, graph_manager):
     positions = model_manager.get_all_positions()
     true_temperatures = model_manager.get_all_temp_values()
     model_temperatures = model_manager.get_all_model_temperatures(layout)
+    print('\nLoss:', str(model_manager.get_loss(layout)))
     
     if model_manager.is_symmetric():
         layout = model_manager.reflect_position(layout)
@@ -61,14 +62,16 @@ def check_results(res, is_symmetric, num_sensors, model_name):
 
 
 
-def optimise_sensor_layout(model_manager, graph_manager, num_sensors=10, time_limit='00:00:30'):
+def optimise_sensor_layout(model_manager, graph_manager, num_sensors=10, time_limit='00:10:00'):
     # Optimises the sensor placement
+    print('\nOptimising...')
     problem = LossFunction(num_sensors, model_manager)
     res = optimise_with_PSO(problem, time_limit)
 
     model_type_to_name = {
         GPModel:'GP',
-        RBFModel:'RBF'
+        RBFModel:'RBF',
+        CTModel:'CT'
     }
     check_results(
         res, 
@@ -108,7 +111,7 @@ def find_pareto(model_manager, time_limit='00:10:00', sensor_nums=[3, 4, 5, 6, 7
     for num in sensor_nums:
         problem = LossFunction(num, model_manager)
         print('\nOptimising...')
-        res = optimise_with_PSO(problem, time_limit)
+        res = optimise_with_GA(problem, time_limit)
 
         model_type_to_name = {
         GPModel:'GP',
@@ -134,12 +137,13 @@ def find_pareto(model_manager, time_limit='00:10:00', sensor_nums=[3, 4, 5, 6, 7
 
 if __name__ == '__main__':
     graph_manager = GraphManager()
-    symmetric_manager = SymmetricManager('temperature_field.csv', RBFModel)
+    # Note that the uniform manager can never manage the CTModel
+    symmetric_manager = SymmetricManager('temperature_field.csv', CTModel)
     uniform_manager = UniformManager('temperature_field.csv', RBFModel)
 
     layout = np.array([0.012569, 0.0058103, 0.0088448, 0.0202931, 0.0041897, 0.0118448, 0.0079138, 0.0046034, 0.0088448, -0.0074655])
     #show_sensor_layout(layout, symmetric_manager, graph_manager)
-    #optimise_sensor_layout(uniform_manager, graph_manager, 5, '00:00:30')
+    optimise_sensor_layout(symmetric_manager, graph_manager, 24, '00:00:10')
     #show_pareto(graph_manager, False)
-    #show_best(graph_manager, uniform_manager, 3)
-    find_pareto(uniform_manager)
+    #show_best(graph_manager, symmetric_manager, 6)
+    #find_pareto(uniform_manager)

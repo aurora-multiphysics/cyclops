@@ -1,6 +1,6 @@
+from scipy.interpolate import RBFInterpolator, CloughTocher2DInterpolator
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
-from scipy.interpolate import RBFInterpolator
 from sklearn import preprocessing
 import numpy as np
 
@@ -43,5 +43,21 @@ class RBFModel():
 
 
 
+class CTModel():
+    def __init__(self, sensor_pos, sensor_temps):
+        # IMPORTANT: Can only be used with the symmetric model_manager
+        self.__scaler = preprocessing.StandardScaler().fit(sensor_pos)
+        scaled_pos = self.__scaler.transform(sensor_pos)
+
+        self.__interpolater = CloughTocher2DInterpolator(scaled_pos, sensor_temps)
+
+    
+    def get_temp(self, pos_xy):
+        scaled_pos_xy = self.__scaler.transform(pos_xy.reshape(1, -1))
+        value = self.__interpolater(scaled_pos_xy)[0]
+        if value != value:
+            return 600
+        else:
+            return value
 
 
