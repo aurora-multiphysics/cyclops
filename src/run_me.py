@@ -1,8 +1,8 @@
-from src.optimisers import LossFunction, optimise_with_GA, optimise_with_PSO
-from src.face_model import GPModel, RBFModel, CTModel, CTRBFModel, CSModel
-from src.model_management import SymmetricManager, UniformManager
-from src.results_manager import ResultsManager
-from src.graph_manager import GraphManager
+from optimisers import LossFunction, optimise_with_GA, optimise_with_PSO
+from face_model import GPModel, RBFModel, CTModel, CTRBFModel, CSModel
+from model_management import SymmetricManager, UniformManager
+from results_manager import ResultsManager
+from graph_manager import GraphManager
 import numpy as np
 
 
@@ -141,12 +141,12 @@ def find_pareto(model_manager, time_limit='00:10:00', sensor_nums=[14, 16]):
 if __name__ == '__main__':
     graph_manager = GraphManager()
     # Note that the uniform manager can never manage the CTModel
-    symmetric_manager = SymmetricManager('temperature_field.csv', CTModel)
+    symmetric_manager = SymmetricManager('temperature_field.csv', RBFModel)
     uniform_manager = UniformManager('temperature_field.csv', RBFModel)
 
     #layout = np.array([0.012569, 0.0058103, 0.0088448, 0.0202931, 0.0041897, 0.0118448, 0.0079138, 0.0046034, 0.0088448, -0.0074655])
     #show_sensor_layout(layout, symmetric_manager, graph_manager)
     #show_pareto(graph_manager, True)
-    show_best(graph_manager, uniform_manager, 3)
-    #optimise_sensor_layout(symmetric_manager)
+    #show_best(graph_manager, symmetric_manager, 6)
+    optimise_sensor_layout(symmetric_manager, graph_manager, num_sensors=6)
     #find_pareto(symmetric_manager)
