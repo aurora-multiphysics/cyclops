@@ -50,19 +50,21 @@ class GraphManager():
         self.scatter_sensor_positions(ax_2, sensor_positions)
         self.plot_circle(ax_2)
 
-        ax_3.set_title('Sensor layout')
-        self.plot_monoblock_grid(ax_3, all_positions)
-        self.scatter_sensor_positions(ax_3, sensor_positions)
+        ax_3.set_title('Errors in temperature field reconstruction')
+        differences = np.abs(true_temps - model_temps)
+        cp_3 = self.plot_field_errors(ax_3, all_positions, differences)
+        self.plot_circle(ax_3)
+
         fig_1.colorbar(cp_2, ax=[ax_1, ax_2])
+        fig_1.colorbar(cp_3)
         
         # Draw the second plot
         fig_2, ax_4 = plt.subplots(figsize=(5, 5))
 
-        differences = np.abs(true_temps - model_temps)
-        cp_4 = self.plot_field_errors(ax_4, all_positions, differences)
-        self.plot_circle(ax_4)
-        fig_2.colorbar(cp_4)
-        
+        ax_4.set_title('Sensor layout')
+        self.plot_monoblock_grid(ax_4, all_positions)
+        self.scatter_sensor_positions(ax_4, sensor_positions)
+
         plt.show()
         plt.close()
 
@@ -75,7 +77,7 @@ class GraphManager():
             positions[:,0].reshape(-1), 
             positions[:,1].reshape(-1), 
             temp_values, 
-            cmap=cm.jet, levels = 30
+            cmap=cm.plasma, levels = 30
         )
 
 

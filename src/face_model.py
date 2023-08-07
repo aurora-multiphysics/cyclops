@@ -1,4 +1,4 @@
-from scipy.interpolate import RBFInterpolator, CloughTocher2DInterpolator
+from scipy.interpolate import RBFInterpolator, CloughTocher2DInterpolator, CubicSpline
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 from sklearn import preprocessing
@@ -81,4 +81,18 @@ class CTRBFModel():
         else:
             return value
 
+
+
+class CSModel():
+    def __init__(self, sensor_pos, sensor_temps):
+        # IMPORTANT: Can only be used with the uniform model_manager
+        self.__scaler = preprocessing.StandardScaler().fit(sensor_pos)
+        scaled_pos = self.__scaler.transform(sensor_pos)
+        
+        self.__cubic_spline = CubicSpline(scaled_pos, sensor_temps)
+
+
+    def get_temp(self, pos_xy):
+        scaled_pos_xy = self.__scaler.transform(pos_xy.reshape(1, -1))
+        return self.__cubic_spline(scaled_pos_xy)[0]
 
