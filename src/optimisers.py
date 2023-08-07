@@ -11,12 +11,12 @@ import numpy as np
 class LossFunction(Problem):
     def __init__(self, num_sensors, model_manager):
         if model_manager.is_symmetric():
-            low_border = [0, -0.013] * (num_sensors//2)
-            high_border = [0.013, 0.021] * (num_sensors//2)
+            low_border = [0, -0.011] * (num_sensors//2)
+            high_border = [0.011, 0.019] * (num_sensors//2)
             num_dimensions = num_sensors
         else:
-            low_border = [-0.013, -0.013] * num_sensors
-            high_border = [0.013, 0.021] * num_sensors
+            low_border = [-0.011, -0.012] * num_sensors
+            high_border = [0.011, 0.019] * num_sensors
             num_dimensions = 2*num_sensors
 
         super().__init__(
