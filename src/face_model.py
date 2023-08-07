@@ -88,11 +88,14 @@ class CSModel():
         # IMPORTANT: Can only be used with the uniform model_manager
         self.__scaler = preprocessing.StandardScaler().fit(sensor_pos)
         scaled_pos = self.__scaler.transform(sensor_pos)
-        
-        self.__cubic_spline = CubicSpline(scaled_pos, sensor_temps)
+
+        pos_temp_matrix = np.concatenate((scaled_pos, sensor_temps.reshape(-1, 1)), axis=1)
+        pos_temp_matrix = pos_temp_matrix[pos_temp_matrix[:, 0].argsort()]
+
+        self.__cubic_spline = CubicSpline(pos_temp_matrix[:,0].reshape(-1), pos_temp_matrix[:,1].reshape(-1))
 
 
     def get_temp(self, pos_xy):
         scaled_pos_xy = self.__scaler.transform(pos_xy.reshape(1, -1))
-        return self.__cubic_spline(scaled_pos_xy)[0]
+        return self.__cubic_spline(scaled_pos_xy)
 

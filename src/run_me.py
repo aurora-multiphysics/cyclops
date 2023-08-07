@@ -72,7 +72,8 @@ def optimise_sensor_layout(model_manager, graph_manager, num_sensors=10, time_li
         GPModel:'GP',
         RBFModel:'RBF',
         CTModel:'CT',
-        CTRBFModel:'CTRBF'
+        CTRBFModel:'CTRBF',
+        CSModel:'CS'
     }
     check_results(
         res, 
@@ -93,9 +94,9 @@ def optimise_sensor_layout(model_manager, graph_manager, num_sensors=10, time_li
 
 def show_best(graph_manager, model_manager, num):
     if model_manager.is_symmetric() == True:
-        results_manager = ResultsManager('best_symmetric_setups.txt')
+        results_manager = ResultsManager('best_symmetric_non_ideal_setups.txt')
     else:
-        results_manager = ResultsManager('best_uniform_setups.txt')
+        results_manager = ResultsManager('best_uniform_non_ideal_setups.txt')
     
     loss, layout, model_name = results_manager.read_file(num)
     show_sensor_layout(
@@ -118,7 +119,8 @@ def find_pareto(model_manager, time_limit='00:10:00', sensor_nums=[14, 16]):
         GPModel:'GP',
         RBFModel:'RBF',
         CTModel:'CT',
-        CTRBFModel:'CTRBF'
+        CTRBFModel:'CTRBF',
+        CSModel:'CS'
         }
         check_results(
             res, 
@@ -142,11 +144,11 @@ if __name__ == '__main__':
     graph_manager = GraphManager()
     # Note that the uniform manager can never manage the CTModel
     symmetric_manager = SymmetricManager('temperature_field.csv', RBFModel)
-    uniform_manager = UniformManager('temperature_field.csv', RBFModel)
+    uniform_manager = UniformManager('temperature_field.csv', CSModel)
 
     #layout = np.array([0.012569, 0.0058103, 0.0088448, 0.0202931, 0.0041897, 0.0118448, 0.0079138, 0.0046034, 0.0088448, -0.0074655])
     #show_sensor_layout(layout, symmetric_manager, graph_manager)
-    #show_pareto(graph_manager, True)
+    #show_pareto(graph_manager, False)
     #show_best(graph_manager, symmetric_manager, 6)
-    optimise_sensor_layout(symmetric_manager, graph_manager, num_sensors=6)
+    optimise_sensor_layout(uniform_manager, graph_manager, num_sensors=6, time_limit='00:00:30')
     #find_pareto(symmetric_manager)
