@@ -1,6 +1,6 @@
-from optimisers import LossFunction, optimise_with_GA, optimise_with_PSO
 from face_model import GPModel, RBFModel, CTModel, CTRBFModel, CSModel
 from model_management import SymmetricManager, UniformManager
+from optimisers import LossFunction, optimise_with_GA
 from results_manager import ResultsManager
 from graph_manager import GraphManager
 import numpy as np
@@ -9,9 +9,9 @@ import numpy as np
 
 def show_sensor_layout(layout, model_manager, graph_manager):
     # Plots 3D graph + comparison pane
-    positions = model_manager.get_all_positions()
-    true_temperatures = model_manager.get_all_temp_values()
-    model_temperatures = model_manager.get_all_model_temperatures(layout)
+    positions = model_manager.get_positions()
+    true_temperatures = model_manager.get_temp_values()
+    model_temperatures = model_manager.get_model_temperatures(layout, positions)
     print('\nLoss:', str(model_manager.get_loss(layout)))
     
     if model_manager.is_symmetric():
@@ -66,7 +66,7 @@ def optimise_sensor_layout(model_manager, graph_manager, num_sensors=10, time_li
     # Optimises the sensor placement
     print('\nOptimising...')
     problem = LossFunction(num_sensors, model_manager)
-    res = optimise_with_PSO(problem, time_limit)
+    res = optimise_with_GA(problem, time_limit)
 
     model_type_to_name = {
         GPModel:'GP',
@@ -75,20 +75,22 @@ def optimise_sensor_layout(model_manager, graph_manager, num_sensors=10, time_li
         CTRBFModel:'CTRBF',
         CSModel:'CS'
     }
-    check_results(
-        res, 
-        model_manager.is_symmetric(), 
-        num_sensors,
-        model_type_to_name[model_manager.get_model_type()]
-    )
-    graph_manager.draw_optimisation(res.history)
-    show_sensor_layout(
-        res.X, 
-        model_manager, 
-        graph_manager
-    )
+    # check_results(
+    #     res, 
+    #     model_manager.is_symmetric(), 
+    #     num_sensors,
+    #     model_type_to_name[model_manager.get_model_type()]
+    # )
+    # graph_manager.draw_optimisation(res.history)
+    graph_manager.draw_reliability_pareto(res.F)
     print('\nResult:')
     print(res.X)
+    for layout in res.X:
+        show_sensor_layout(
+            layout, 
+            model_manager, 
+            graph_manager
+        )
 
 
 
@@ -149,6 +151,6 @@ if __name__ == '__main__':
     #layout = np.array([0.012569, 0.0058103, 0.0088448, 0.0202931, 0.0041897, 0.0118448, 0.0079138, 0.0046034, 0.0088448, -0.0074655])
     #show_sensor_layout(layout, symmetric_manager, graph_manager)
     #show_pareto(graph_manager, False)
-    #show_best(graph_manager, symmetric_manager, 6)
-    optimise_sensor_layout(symmetric_manager, graph_manager, num_sensors=8, time_limit='00:00:30')
+    #show_best(graph_manager, uniform_manager, 3)
+    optimise_sensor_layout(uniform_manager, graph_manager, num_sensors=4, time_limit='00:05:00')
     #find_pareto(symmetric_manager)

@@ -15,10 +15,13 @@ RADIUS = 0.006
 
 class GraphManager():
     def __init__(self):
+        # All draw methods produce a new window
+        # and all plot methods produce plots for that window
         plt.style.use('science')
 
 
     def draw_double_3D_temp_field(self, positions, true_temps, model_temps):
+        # Draw the 3D double temperature field
         fig, ax = plt.subplots(subplot_kw={"projection": "3d"}, figsize=(8, 6))
 
         ax.set_title('Model and simulation temperature fields')
@@ -70,6 +73,7 @@ class GraphManager():
 
 
     def plot_contour_temp_field(self, ax, positions, temp_values):
+        # Plot a sincle temperature contour field
         ax.set_xlabel('x (m)')
         ax.set_ylabel('y (m)')
 
@@ -82,6 +86,7 @@ class GraphManager():
 
 
     def scatter_sensor_positions(self, ax, sensor_positions):
+        # Produce a scatter plot of the sensor positions to overlay
         sensor_x = []
         sensor_y = []
         for i in range(len(sensor_positions)):
@@ -99,11 +104,13 @@ class GraphManager():
 
     
     def plot_circle(self, ax):
+        # Produce a white circle to overlay
         circle1 = plt.Circle((0, 0), RADIUS, color='w')
         ax.add_patch(circle1)
 
 
     def plot_monoblock_grid(self, ax, positions):
+        # Produce a grid of the monoblock potential positions
         triang = tri.Triangulation(positions[:, 0], positions[:, 1])
         triang.set_mask(np.hypot(
             positions[:, 0][triang.triangles].mean(axis=1),
@@ -113,6 +120,7 @@ class GraphManager():
 
 
     def plot_field_errors(self, ax, positions, differences):
+        # Plot the difference in field temperatures
         ax.set_xlabel('x (m)')
         ax.set_ylabel('y (m)')
 
@@ -125,6 +133,7 @@ class GraphManager():
     
 
     def draw_optimisation(self, history):
+        # Draw the optimisation progress chart
         n_evals = []
         average_loss = []
         min_loss = []
@@ -147,12 +156,22 @@ class GraphManager():
         plt.close()
     
 
-    def draw_pareto(self, numbers, results):
-        # Plot the pareto front
+    def draw_num_pareto(self, numbers, results):
+        # Draw the pareto front
         fig, ax = plt.subplots(figsize=(8, 6))
         plt.scatter(numbers, results, facecolors='none', edgecolors='b')
         plt.xlabel('Number of sensors')
         plt.ylabel('Loss')
+        plt.title('Pareto front')
+        plt.show()
+        plt.close()
+
+
+    def draw_reliability_pareto(self, F):
+        fig, ax = plt.subplots(figsize=(8, 6))
+        plt.scatter(F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
+        plt.xlabel('Reconstruction loss')
+        plt.ylabel('Reconstruction reliability')
         plt.title('Pareto front')
         plt.show()
         plt.close()
