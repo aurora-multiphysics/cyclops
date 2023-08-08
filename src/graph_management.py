@@ -12,7 +12,6 @@ RADIUS = 0.006
 
 
 
-
 class GraphManager():
     def __init__(self):
         # All draw methods produce a new window
@@ -175,3 +174,6 @@ class GraphManager():
         plt.title('Pareto front')
         plt.show()
         plt.close()
+
+
+graph_manager = GraphManager()

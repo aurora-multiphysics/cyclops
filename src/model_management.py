@@ -6,7 +6,7 @@ import os
 
 
 class CSVReader():
-    def __init__(self, csv_name, noise_dev=0.6):
+    def __init__(self, csv_name, noise_dev=2):
         # Load the file
         parent_path = os.path.dirname(os.path.dirname(__file__))
         full_path = os.path.join(os.path.sep,parent_path,'simulation', csv_name)
@@ -57,7 +57,7 @@ class CSVReader():
             rounded_pos = self.find_nearest_pos(sensor_layout[i])
             sensor_temperatures[i] = self.get_temp(rounded_pos)
 
-        return sensor_temperatures + np.random.normal(0, self._noise_dev, num_sensors)
+        return sensor_temperatures
 
 
 
@@ -71,7 +71,7 @@ class ModelUser():
         return self._default_model_type
 
     
-    def get_trained_model(self, proposed_sensor_layout):
+    def get_trained_model(self, proposed_sensor_layout, offset=0):
         return None
 
 
@@ -86,11 +86,14 @@ class ModelUser():
         return loss
 
 
-    def get_loss(self, proposed_sensor_layout, num_repetitions=10):
-        losses = np.zeros(num_repetitions)
-        for i in range(num_repetitions):
-            model = self.get_trained_model(proposed_sensor_layout)
-            losses[i] = self.compare_fields(model)
+    def get_loss(self, proposed_sensor_layout):
+        losses = np.zeros(3)
+        model = self.get_trained_model(proposed_sensor_layout)
+        losses[0] = self.compare_fields(model)
+        model = self.get_trained_model(proposed_sensor_layout, offset=self._noise_dev)
+        losses[1] = self.compare_fields(model)
+        model = self.get_trained_model(proposed_sensor_layout, offset=-self._noise_dev)
+        losses[2] = self.compare_fields(model)
         return np.mean(losses), np.std(losses)
 
     
@@ -128,9 +131,10 @@ class SymmetricManager(CSVReader, ModelUser):
         return np.concatenate((proposed_sensor_layout, multiplier * proposed_sensor_layout), axis=0)
 
 
-    def get_trained_model(self, proposed_sensor_layout):
+    def get_trained_model(self, proposed_sensor_layout, offset=0):
         symmetric_sensor_layout = self.reflect_position(proposed_sensor_layout)
         training_temperatures = self.find_train_temps(symmetric_sensor_layout)
+        training_temperatures += np.ones(training_temperatures.shape)*offset
         return self._default_model_type(symmetric_sensor_layout, training_temperatures)
 
     
@@ -151,9 +155,10 @@ class UniformManager(CSVReader, ModelUser):
         return model.get_temp(pos[1])
 
 
-    def get_trained_model(self, proposed_sensor_layout):
+    def get_trained_model(self, proposed_sensor_layout, offset=0):
         uniform_sensor_layout = proposed_sensor_layout.reshape(-1, 2)
         training_temperatures = self.find_train_temps(uniform_sensor_layout)
+        training_temperatures += np.ones(training_temperatures.shape)*offset
         sensor_y_values = uniform_sensor_layout[:,1].reshape(-1, 1)
         return self._default_model_type(sensor_y_values, training_temperatures)
 

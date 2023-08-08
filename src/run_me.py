@@ -1,14 +1,30 @@
-from face_model import GPModel, RBFModel, CTModel, CTRBFModel, CSModel
+from face_model import GPModel, RBFModel, CTModel, CSModel
 from model_management import SymmetricManager, UniformManager
 from optimisers import LossFunction, optimise_with_GA
-from results_manager import ResultsManager
-from graph_manager import GraphManager
+from results_management import results_manager
+from graph_management import graph_manager
 import numpy as np
 
 
 
-def show_sensor_layout(layout, model_manager, graph_manager):
-    # Plots 3D graph + comparison pane
+MODEL_TO_STRING = {
+    GPModel:'GP',
+    RBFModel:'RBF',
+    CTModel:'CT',
+    CSModel:'CS'
+}
+
+STRING_TO_MODEL = {
+    'GP':GPModel,
+    'RBF':RBFModel,
+    'CT':CTModel,
+    'CS':CSModel
+}
+
+
+
+
+def show_sensor_layout(layout, model_manager):
     positions = model_manager.get_positions()
     true_temperatures = model_manager.get_temp_values()
     model_temperatures = model_manager.get_model_temperatures(layout, positions)
@@ -35,78 +51,46 @@ def show_sensor_layout(layout, model_manager, graph_manager):
 
 
 
-def show_pareto(graph_manager, is_symmetric=True):
-    if is_symmetric == True:
-        results_manager = ResultsManager('best_symmetric_setups.txt')
-    else:
-        results_manager = ResultsManager('best_uniform_setups.txt')
-    
-    numbers = results_manager.get_nums()
-    results = []
-    for num in numbers:
-        results.append(results_manager.read_file(num)[0])
-    graph_manager.draw_pareto(numbers, results)
-
-
-
-def check_results(res, is_symmetric, num_sensors, model_name):
-    if is_symmetric == True:
-        results_manager = ResultsManager('best_symmetric_non_ideal_setups.txt')
-    else:
-        results_manager = ResultsManager('best_uniform_non_ideal_setups.txt')
-
-    if res.F[0] < results_manager.read_file(num_sensors)[0]:
-        print('\nSaving new record...')
-        results_manager.write_file(num_sensors, res.F[0], list(res.X), model_name)
-        results_manager.save_updates()
-
-
-
-def optimise_sensor_layout(model_manager, graph_manager, num_sensors=10, time_limit='00:10:00'):
+def optimise_sensor_layout(model_manager, num_sensors=10, time_limit='00:10:00'):
     # Optimises the sensor placement
     print('\nOptimising...')
     problem = LossFunction(num_sensors, model_manager)
     res = optimise_with_GA(problem, time_limit)
 
-    model_type_to_name = {
-        GPModel:'GP',
-        RBFModel:'RBF',
-        CTModel:'CT',
-        CTRBFModel:'CTRBF',
-        CSModel:'CS'
-    }
-    # check_results(
-    #     res, 
-    #     model_manager.is_symmetric(), 
-    #     num_sensors,
-    #     model_type_to_name[model_manager.get_model_type()]
-    # )
-    # graph_manager.draw_optimisation(res.history)
     graph_manager.draw_reliability_pareto(res.F)
+    
     print('\nResult:')
     print(res.X)
-    for layout in res.X:
-        show_sensor_layout(
-            layout, 
-            model_manager, 
-            graph_manager
-        )
+    print('\nDisplay:')
+    save_results(res.X, model_manager)
+    show_results(res.X, model_manager)
 
 
 
-def show_best(graph_manager, model_manager, num):
-    if model_manager.is_symmetric() == True:
-        results_manager = ResultsManager('best_symmetric_non_ideal_setups.txt')
-    else:
-        results_manager = ResultsManager('best_uniform_non_ideal_setups.txt')
-    
-    loss, layout, model_name = results_manager.read_file(num)
-    show_sensor_layout(
-        np.array(layout), 
-        model_manager, 
-        graph_manager
+def show_results(res_x, model_manager):
+    if len(res_x) > 5:
+        res_x = res_x[:5]
+    for setup in res_x:
+        show_sensor_layout(setup, model_manager)
+
+
+
+
+def save_results(res_x, model_manager):
+    ask_save = ''
+    while ask_save not in ('Y', 'N'):
+        ask_show = input('Do you want to save the sensor layouts [Y/N]? ')
+    if ask_show == 'N':
+        return None
+    ask_ID = ''
+    while ask_ID not in results_manager.get_IDs():
+        ask_ID = input('Enter ID to save model: ')
+    results_manager.write_file(
+        ask_ID, 
+        MODEL_TO_STRING[model_manager.get_model_type],
+        res_x 
     )
-    
+    results_manager.save_updates()
 
 
 
@@ -116,24 +100,20 @@ def find_pareto(model_manager, time_limit='00:10:00', sensor_nums=[14, 16]):
         problem = LossFunction(num, model_manager)
         print('\nOptimising...')
         res = optimise_with_GA(problem, time_limit)
-
-        model_type_to_name = {
-        GPModel:'GP',
-        RBFModel:'RBF',
-        CTModel:'CT',
-        CTRBFModel:'CTRBF',
-        CSModel:'CS'
-        }
-        check_results(
-            res, 
-            model_manager.is_symmetric(), 
-            num,
-            model_type_to_name[model_manager.get_model_type()]
-        )
         print('\nResult:')
         print(res.X)
         setups.append(res.X)
     print('\nSetups:\n',setups)
+
+
+def show_old_setups(old_ID):
+    model, setups = results_manager.read_file(old_ID)
+    if old_ID[0] == 'U':
+        temp_model_manager = UniformManager('temperature_field.csv', STRING_TO_MODEL[model])
+    else:
+        temp_model_manager = SymmetricManager('temperature_field.csv', STRING_TO_MODEL[model])
+    setups = np.array(setups)
+    show_results(setups, temp_model_manager)
 
 
 
@@ -143,14 +123,8 @@ def find_pareto(model_manager, time_limit='00:10:00', sensor_nums=[14, 16]):
 
 
 if __name__ == '__main__':
-    graph_manager = GraphManager()
-    # Note that the uniform manager can never manage the CTModel
     symmetric_manager = SymmetricManager('temperature_field.csv', GPModel)
     uniform_manager = UniformManager('temperature_field.csv', CSModel)
 
-    #layout = np.array([0.012569, 0.0058103, 0.0088448, 0.0202931, 0.0041897, 0.0118448, 0.0079138, 0.0046034, 0.0088448, -0.0074655])
-    #show_sensor_layout(layout, symmetric_manager, graph_manager)
-    #show_pareto(graph_manager, False)
-    #show_best(graph_manager, uniform_manager, 3)
-    optimise_sensor_layout(uniform_manager, graph_manager, num_sensors=4, time_limit='00:05:00')
-    #find_pareto(symmetric_manager)
+    optimise_sensor_layout(uniform_manager, graph_manager, num_sensors=4, time_limit='00:10:00')
+    #show_old_setups('U5-2')
