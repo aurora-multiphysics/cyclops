@@ -75,18 +75,23 @@ def show_results(res_x, model_manager):
 
 
 
-
 def save_results(res_x, model_manager):
     ask_save = ''
     while ask_save not in ('Y', 'N'):
-        ask_show = input('Do you want to save the sensor layouts [Y/N]? ')
-    if ask_show == 'N':
+        ask_save = input('Do you want to save the sensor layouts [Y/N]? ')
+    if ask_save == 'N':
         return None
-    ask_ID = ''
-    while ask_ID not in results_manager.get_IDs():
+    ask_ID = results_manager.get_IDs()[0]
+    while ask_ID in results_manager.get_IDs():
         ask_ID = input('Enter ID to save model: ')
+
+    if model_manager.is_symmetric():
+        id = 'S'+ask_ID
+    else:
+        id = 'U'+ask_ID
+
     results_manager.write_file(
-        ask_ID, 
+        id, 
         MODEL_TO_STRING[model_manager.get_model_type],
         res_x 
     )
@@ -104,6 +109,7 @@ def find_pareto(model_manager, time_limit='00:10:00', sensor_nums=[14, 16]):
         print(res.X)
         setups.append(res.X)
     print('\nSetups:\n',setups)
+
 
 
 def show_old_setups(old_ID):
@@ -126,5 +132,5 @@ if __name__ == '__main__':
     symmetric_manager = SymmetricManager('temperature_field.csv', GPModel)
     uniform_manager = UniformManager('temperature_field.csv', CSModel)
 
-    optimise_sensor_layout(uniform_manager, graph_manager, num_sensors=4, time_limit='00:10:00')
-    #show_old_setups('U5-2')
+    #optimise_sensor_layout(uniform_manager, num_sensors=4, time_limit='00:03:00')
+    show_old_setups('U5-1')

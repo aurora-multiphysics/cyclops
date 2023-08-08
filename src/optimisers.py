@@ -55,10 +55,3 @@ def optimise_with_GA(problem, time_limit):
                 save_history=True,
                 verbose=True)
     return res
-
-
-
-
-
-
-

@@ -97,7 +97,7 @@ class GraphManager():
         ax.scatter(
             sensor_x, 
             sensor_y,
-            s=20,
+            s=50,
             color='black'
         )
 
