@@ -27,12 +27,9 @@ class ExodusReader():
         reader.update()
 
         # __source stores the exodus file's data
-        self.__source = chigger.exodus.ExodusSource(
-            reader, 
-            variable='temperature', 
-            viewport=[0,0,0.5,1]
-        )
-        self.__source.update()
+        self.__source = chigger.exodus.ExodusSource(reader)
+        self.__source.update(variable='temperature')
+        print(self.__source.getRange())
 
     
     def get_point_temp(self, pos):
@@ -48,9 +45,9 @@ class ExodusReader():
         return temp_value
 
 
-    def get_grid(self, num_x = 30, num_y = 30):
+    def get_grid(self, num_z = 30, num_y = 30):
         # Gets a grid of position values and their corresponding temperatures
-        x_values = np.linspace(X_BOUNDS[0], X_BOUNDS[1], num_x)
+        z_values = np.linspace(0, 0.012, num_z)
         y_values = np.linspace(Y_BOUNDS[0], Y_BOUNDS[1], num_y)
 
         temp = []
@@ -58,14 +55,15 @@ class ExodusReader():
         y = []
 
         print("\nGenerating node data...")
-        for i in tqdm(range(len(x_values))):
+        for i in tqdm(range(len(z_values))):
             for j in range(len(y_values)):
-                if self.check_face(x_values[i], y_values[j]):
-                    rounded_x = np.round(x_values[i], 7)
-                    rounded_y = np.round(y_values[j], 7)
-                    temp.append(self.get_point_temp([rounded_x, rounded_y, 0]))
-                    x.append(rounded_x)
-                    y.append(rounded_y)
+                #if self.check_face(z_values[i], y_values[j]):
+                rounded_z = np.round(z_values[i], 7)
+                rounded_y = np.round(y_values[j], 7)
+                temp.append(self.get_point_temp([0.01, rounded_y, rounded_z]))
+                x.append(rounded_z)
+                y.append(rounded_y)
+        print(temp)
         return x, y, temp
 
 
@@ -81,7 +79,7 @@ class ExodusReader():
         print('\n', dataframe)
 
         parent_path = os.path.dirname(os.path.dirname(__file__))
-        full_path = os.path.join(os.path.sep,parent_path,'simulation', 'temperature_field.csv')
+        full_path = os.path.join(os.path.sep,parent_path,'simulation', 'side_field.csv')
         dataframe.to_csv(full_path, index=False)
 
 
@@ -103,11 +101,6 @@ class ExodusReader():
         if y <= Y_BOUNDS[0] or y >= Y_BOUNDS[1]:
             return False
         return True
-
-    
-    def get_comparison_positions(self):
-        # Return the comparison positions
-        return self.__compare_x, self.__compare_y
 
 
     
