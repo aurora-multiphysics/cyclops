@@ -1,11 +1,9 @@
-import numpy as np
-from pymoo.core.problem import ElementwiseProblem
-from pymoo.algorithms.moo.nsga2 import NSGA2
-from pymoo.operators.crossover.sbx import SBX
-from pymoo.operators.mutation.pm import PM
 from pymoo.operators.sampling.rnd import FloatRandomSampling
-from matplotlib import pyplot as plt
+from pymoo.core.problem import ElementwiseProblem
 from pymoo.termination import get_termination
+from pymoo.operators.crossover.sbx import SBX
+from pymoo.algorithms.moo.nsga2 import NSGA2
+from pymoo.operators.mutation.pm import PM
 from pymoo.optimize import minimize
 
 

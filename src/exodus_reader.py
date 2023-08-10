@@ -37,7 +37,7 @@ class ExodusReader():
 
     def get_grid(self, num_x = 30, num_y = 30):
         # Gets a grid of position values and their corresponding temperatures
-        x_values = np.linspace(X_BOUNDS[0], X_BOUNDS[1], num_x)
+        x_values = np.linspace(Z_BOUNDS[0], Z_BOUNDS[1], num_x)
         y_values = np.linspace(Y_BOUNDS[0], Y_BOUNDS[1], num_y)
 
         temp = []
@@ -47,12 +47,17 @@ class ExodusReader():
         print("\nGenerating node data...")
         for i in tqdm(range(len(x_values))):
             for j in range(len(y_values)):
-                if self.check_face(x_values[i], y_values[j]):
-                    rounded_x = np.round(x_values[i], 7)
-                    rounded_y = np.round(y_values[j], 7)
-                    temp.append(self.get_point_temp(np.array([rounded_x, rounded_y, 0])))
-                    x.append(rounded_x)
+                #if self.check_face(x_values[i], y_values[j]):
+                rounded_x = np.round(x_values[i], 7)
+                rounded_y = np.round(y_values[j], 7)
+                temp.append(self.get_point_temp(np.array([X_BOUNDS[1]-0.0001, rounded_y, rounded_x])))
+                x.append(rounded_x)
+                y.append(rounded_y)
+                # For two monoblocks next to each other:
+                if rounded_x != 0:
+                    x.append(-rounded_x)
                     y.append(rounded_y)
+                    temp.append(self.get_point_temp(np.array([X_BOUNDS[1]-0.0001, rounded_y, rounded_x])))
         print(temp)
         return x, y, temp
 
@@ -60,7 +65,7 @@ class ExodusReader():
     def send_to_csv(self, x, y, temp, csv_name):
         # Stores the position and temperature data in the columns of a csv file
         data = {
-            'X': x, 
+            'Z': x, 
             'Y': y,
             'T': temp
         }
@@ -96,7 +101,7 @@ class ExodusReader():
 
 
 if __name__ == "__main__":
-    exodus_reader = ExodusReader('monoblock_out11.e')
+    exodus_reader = ExodusReader('monoblock_out.e')
     x, y, temps = exodus_reader.get_grid()
     exodus_reader.plot_3D(x, y, temps)
-    exodus_reader.send_to_csv(x, y, temps, 'front_field.csv')
+    exodus_reader.send_to_csv(x, y, temps, 'side_field.csv')
