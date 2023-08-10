@@ -87,7 +87,7 @@ class CSVReader():
     def find_lost_sensors(self, sensor_arr_1, sensor_arr_2):
         lost_sensors = []
         for pos in sensor_arr_1:
-            rounded_pos = self.find_nearest_pos(pos)
+            rounded_pos = self.find_nearest_pos(rounded_pos)
             if rounded_pos not in sensor_arr_2:
                 lost_sensors.append(rounded_pos)
         return np.array(lost_sensors)

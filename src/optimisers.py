@@ -8,14 +8,22 @@ from pymoo.optimize import minimize
 
 
 
+#Monoblock values
+X_BOUNDS = (-0.0135, 0.0135)
+Y_BOUNDS = (-0.0135, 0.0215)
+Z_BOUNDS = (0, 0.012)
+
+
+
+
 class LossFunction(ElementwiseProblem):
     def __init__(self, num_sensors, model_manager):
         if model_manager.is_symmetric():
-            low_border = [0, -0.011] * (num_sensors//2)
+            low_border = [0, -0.0115] * (num_sensors//2)
             high_border = [0.011, 0.019] * (num_sensors//2)
             num_dimensions = num_sensors
         else:
-            low_border = [-0.011, -0.012] * num_sensors
+            low_border = [-0.011, -0.0115] * num_sensors
             high_border = [0.011, 0.019] * num_sensors
             num_dimensions = 2*num_sensors
 

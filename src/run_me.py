@@ -31,7 +31,7 @@ def show_sensor_layout(layout, model_manager):
         positions,
         layout
     )
-    print(lost_sensors)
+    print('\nFailed sensors: ', lost_sensors)
     graph_manager.draw_double_3D_temp_field(
         positions, 
         true_temperatures, 
