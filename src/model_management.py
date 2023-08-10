@@ -52,17 +52,6 @@ class CSVReader():
         difference_array = np.square(self._positions - pos)
         index = np.apply_along_axis(np.sum, 1, difference_array).argmin()
         return self._positions[index]
-    
-    
-    def find_pos_in_radius(self, pos, radius):
-        # Return all the positions in a certain radius from a specific position
-        difference_array = np.apply_along_axis(self.get_distance_between())
-        print(difference_array)
-        pos_in_radius = []
-
-
-    def get_distance_between(self, pos1, pos2):
-        return np.linalg.norm(pos1 - pos2)
 
 
     def get_temp(self, rounded_pos):
@@ -86,15 +75,22 @@ class CSVReader():
         for i in range(0, len(sensor_layout)):
             rounded_pos = self.find_nearest_pos(sensor_layout[i])
             mean_temp = self.get_mean_temp(rounded_pos)
-            #sensor_temp = sensor.get_measured_temp(mean_temp)
-            sensor_temp = mean_temp
+            sensor_temp = sensor.get_measured_temp(mean_temp)
             
             if sensor_temp != None:
                 sensor_temperatures.append(sensor_temp)
                 adjusted_sensor_layout.append(rounded_pos)
 
-        print(sensor_temperatures)
         return np.array(adjusted_sensor_layout), np.array(sensor_temperatures)
+    
+
+    def find_lost_sensors(self, sensor_arr_1, sensor_arr_2):
+        lost_sensors = []
+        for pos in sensor_arr_1:
+            rounded_pos = self.find_nearest_pos(pos)
+            if rounded_pos not in sensor_arr_2:
+                lost_sensors.append(rounded_pos)
+        return np.array(lost_sensors)
 
 
 
@@ -129,13 +125,14 @@ class ModelUser():
         return loss, 1.0
     
 
-    def get_model_temperatures(self, sensor_layout, positions):
-        model = self.get_trained_model(sensor_layout)
+    def get_model_temperatures(self, model, positions):
         model_temperatures = np.zeros(len(positions))
-
         for i in range(len(positions)):
             model_temperatures[i] = self.get_model_temp(positions[i], model)
         return model_temperatures
+    
+    
+
 
     
 
@@ -167,6 +164,13 @@ class SymmetricManager(CSVReader, ModelUser):
         symmetric_sensor_layout = self.reflect_position(proposed_sensor_layout)
         adjusted_sensor_layout, training_temperatures = self.find_train_temps(symmetric_sensor_layout)
         return self._default_model_type(adjusted_sensor_layout, training_temperatures)
+    
+
+    def find_temp_for_plotting(self, positions, layout):
+        symmetric_sensor_layout = self.reflect_position(layout)
+        adjusted_sensor_layout, training_temperatures = self.find_train_temps(symmetric_sensor_layout)
+        model = self._default_model_type(adjusted_sensor_layout, training_temperatures)
+        return self.get_model_temperatures(model, positions), adjusted_sensor_layout, self.find_lost_sensors(symmetric_sensor_layout, adjusted_sensor_layout)
 
     
 
@@ -191,3 +195,12 @@ class UniformManager(CSVReader, ModelUser):
         adjusted_sensor_layout, training_temperatures = self.find_train_temps(uniform_sensor_layout)
         sensor_y_values = adjusted_sensor_layout[:,1].reshape(-1, 1)
         return self._default_model_type(sensor_y_values, training_temperatures)
+    
+
+    def find_temp_for_plotting(self, positions, layout):
+        uniform_sensor_layout = layout.reshape(-1, 2)
+        adjusted_sensor_layout, training_temperatures = self.find_train_temps(uniform_sensor_layout)
+
+        sensor_y_values = adjusted_sensor_layout[:,1].reshape(-1, 1)
+        model = self._default_model_type(sensor_y_values, training_temperatures)
+        return self.get_model_temperatures(model, positions), adjusted_sensor_layout, self.find_lost_sensors(uniform_sensor_layout, adjusted_sensor_layout)

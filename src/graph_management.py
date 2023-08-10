@@ -71,7 +71,7 @@ class GraphManager():
         plt.close()
 
     
-    def draw_side_comparison_pane(self, all_positions, sensor_positions, true_temps, model_temps):
+    def draw_side_comparison_pane(self, all_positions, sensor_positions, true_temps, model_temps, lost_sensors):
         # Draw the first plot
         fig_1, (ax_1, ax_2, ax_3) = plt.subplots(1,3, figsize=(18, 5))
 
@@ -81,6 +81,7 @@ class GraphManager():
         ax_2.set_title('Predicted temperature field')
         cp_2 = self.plot_contour_temp_field(ax_2, all_positions, model_temps)
         self.scatter_sensor_positions(ax_2, sensor_positions)
+        self.scatter_sensor_positions(ax_2, lost_sensors, pen=('red', '*'))
 
         ax_3.set_title('Errors in temperature field reconstruction')
         differences = np.abs(true_temps - model_temps)
@@ -95,6 +96,7 @@ class GraphManager():
         ax_4.set_title('Sensor layout')
         self.plot_monoblock_grid(ax_4, all_positions, block_circle=False)
         self.scatter_sensor_positions(ax_4, sensor_positions)
+        self.scatter_sensor_positions(ax_4, lost_sensors, pen=('red', '*'))
 
         plt.show()
         plt.close()
@@ -113,7 +115,7 @@ class GraphManager():
         )
 
 
-    def scatter_sensor_positions(self, ax, sensor_positions):
+    def scatter_sensor_positions(self, ax, sensor_positions, pen=('black', 'o')):
         # Produce a scatter plot of the sensor positions to overlay
         sensor_x = []
         sensor_y = []
@@ -121,13 +123,12 @@ class GraphManager():
             sensor_x.append(sensor_positions[i, 0])
             sensor_y.append(sensor_positions[i, 1])
 
-        ax.set_xlabel('x (m)')
-        ax.set_ylabel('y (m)')
         ax.scatter(
             sensor_x, 
             sensor_y,
-            s=50,
-            color='black'
+            s=200,
+            color=pen[0],
+            marker=pen[1]
         )
 
     

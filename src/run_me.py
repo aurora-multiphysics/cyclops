@@ -23,20 +23,15 @@ STRING_TO_MODEL = {
 
 
 
-
 def show_sensor_layout(layout, model_manager):
     positions = model_manager.get_positions()
     true_temperatures = model_manager.get_temp_values()
-    model_temperatures = model_manager.get_model_temperatures(layout, positions)
-    print('\nLoss:', str(model_manager.get_loss(layout)))
-    
-    if model_manager.is_symmetric():
-        layout = model_manager.reflect_position(layout)
-    else:
-        layout = layout.reshape(-1, 2)
-    for i, pos in enumerate(layout):
-        layout[i] = model_manager.find_nearest_pos(pos)
 
+    model_temperatures, new_layout, lost_sensors = model_manager.find_temp_for_plotting(
+        positions,
+        layout
+    )
+    print(lost_sensors)
     graph_manager.draw_double_3D_temp_field(
         positions, 
         true_temperatures, 
@@ -44,10 +39,12 @@ def show_sensor_layout(layout, model_manager):
     )
     graph_manager.draw_side_comparison_pane(
         positions, 
-        layout, 
+        new_layout, 
         true_temperatures, 
-        model_temperatures
+        model_temperatures,
+        lost_sensors
     )
+    print('\nLoss', model_manager.get_loss(layout))
 
 
 
@@ -133,4 +130,4 @@ if __name__ == '__main__':
     uniform_manager = UniformManager('side_field.csv', CSModel)
 
     #optimise_sensor_layout(uniform_manager, num_sensors=4, time_limit='00:03:00')
-    show_old_setups('S5-1')
+    show_old_setups('U5-1')
