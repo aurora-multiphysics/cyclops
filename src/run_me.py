@@ -1,5 +1,5 @@
-from face_model import GPModel, RBFModel, CTModel, CSModel
 from model_management import SymmetricManager, UniformManager
+from face_model import GPModel, RBFModel, CTModel, CSModel
 from optimisers import LossFunction, optimise_with_GA
 from results_management import results_manager
 from graph_management import graph_manager
@@ -42,9 +42,9 @@ def show_sensor_layout(layout, model_manager):
         true_temperatures, 
         model_temperatures
     )
-    graph_manager.draw_comparison_pane(
+    graph_manager.draw_side_comparison_pane(
         positions, 
-        layout.reshape(-1, 2), 
+        layout, 
         true_temperatures, 
         model_temperatures
     )
@@ -115,9 +115,9 @@ def find_pareto(model_manager, time_limit='00:10:00', sensor_nums=[14, 16]):
 def show_old_setups(old_ID):
     model, setups = results_manager.read_file(old_ID)
     if old_ID[0] == 'U':
-        temp_model_manager = UniformManager('temperature_field.csv', STRING_TO_MODEL[model])
+        temp_model_manager = UniformManager('side_field.csv', STRING_TO_MODEL[model])
     else:
-        temp_model_manager = SymmetricManager('temperature_field.csv', STRING_TO_MODEL[model])
+        temp_model_manager = SymmetricManager('side_field.csv', STRING_TO_MODEL[model])
     setups = np.array(setups)
     show_results(setups, temp_model_manager)
 
@@ -129,8 +129,8 @@ def show_old_setups(old_ID):
 
 
 if __name__ == '__main__':
-    symmetric_manager = SymmetricManager('temperature_field.csv', GPModel)
-    uniform_manager = UniformManager('temperature_field.csv', CSModel)
+    symmetric_manager = SymmetricManager('side_field.csv', GPModel)
+    uniform_manager = UniformManager('side_field.csv', CSModel)
 
     #optimise_sensor_layout(uniform_manager, num_sensors=4, time_limit='00:03:00')
-    show_old_setups('U5-1')
+    show_old_setups('S5-1')

@@ -1,12 +1,15 @@
+from sensors import Thermocouple
+from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import os
 
 
+THERMOCOUPLE_RADIUS = 0.0025
 
 
 class CSVReader():
-    def __init__(self, csv_name, noise_dev=2):
+    def __init__(self, csv_name):
         # Load the file
         parent_path = os.path.dirname(os.path.dirname(__file__))
         full_path = os.path.join(os.path.sep,parent_path,'simulation', csv_name)
@@ -18,13 +21,22 @@ class CSVReader():
         self._positions = np.concatenate((x_values.reshape(-1, 1), y_values.reshape(-1, 1)), 1)
         self._temp_values = (dataframe['T'].values)
 
-        # Make the position to temperature dictionary so temperature reading is O(1)
+        # Make the position to temperature matrix so temperature reading is O(1)
         self._pos_to_temp = {}
         for i, x_value in enumerate(x_values):
             hashable_pos = (x_value, y_values[i])
             self._pos_to_temp[hashable_pos] = self._temp_values[i]
-        
-        self._noise_dev = noise_dev
+
+        # Create the mean_temp dictionary
+        self._pos_to_mean_temp = {}
+        print('\nCalculating mean temperature values...')
+        for i, x_value1 in enumerate(tqdm(x_values)):
+            hashable_pos = (x_value1, y_values[i])
+            temp_in_radius = []
+            for j, x_value2 in enumerate(x_values):
+                if np.sqrt((x_value2 - x_value1)**2 + (y_values[j] - y_values[i])**2) < THERMOCOUPLE_RADIUS**2:
+                    temp_in_radius.append(self._pos_to_temp[(x_value2, y_values[j])])
+            self._pos_to_mean_temp[hashable_pos] = np.mean(np.array(temp_in_radius))
     
 
     def get_positions(self):
@@ -40,24 +52,49 @@ class CSVReader():
         difference_array = np.square(self._positions - pos)
         index = np.apply_along_axis(np.sum, 1, difference_array).argmin()
         return self._positions[index]
+    
+    
+    def find_pos_in_radius(self, pos, radius):
+        # Return all the positions in a certain radius from a specific position
+        difference_array = np.apply_along_axis(self.get_distance_between())
+        print(difference_array)
+        pos_in_radius = []
+
+
+    def get_distance_between(self, pos1, pos2):
+        return np.linalg.norm(pos1 - pos2)
 
 
     def get_temp(self, rounded_pos):
         # Return the temperature at the recorded position nearest pos
         hashable_pos = tuple(rounded_pos)
         return self._pos_to_temp[hashable_pos]
+    
+
+    def get_mean_temp(self, rounded_pos):
+        # Return the mean at the recorded position nearest pos
+        hashable_pos = tuple(rounded_pos)
+        return self._pos_to_mean_temp[hashable_pos]
 
 
     def find_train_temps(self, sensor_layout):
         # Return an array containing the temperature at each sensor position
-        num_sensors = len(sensor_layout)
-        sensor_temperatures = np.zeros(num_sensors)
+        adjusted_sensor_layout = []
+        sensor_temperatures = []
+        sensor = Thermocouple()
 
-        for i in range(0, num_sensors):
+        for i in range(0, len(sensor_layout)):
             rounded_pos = self.find_nearest_pos(sensor_layout[i])
-            sensor_temperatures[i] = self.get_temp(rounded_pos)
+            mean_temp = self.get_mean_temp(rounded_pos)
+            #sensor_temp = sensor.get_measured_temp(mean_temp)
+            sensor_temp = mean_temp
+            
+            if sensor_temp != None:
+                sensor_temperatures.append(sensor_temp)
+                adjusted_sensor_layout.append(rounded_pos)
 
-        return sensor_temperatures
+        print(sensor_temperatures)
+        return np.array(adjusted_sensor_layout), np.array(sensor_temperatures)
 
 
 
@@ -71,7 +108,7 @@ class ModelUser():
         return self._default_model_type
 
     
-    def get_trained_model(self, proposed_sensor_layout, offset=0):
+    def get_trained_model(self, proposed_sensor_layout):
         return None
 
 
@@ -87,16 +124,11 @@ class ModelUser():
 
 
     def get_loss(self, proposed_sensor_layout):
-        losses = np.zeros(3)
         model = self.get_trained_model(proposed_sensor_layout)
-        losses[0] = self.compare_fields(model)
-        model = self.get_trained_model(proposed_sensor_layout, offset=self._noise_dev)
-        losses[1] = self.compare_fields(model)
-        model = self.get_trained_model(proposed_sensor_layout, offset=-self._noise_dev)
-        losses[2] = self.compare_fields(model)
-        return np.mean(losses), np.std(losses)
-
+        loss= self.compare_fields(model)
+        return loss, 1.0
     
+
     def get_model_temperatures(self, sensor_layout, positions):
         model = self.get_trained_model(sensor_layout)
         model_temperatures = np.zeros(len(positions))
@@ -131,11 +163,10 @@ class SymmetricManager(CSVReader, ModelUser):
         return np.concatenate((proposed_sensor_layout, multiplier * proposed_sensor_layout), axis=0)
 
 
-    def get_trained_model(self, proposed_sensor_layout, offset=0):
+    def get_trained_model(self, proposed_sensor_layout):
         symmetric_sensor_layout = self.reflect_position(proposed_sensor_layout)
-        training_temperatures = self.find_train_temps(symmetric_sensor_layout)
-        training_temperatures += np.ones(training_temperatures.shape)*offset
-        return self._default_model_type(symmetric_sensor_layout, training_temperatures)
+        adjusted_sensor_layout, training_temperatures = self.find_train_temps(symmetric_sensor_layout)
+        return self._default_model_type(adjusted_sensor_layout, training_temperatures)
 
     
 
@@ -155,23 +186,8 @@ class UniformManager(CSVReader, ModelUser):
         return model.get_temp(pos[1])
 
 
-    def get_trained_model(self, proposed_sensor_layout, offset=0):
+    def get_trained_model(self, proposed_sensor_layout):
         uniform_sensor_layout = proposed_sensor_layout.reshape(-1, 2)
-        training_temperatures = self.find_train_temps(uniform_sensor_layout)
-        training_temperatures += np.ones(training_temperatures.shape)*offset
-        sensor_y_values = uniform_sensor_layout[:,1].reshape(-1, 1)
+        adjusted_sensor_layout, training_temperatures = self.find_train_temps(uniform_sensor_layout)
+        sensor_y_values = adjusted_sensor_layout[:,1].reshape(-1, 1)
         return self._default_model_type(sensor_y_values, training_temperatures)
-
-    
-
-
-    
-
-
-
-
-
-
-
-
-
