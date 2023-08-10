@@ -1,9 +1,10 @@
+from scipy.interpolate import LinearNDInterpolator
 from matplotlib import pyplot as plt
 from matplotlib import cm
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
-import chigger
+import meshio
 import os
 
 
@@ -23,31 +24,20 @@ class ExodusReader():
         parent_path = os.path.dirname(os.path.dirname(__file__))
         full_path = os.path.join(os.path.sep,parent_path,'simulation', file_name)
 
-        reader = chigger.exodus.ExodusReader(full_path)
-        reader.update()
+        mesh = meshio.read(full_path)
+        positions = mesh.points
+        temperatures = mesh.point_data['temperature']
 
-        # __source stores the exodus file's data
-        self.__source = chigger.exodus.ExodusSource(reader)
-        self.__source.update(variable='temperature')
-        print(self.__source.getRange())
+        self.__interpolater = LinearNDInterpolator(positions, temperatures)
 
-    
+
     def get_point_temp(self, pos):
-        # Get the temperature from a specified
-        sample = chigger.exodus.ExodusSourceLineSampler(
-            self.__source, 
-            resolution=1, 
-            point1 = pos, 
-            point2 = pos
-        )
-        sample.update()
-        temp_value = sample.getSample('temperature')[0]
-        return temp_value
+        return self.__interpolater(pos)[0]
 
 
-    def get_grid(self, num_z = 30, num_y = 30):
+    def get_grid(self, num_x = 30, num_y = 30):
         # Gets a grid of position values and their corresponding temperatures
-        z_values = np.linspace(0, 0.012, num_z)
+        x_values = np.linspace(X_BOUNDS[0], X_BOUNDS[1], num_x)
         y_values = np.linspace(Y_BOUNDS[0], Y_BOUNDS[1], num_y)
 
         temp = []
@@ -55,19 +45,19 @@ class ExodusReader():
         y = []
 
         print("\nGenerating node data...")
-        for i in tqdm(range(len(z_values))):
+        for i in tqdm(range(len(x_values))):
             for j in range(len(y_values)):
-                #if self.check_face(z_values[i], y_values[j]):
-                rounded_z = np.round(z_values[i], 7)
-                rounded_y = np.round(y_values[j], 7)
-                temp.append(self.get_point_temp([0.01, rounded_y, rounded_z]))
-                x.append(rounded_z)
-                y.append(rounded_y)
+                if self.check_face(x_values[i], y_values[j]):
+                    rounded_x = np.round(x_values[i], 7)
+                    rounded_y = np.round(y_values[j], 7)
+                    temp.append(self.get_point_temp(np.array([rounded_x, rounded_y, 0])))
+                    x.append(rounded_x)
+                    y.append(rounded_y)
         print(temp)
         return x, y, temp
 
 
-    def send_to_csv(self, x, y, temp):
+    def send_to_csv(self, x, y, temp, csv_name):
         # Stores the position and temperature data in the columns of a csv file
         data = {
             'X': x, 
@@ -79,7 +69,7 @@ class ExodusReader():
         print('\n', dataframe)
 
         parent_path = os.path.dirname(os.path.dirname(__file__))
-        full_path = os.path.join(os.path.sep,parent_path,'simulation', 'side_field.csv')
+        full_path = os.path.join(os.path.sep,parent_path,'simulation', csv_name)
         dataframe.to_csv(full_path, index=False)
 
 
@@ -101,9 +91,7 @@ class ExodusReader():
         if y <= Y_BOUNDS[0] or y >= Y_BOUNDS[1]:
             return False
         return True
-
-
-    
+  
 
 
 
@@ -111,4 +99,4 @@ if __name__ == "__main__":
     exodus_reader = ExodusReader('monoblock_out11.e')
     x, y, temps = exodus_reader.get_grid()
     exodus_reader.plot_3D(x, y, temps)
-    exodus_reader.send_to_csv(x, y, temps)
+    exodus_reader.send_to_csv(x, y, temps, 'front_field.csv')
