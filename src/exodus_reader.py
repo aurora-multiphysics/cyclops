@@ -2,81 +2,129 @@ from scipy.interpolate import LinearNDInterpolator
 from matplotlib import pyplot as plt
 from matplotlib import cm
 from tqdm import tqdm
-import pandas as pd
 import numpy as np
 import meshio
 import os
-
 
 
 #Monoblock values
 X_BOUNDS = (-0.0135, 0.0135)
 Y_BOUNDS = (-0.0135, 0.0215)
 Z_BOUNDS = (0, 0.012)
-RADIUS = 0.006
+MONOBLOCK_RADIUS = 0.006
+THERMOCOUPLE_RADIUS = 0.000075
+
+# Function naming
+# get_ means getter
+# find_ means calculate that value
+# generate is for getters
 
 
 
 
 class ExodusReader():
-    def __init__(self, file_name):
+    def __init__(self, file_name, front):
         # Load the file
         parent_path = os.path.dirname(os.path.dirname(__file__))
         full_path = os.path.join(os.path.sep,parent_path,'simulation', file_name)
 
         mesh = meshio.read(full_path)
-        positions = mesh.points
+        mesh_positions = mesh.points
         temperatures = mesh.point_data['temperature']
+        self.__interpolater = LinearNDInterpolator(mesh_positions, temperatures)
 
-        self.__interpolater = LinearNDInterpolator(positions, temperatures)
+        if front == True:
+            self.__comparison_pos, self.__comparison_temps = self.generate_front()
+        else:
+            self.__comparison_pos, self.__comparison_temps = self.generate_side()
+        self.__mean_kernel = self.generate_kernel()
 
 
-    def get_point_temp(self, pos):
-        return self.__interpolater(pos)[0]
+    def get_positions(self):
+        return self.__comparison_pos
 
 
-    def get_grid(self, num_x = 30, num_y = 30):
-        # Gets a grid of position values and their corresponding temperatures
-        x_values = np.linspace(Z_BOUNDS[0], Z_BOUNDS[1], num_x)
+    def get_temperatures(self):
+        return self.__comparison_temps
+    
+
+    def find_temps(self, pos):
+        return self.__interpolater(pos)
+    
+
+    def find_mean_temp(self, pos):
+        pos_in_radius = self.__mean_kernel + np.ones()*pos
+        temps = self.find_temps(pos_in_radius)
+        return np.mean(temps)
+
+
+    def generate_kernel(self, num_x = 5, num_y = 5):
+        x_values = np.linspace(-THERMOCOUPLE_RADIUS, THERMOCOUPLE_RADIUS, num_x)
+        y_values = np.linspace(-THERMOCOUPLE_RADIUS, THERMOCOUPLE_RADIUS, num_y)
+        pos_in_radius = []
+        for x in x_values:
+            for y in y_values:
+                if x**2 + y**2 <= THERMOCOUPLE_RADIUS**2:
+                    pos = np.array([x, y])
+                    pos_in_radius.append(pos)
+        return np.array(pos_in_radius) 
+
+
+    def generate_front(self, num_x = 20, num_y = 20):
+        x_values = np.linspace(X_BOUNDS[0], X_BOUNDS[1], num_x)
         y_values = np.linspace(Y_BOUNDS[0], Y_BOUNDS[1], num_y)
 
-        temp = []
+        temps = []
         x = []
         y = []
 
         print("\nGenerating node data...")
         for i in tqdm(range(len(x_values))):
             for j in range(len(y_values)):
-                #if self.check_face(x_values[i], y_values[j]):
-                rounded_x = np.round(x_values[i], 7)
-                rounded_y = np.round(y_values[j], 7)
-                temp.append(self.get_point_temp(np.array([X_BOUNDS[1]-0.0001, rounded_y, rounded_x])))
-                x.append(rounded_x)
-                y.append(rounded_y)
-                # For two monoblocks next to each other:
-                if rounded_x != 0:
-                    x.append(-rounded_x)
+                if self.check_front_face(x_values[i], y_values[j]):
+                    rounded_x = np.round(x_values[i], 7)
+                    rounded_y = np.round(y_values[j], 7)
+                    temps.append(self.find_temps(np.array([rounded_x, rounded_y, 0]))[0])
+                    x.append(rounded_x)
                     y.append(rounded_y)
-                    temp.append(self.get_point_temp(np.array([X_BOUNDS[1]-0.0001, rounded_y, rounded_x])))
-        print(temp)
-        return x, y, temp
+        
+        x = np.array(x).reshape(-1, 1)
+        y = np.array(y).reshape(-1, 1)
+        return np.concatenate((x, y), axis=1), temps
+    
 
+    def generate_side(self, num_z = 20, num_y = 20, double=True):
+        z_values = np.linspace(Z_BOUNDS[0], Z_BOUNDS[1], num_z)
+        y_values = np.linspace(Y_BOUNDS[0], Y_BOUNDS[1], num_y)
 
-    def send_to_csv(self, x, y, temp, csv_name):
-        # Stores the position and temperature data in the columns of a csv file
-        data = {
-            'Z': x, 
-            'Y': y,
-            'T': temp
-        }
+        temps = []
+        z = []
+        y = []
 
-        dataframe = pd.DataFrame(data)
-        print('\n', dataframe)
+        print("\nGenerating node data...")
+        for i in tqdm(range(len(z_values))):
+            for j in range(len(y_values)):
+                rounded_z = np.round(z_values[i], 7)
+                rounded_y = np.round(y_values[j], 7)
+                temp = self.find_temps(np.array([rounded_z, rounded_y, 0]))[0]
+                temps.append(temp)
+                z.append(rounded_z)
+                y.append(rounded_y)
+                if double == True and rounded_z != 0.0:
+                    z.append(-rounded_z)
+                    y.append(rounded_y)
+                    temps.append(temp)
 
-        parent_path = os.path.dirname(os.path.dirname(__file__))
-        full_path = os.path.join(os.path.sep,parent_path,'simulation', csv_name)
-        dataframe.to_csv(full_path, index=False)
+        z = np.array(z).reshape(-1, 1)
+        y = np.array(y).reshape(-1, 1)
+        return np.concatenate((z, y), axis=1), temps
 
+    
+    def check_front_face(self, x, y):
+        # Check if a point is not in the monoblock's hole
+        if x**2 + y ** 2 <= MONOBLOCK_RADIUS**2:
+            return False
+        return True
 
     def plot_3D(self, x_positions, y_positions, temp_values):
         # Plot a smart 3D graph of the temperature at various points of the monoblock
@@ -87,21 +135,10 @@ class ExodusReader():
         plt.close()
         
 
-    def check_face(self, x, y):
-        # Check if a point is not in the monoblock's hole
-        if x**2 + y ** 2 <= RADIUS**2:
-            return False
-        if x <= X_BOUNDS[0] or x >= X_BOUNDS[1]:
-            return False
-        if y <= Y_BOUNDS[0] or y >= Y_BOUNDS[1]:
-            return False
-        return True
-  
-
 
 
 if __name__ == "__main__":
-    exodus_reader = ExodusReader('monoblock_out.e')
-    x, y, temps = exodus_reader.get_grid()
-    exodus_reader.plot_3D(x, y, temps)
-    exodus_reader.send_to_csv(x, y, temps, 'side_field.csv')
+    exodus_reader = ExodusReader('monoblock_out.e', False)
+    positions = exodus_reader.get_positions()
+    temps = exodus_reader.get_temperatures()
+    exodus_reader.plot_3D(positions[:,0], positions[:,1], temps)
