@@ -34,7 +34,7 @@ def show_sensor_layout(layout):
     positions = csv_reader.get_positions()
     true_temperatures = csv_reader.get_temperatures()
     model_temperatures, new_layout, lost_sensors = model_manager.find_temps_for_plotting(layout)
-    
+
     if hasattr(model_temperatures, '__iter__') == False:
         print('Not enough working sensors.')
         return None
@@ -44,17 +44,18 @@ def show_sensor_layout(layout):
         true_temperatures, 
         model_temperatures
     )
-    graph_manager.draw_side_comparison_pane(
+    graph_manager.draw_compare(
         positions, 
         new_layout, 
         true_temperatures, 
         model_temperatures,
-        lost_sensors
+        lost_sensors,
+        's'
     )
 
 
 
-def optimise_sensor_layout(num_sensors=6, time_limit='00:05:00'):
+def optimise_sensor_layout(num_sensors=5, time_limit='00:00:10'):
     # Optimises the sensor placement
     print('\nOptimising...')
     problem = LossFunction(num_sensors, model_manager)
@@ -65,16 +66,19 @@ def optimise_sensor_layout(num_sensors=6, time_limit='00:05:00'):
     print('\nResult:')
     print(res.X)
     print('\nDisplay:')
-    show_sensor_layout(res.X)
+    show_results(res.X)
 
 
-
+def show_results(res_x):
+    if len(res_x) > 2:
+        res_x = res_x[:2]
+    for setup in res_x:
+        show_sensor_layout(setup)
 
 
 
 
 
 if __name__ == '__main__':
-    #print(model_manager.find_loss(np.array([0, -0.01, 0, 0, 0, 0.01, 0, 0.02])))
-    #optimise_sensor_layout()
-    show_sensor_layout(np.array([0, -0.01, 0, 0, 0, 0.01, 0, 0.02]))
+    #print(model_manager.find_loss(np.array([0.001, -0.01, 0.001, 0, 0.001, 0.01, 0.001, 0.02])))
+    optimise_sensor_layout()

@@ -26,8 +26,8 @@ class GPModel():
 
     
     def get_temp(self, pos_xy):
-        scaled_pos_xy = self.__scaler.transform(pos_xy.reshape(1, -1))
-        return self.__gp.predict(scaled_pos_xy)[0]
+        scaled_pos_xy = self.__scaler.transform(pos_xy)
+        return self.__gp.predict(scaled_pos_xy)
 
 
 
@@ -36,13 +36,12 @@ class RBFModel():
     def __init__(self, sensor_pos, sensor_temps):
         self.__scaler = preprocessing.StandardScaler().fit(sensor_pos)
         scaled_pos = self.__scaler.transform(sensor_pos)
-
         self.__interpolater = RBFInterpolator(scaled_pos, sensor_temps)
 
 
     def get_temp(self, pos_xy):
-        scaled_pos_xy = self.__scaler.transform(pos_xy.reshape(1, -1))
-        return self.__interpolater(scaled_pos_xy)[0]
+        scaled_pos_xy = self.__scaler.transform(pos_xy)
+        return self.__interpolater(scaled_pos_xy)
 
 
 
@@ -58,11 +57,11 @@ class CTModel():
 
     
     def get_temp(self, pos_xy):
-        scaled_pos_xy = self.__scaler.transform(pos_xy.reshape(1, -1))
-        value = self.__interpolater(scaled_pos_xy)[0]
+        scaled_pos_xy = self.__scaler.transform(pos_xy)
+        value = self.__interpolater(scaled_pos_xy)
         if value != value:
             #return 600
-            return self.__extrapolater(scaled_pos_xy)[0]
+            return self.__extrapolater(scaled_pos_xy)
         else:
             return value
 
@@ -81,6 +80,6 @@ class CSModel():
 
 
     def get_temp(self, pos_xy):
-        scaled_pos_xy = self.__scaler.transform(pos_xy.reshape(1, -1))
-        return self.__cubic_spline(scaled_pos_xy)[0][0]
+        scaled_pos_xy = self.__scaler.transform(pos_xy)
+        return self.__cubic_spline(scaled_pos_xy)
 

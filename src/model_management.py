@@ -77,13 +77,14 @@ class ModelUser():
         self._comparison_pos = reader.get_positions()
         self._model_type = model_type
         self._reader = reader
+        self._sensor = Thermocouple('k-type.csv')
         
     
     def get_model_type(self) -> type:
         return self._model_type
 
 
-    def find_model_temp(self, pos, model):
+    def find_model_temps(self, pos, model):
         return None
 
 
@@ -92,36 +93,30 @@ class ModelUser():
 
 
     def compare_fields(self, model):
-        loss = 0
-        for i, pos in enumerate(self._comparison_pos):
-            loss += np.square(self._comparison_temps[i] - self.find_model_temp(pos, model))
-        return loss
+        loss_array = np.square(self._comparison_temps- self.find_model_temps(self._comparison_pos, model))
+        return np.sum(loss_array)
     
     
-    def find_loss(self, proposed_sensor_layout):
-        model = self.build_trained_model(proposed_sensor_layout)
-        if model == None:
-            return 1e10, 1e10
-        loss = self.compare_fields(model)
-        return loss, 1.0
+    def find_loss(self, proposed_sensor_layout, repetitions=20):
+        losses = np.zeros(repetitions)
+        setups_failed = 0
+        for i in range(repetitions):
+            model = self.build_trained_model(proposed_sensor_layout)
+            if model == None:
+                setups_failed += 1
+            else:
+                losses[i] = self.compare_fields(model)
+        return np.mean(losses), setups_failed/repetitions
     
-
-    def find_model_temperatures(self, model, positions):
-        model_temperatures = np.zeros(len(positions))
-        for i in range(len(positions)):
-            model_temperatures[i] = self.find_model_temp(positions[i], model)
-        return model_temperatures
-
 
     def find_train_temps(self, sensor_layout):
         # Return an array containing the temperature at each sensor position
         adjusted_sensor_layout = []
         sensor_temperatures = []
-        sensor = Thermocouple()
 
         for i, sensor_pos in enumerate(sensor_layout):
             mean_temp = self._reader.find_mean_temp(sensor_pos)
-            sensor_temp = sensor.get_measured_temp(mean_temp)
+            sensor_temp = self._sensor.get_measured_temp(mean_temp)
 
             if sensor_temp != None:
                 sensor_temperatures.append(sensor_temp)
@@ -133,7 +128,7 @@ class ModelUser():
     def compare_arrays(self, arr_1, arr_2):
         only_in_2 = []
         for pos in arr_2:
-            if pos not in arr_1:
+            if np.sum(np.square(pos)) not in np.sum(np.square(arr_1), axis=1):
                 only_in_2.append(pos)
         return np.array(only_in_2)
 
@@ -158,8 +153,8 @@ class SymmetricManager(ModelUser):
         return True
 
 
-    def find_model_temp(self, pos, model):
-        return model.get_temp(pos)
+    def find_model_temps(self, positions, model):
+        return model.get_temp(positions)
 
 
     def reflect_position(self, proposed_sensor_layout):
@@ -187,7 +182,7 @@ class SymmetricManager(ModelUser):
         model = self._model_type(adjusted_sensor_layout, training_temperatures)
 
         lost_sensors = self.compare_arrays(adjusted_sensor_layout, symmetric_sensor_layout)
-        return self.find_model_temperatures(model, self._comparison_pos), adjusted_sensor_layout, lost_sensors
+        return self.find_model_temps(self._comparison_pos, model), adjusted_sensor_layout, lost_sensors
 
     
 
@@ -202,8 +197,9 @@ class UniformManager(ModelUser):
         return False
 
     
-    def find_model_temp(self, pos, model):
-        return model.get_temp(pos[1])
+    def find_model_temps(self, positions, model):
+        y_values = positions[:, 1].reshape(-1, 1)
+        return model.get_temp(y_values)
 
 
     def build_trained_model(self, proposed_sensor_layout):
@@ -226,4 +222,4 @@ class UniformManager(ModelUser):
         model = self._model_type(sensor_y_values, training_temperatures)
 
         lost_sensors = self.compare_arrays(adjusted_sensor_layout, uniform_sensor_layout)
-        return self.find_model_temperatures(model, self._comparison_pos), adjusted_sensor_layout, lost_sensors
+        return self.find_model_temps(self._comparison_pos, model), adjusted_sensor_layout, lost_sensors

@@ -1,6 +1,5 @@
 from sklearn.linear_model import LinearRegression
 from scipy.interpolate import CubicSpline
-from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
 import os
@@ -8,7 +7,7 @@ import os
 
 class Thermocouple():
     def __init__(self, csv_name):
-        self.__failure_chance = 0.1             # 1 in 10 fail
+        self.__failure_chance = 0.1
         self.__error = 2.2                      # +/- 2.2 degrees C
 
         parent_path = os.path.dirname(os.path.dirname(__file__))
@@ -22,17 +21,6 @@ class Thermocouple():
         self.__regressor.fit(voltages.reshape(-1, 1), temps.reshape(-1, 1))
         self.__extrapolator = np.polynomial.polynomial.Polynomial.fit(temps, voltages, deg=3)
         self.__interpolator = CubicSpline(temps, voltages)
-
-        x = np.linspace(20, 1600, 300)
-        new_temps = []
-        for temp in x:
-            new_temps.append(self.get_linearised_temp(temp))
-        plt.plot(x, new_temps)
-        #plt.plot(x, x)
-        plt.xlabel('True temp')
-        plt.ylabel('Linearised temp')
-        plt.show()
-        plt.close()
 
     
     def get_linearised_temp(self, start_temp):
@@ -49,7 +37,7 @@ class Thermocouple():
         if chance < self.__failure_chance:
             return None
         else:
-            return mean_temp + self.__error/3 * np.random.normal()
+            return self.get_linearised_temp(mean_temp) + self.__error/3 * np.random.normal()
         
 
     

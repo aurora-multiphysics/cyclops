@@ -1,8 +1,10 @@
+from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import pyplot as plt
 from matplotlib import tri as tri
 from matplotlib import cm
 import scienceplots
 import numpy as np
+import os
 
 
 
@@ -11,11 +13,17 @@ import numpy as np
 RADIUS = 0.006
 
 
+# Function naming
+# draw_ create entire window (and may also create a figure/fill in the figure)
+# build_ create a figure (and may also fill in the axes)
+# plot_ fill in the axes only
+
+
+
+
 
 class GraphManager():
     def __init__(self):
-        # All draw methods produce a new window
-        # and all plot methods produce plots for that window
         plt.style.use('science')
 
 
@@ -27,83 +35,94 @@ class GraphManager():
         surf_1 = ax.plot_trisurf(
             positions[:,0].reshape(-1), 
             positions[:,1].reshape(-1), 
-            true_temps, 
+            true_temps.reshape(-1), 
             cmap=cm.plasma
         )
         surf_2 = ax.plot_trisurf(
             positions[:,0].reshape(-1), 
             positions[:,1].reshape(-1), 
-            model_temps
+            model_temps.reshape(-1)
         )
         plt.show()
         plt.close()
+
+
+    def create_pdf(self, all_positions, all_layouts, true_temps, model_temps, lost_sensors, face):
+        manager = PDFManager('Layouts.pdf')
+        for sensor_positions in all_layouts:
+            fig_1 = self.build_front_compare(all_positions, sensor_positions, true_temps, model_temps, lost_sensors, face)
+            manager.save_figure(fig_1)
+        manager.close_file()
+
     
-
-    def draw_front_comparison_pane(self, all_positions, sensor_positions, true_temps, model_temps):
-        # Draw the first plot
-        fig_1, (ax_1, ax_2, ax_3) = plt.subplots(1,3, figsize=(18, 5))
-
-        ax_1.set_title('Simulation temperature field')
-        cp_1 = self.plot_contour_temp_field(ax_1, all_positions, true_temps)
-        self.plot_circle(ax_1)
-
-        ax_2.set_title('Predicted temperature field')
-        cp_2 = self.plot_contour_temp_field(ax_2, all_positions, model_temps)
-        self.scatter_sensor_positions(ax_2, sensor_positions)
-        self.plot_circle(ax_2)
-
-        ax_3.set_title('Errors in temperature field reconstruction')
-        differences = np.abs(true_temps - model_temps)
-        cp_3 = self.plot_field_errors(ax_3, all_positions, differences)
-        self.plot_circle(ax_3)
-
-        fig_1.colorbar(cp_2, ax=[ax_1, ax_2])
-        fig_1.colorbar(cp_3)
-        
-        # Draw the second plot
-        fig_2, ax_4 = plt.subplots(figsize=(5, 5))
-
-        ax_4.set_title('Sensor layout')
-        self.plot_monoblock_grid(ax_4, all_positions)
-        self.scatter_sensor_positions(ax_4, sensor_positions)
-
+    def draw_compare(self, all_positions, sensor_positions, true_temps, model_temps, lost_sensors, face):
+        fig_1 = self.build_compare(all_positions, sensor_positions, true_temps, model_temps, lost_sensors, face)
+        fig_2 = self.build_compare(all_positions, sensor_positions, true_temps, model_temps, lost_sensors, face)
         plt.show()
         plt.close()
 
     
-    def draw_side_comparison_pane(self, all_positions, sensor_positions, true_temps, model_temps, lost_sensors):
+    def build_compare(self, all_positions, sensor_positions, true_temps, model_temps, lost_sensors, face):
         # Draw the first plot
         fig_1, (ax_1, ax_2, ax_3) = plt.subplots(1,3, figsize=(18, 5))
 
         ax_1.set_title('Simulation temperature field')
-        cp_1 = self.plot_contour_temp_field(ax_1, all_positions, true_temps)
+        cp_1 = self.plot_contour_field(ax_1, all_positions, true_temps)
+        if face == 'f':
+            self.plot_circle(ax_1)
 
         ax_2.set_title('Predicted temperature field')
         ax_2.sharey(ax_1)
-        cp_2 = self.plot_contour_temp_field(ax_2, all_positions, model_temps)
+        cp_2 = self.plot_contour_field(ax_2, all_positions, model_temps)
         self.scatter_sensor_positions(ax_2, sensor_positions)
-        self.scatter_sensor_positions(ax_2, lost_sensors, pen=('red', '*'))
+        self.scatter_sensor_positions(ax_2, lost_sensors, pen=('white', '*'))
+        if face == 'f':
+            self.plot_circle(ax_2)
+
 
         ax_3.set_title('Errors in temperature field reconstruction')
         differences = np.abs(true_temps - model_temps)
         cp_3 = self.plot_field_errors(ax_3, all_positions, differences)
+        if face == 'f':
+            self.plot_circle(ax_3)
 
         fig_1.colorbar(cp_2, ax=[ax_1, ax_2])
         fig_1.colorbar(cp_3)
-        
+        return fig_1
+
+
+    def build_sensors(self, all_positions, sensor_positions, lost_sensors, face):
         # Draw the second plot
         fig_2, ax_4 = plt.subplots(figsize=(5, 5))
 
         ax_4.set_title('Sensor layout')
-        self.plot_monoblock_grid(ax_4, all_positions, block_circle=False)
+        if face == 'f':
+            self.plot_monoblock_grid(ax_4, all_positions, True)
+        else:
+            self.plot_monoblock_grid(ax_4, all_positions, False)
         self.scatter_sensor_positions(ax_4, sensor_positions)
-        self.scatter_sensor_positions(ax_4, lost_sensors, pen=('red', '*'))
-
-        plt.show()
-        plt.close()
+        self.scatter_sensor_positions(ax_4, lost_sensors)
+        return fig_2
 
 
-    def plot_contour_temp_field(self, ax, positions, temp_values):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    def plot_contour_field(self, ax, positions, field_values):
         # Plot a sincle temperature contour field
         ax.set_xlabel('x (m)')
         ax.set_ylabel('y (m)')
@@ -111,23 +130,17 @@ class GraphManager():
         return ax.tricontourf(
             positions[:,0].reshape(-1), 
             positions[:,1].reshape(-1), 
-            temp_values, 
+            field_values, 
             cmap=cm.plasma, 
             levels=np.linspace(100, 1600, 30)
         )
 
 
-    def scatter_sensor_positions(self, ax, sensor_positions, pen=('black', 'o')):
+    def plot_sensor_positions(self, ax, sensor_positions, pen=('black', 'o')):
         # Produce a scatter plot of the sensor positions to overlay
-        sensor_x = []
-        sensor_y = []
-        for i in range(len(sensor_positions)):
-            sensor_x.append(sensor_positions[i, 0])
-            sensor_y.append(sensor_positions[i, 1])
-
         ax.scatter(
-            sensor_x, 
-            sensor_y,
+            sensor_positions[:, 0], 
+            sensor_positions[:, 1],
             s=200,
             color=pen[0],
             marker=pen[1]
@@ -136,11 +149,11 @@ class GraphManager():
     
     def plot_circle(self, ax):
         # Produce a white circle to overlay
-        circle1 = plt.Circle((0, 0), RADIUS, color='w')
-        ax.add_patch(circle1)
+        circle = plt.Circle((0, 0), RADIUS, color='w')
+        ax.add_patch(circle)
 
 
-    def plot_monoblock_grid(self, ax, positions, block_circle = True):
+    def plot_monoblock_grid(self, ax, positions, block_circle):
         # Produce a grid of the monoblock potential positions
         triang = tri.Triangulation(positions[:, 0], positions[:, 1])
         if block_circle == True:
@@ -209,3 +222,20 @@ class GraphManager():
         plt.close()
 
 
+
+
+
+class PDFManager():
+    def __init__(self, name):
+        parent_path = os.path.dirname(os.path.dirname(__file__))
+        file_path = os.path.join(os.path.sep,parent_path, 'results', name)
+        self.__pdf_file = PdfPages(file_path)
+
+
+    def save_figure(self, figure):
+        self.__pdf_file.savefig(figure)
+    
+
+    def close_file(self):
+        self.__pdf_file.close()
+    
