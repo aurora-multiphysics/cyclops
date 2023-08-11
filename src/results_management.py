@@ -59,4 +59,3 @@ class ResultsManager():
     def get_IDs(self):
         return self.__IDs
 
-results_manager = ResultsManager('best_setups.txt')

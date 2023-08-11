@@ -1,8 +1,9 @@
 from model_management import SymmetricManager, UniformManager
 from face_model import GPModel, RBFModel, CTModel, CSModel
 from optimisers import LossFunction, optimise_with_GA
-from results_management import results_manager
-from graph_management import graph_manager
+from results_management import ResultsManager
+from graph_management import GraphManager
+from exodus_reader import ExodusReader
 import numpy as np
 
 
@@ -21,17 +22,20 @@ STRING_TO_MODEL = {
     'CS':CSModel
 }
 
+graph_manager = GraphManager()
+results_manager = ResultsManager('best_setups.txt')
+exodus_reader = ExodusReader('monoblock_out.e', 's')
+model_manager = UniformManager(CSModel, exodus_reader)
 
 
-def show_sensor_layout(layout, model_manager):
-    positions = model_manager.get_positions()
-    true_temperatures = model_manager.get_temp_values()
 
-    model_temperatures, new_layout, lost_sensors = model_manager.find_temp_for_plotting(
-        positions,
-        layout
-    )
-    print('\nFailed sensors: ', lost_sensors)
+
+
+def show_sensor_layout(layout):
+    positions = exodus_reader.get_positions()
+    true_temperatures = exodus_reader.get_temperatures()
+    model_temperatures, new_layout, lost_sensors = model_manager.find_temps_for_plotting(layout)
+    
     graph_manager.draw_double_3D_temp_field(
         positions, 
         true_temperatures, 
@@ -44,7 +48,7 @@ def show_sensor_layout(layout, model_manager):
         model_temperatures,
         lost_sensors
     )
-    print('\nLoss', model_manager.get_loss(layout))
+    print('\nLoss', model_manager.find_loss(layout))
 
 
 
@@ -59,64 +63,12 @@ def optimise_sensor_layout(model_manager, num_sensors=10, time_limit='00:10:00')
     print('\nResult:')
     print(res.X)
     print('\nDisplay:')
-    save_results(res.X, model_manager)
-    show_results(res.X, model_manager)
 
 
 
-def show_results(res_x, model_manager):
-    if len(res_x) > 5:
-        res_x = res_x[:5]
-    for setup in res_x:
-        show_sensor_layout(setup, model_manager)
 
 
 
-def save_results(res_x, model_manager):
-    ask_save = ''
-    while ask_save not in ('Y', 'N'):
-        ask_save = input('Do you want to save the sensor layouts [Y/N]? ')
-    if ask_save == 'N':
-        return None
-    ask_ID = results_manager.get_IDs()[0]
-    while ask_ID in results_manager.get_IDs():
-        ask_ID = input('Enter ID to save model: ')
-
-    if model_manager.is_symmetric():
-        id = 'S'+ask_ID
-    else:
-        id = 'U'+ask_ID
-
-    results_manager.write_file(
-        id, 
-        MODEL_TO_STRING[model_manager.get_model_type],
-        res_x 
-    )
-    results_manager.save_updates()
-
-
-
-def find_pareto(model_manager, time_limit='00:10:00', sensor_nums=[14, 16]):
-    setups = []
-    for num in sensor_nums:
-        problem = LossFunction(num, model_manager)
-        print('\nOptimising...')
-        res = optimise_with_GA(problem, time_limit)
-        print('\nResult:')
-        print(res.X)
-        setups.append(res.X)
-    print('\nSetups:\n',setups)
-
-
-
-def show_old_setups(old_ID):
-    model, setups = results_manager.read_file(old_ID)
-    if old_ID[0] == 'U':
-        temp_model_manager = UniformManager('side_field.csv', STRING_TO_MODEL[model])
-    else:
-        temp_model_manager = SymmetricManager('side_field.csv', STRING_TO_MODEL[model])
-    setups = np.array(setups)
-    show_results(setups, temp_model_manager)
 
 
 
@@ -126,8 +78,5 @@ def show_old_setups(old_ID):
 
 
 if __name__ == '__main__':
-    symmetric_manager = SymmetricManager('side_field.csv', GPModel)
-    uniform_manager = UniformManager('side_field.csv', CSModel)
-
     #optimise_sensor_layout(uniform_manager, num_sensors=4, time_limit='00:03:00')
-    show_old_setups('U5-1')
+    show_sensor_layout(np.array([0.011, 0.0058103, 0.0088448, 0.0102931, 0.0041897, 0.0118448, 0.0079138, 0.0046034, 0.0088448, -0.0074655]))

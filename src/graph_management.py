@@ -207,4 +207,3 @@ class GraphManager():
         plt.close()
 
 
-graph_manager = GraphManager()

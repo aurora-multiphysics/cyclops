@@ -17,27 +17,35 @@ THERMOCOUPLE_RADIUS = 0.000075
 # Function naming
 # get_ means getter
 # find_ means calculate that value
-# generate is for getters
+# generate_ is for producing objects in the initialisation
+# build_ is for producing objects that are used all over the place
 
 
 
 
 class ExodusReader():
-    def __init__(self, file_name, front):
+    def __init__(self, file_name, face):
         # Load the file
         parent_path = os.path.dirname(os.path.dirname(__file__))
         full_path = os.path.join(os.path.sep,parent_path,'simulation', file_name)
 
+        print('\nReading mesh...')
         mesh = meshio.read(full_path)
         mesh_positions = mesh.points
         temperatures = mesh.point_data['temperature']
         self.__interpolater = LinearNDInterpolator(mesh_positions, temperatures)
 
-        if front == True:
+        if face == 'f':
             self.__comparison_pos, self.__comparison_temps = self.generate_front()
         else:
             self.__comparison_pos, self.__comparison_temps = self.generate_side()
+
         self.__mean_kernel = self.generate_kernel()
+        self.__face = face
+
+
+    def get_face_ID(self):
+        return self.__face
 
 
     def get_positions(self):
@@ -53,7 +61,8 @@ class ExodusReader():
     
 
     def find_mean_temp(self, pos):
-        pos_in_radius = self.__mean_kernel + np.ones()*pos
+        pos_in_radius = self.__mean_kernel + np.ones(pos.shape)*pos
+        print(pos_in_radius)
         temps = self.find_temps(pos_in_radius)
         return np.mean(temps)
 
@@ -78,7 +87,7 @@ class ExodusReader():
         x = []
         y = []
 
-        print("\nGenerating node data...")
+        print("Generating node data...")
         for i in tqdm(range(len(x_values))):
             for j in range(len(y_values)):
                 if self.check_front_face(x_values[i], y_values[j]):
@@ -101,12 +110,12 @@ class ExodusReader():
         z = []
         y = []
 
-        print("\nGenerating node data...")
+        print("Generating node data...")
         for i in tqdm(range(len(z_values))):
             for j in range(len(y_values)):
                 rounded_z = np.round(z_values[i], 7)
                 rounded_y = np.round(y_values[j], 7)
-                temp = self.find_temps(np.array([rounded_z, rounded_y, 0]))[0]
+                temp = self.find_temps(np.array([0, rounded_y, rounded_z]))[0]
                 temps.append(temp)
                 z.append(rounded_z)
                 y.append(rounded_y)
@@ -126,10 +135,11 @@ class ExodusReader():
             return False
         return True
 
+
     def plot_3D(self, x_positions, y_positions, temp_values):
         # Plot a smart 3D graph of the temperature at various points of the monoblock
         fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
-        surf = ax.plot_trisurf(x_positions, y_positions, temp_values, cmap=cm.jet, linewidth=0.1)
+        surf = ax.plot_trisurf(x_positions, y_positions, temp_values, cmap=cm.plasma, linewidth=0.1)
         fig.colorbar(surf, shrink=0.5, aspect=5)
         plt.show()
         plt.close()
@@ -138,7 +148,7 @@ class ExodusReader():
 
 
 if __name__ == "__main__":
-    exodus_reader = ExodusReader('monoblock_out.e', False)
+    exodus_reader = ExodusReader('monoblock_out.e', 's')
     positions = exodus_reader.get_positions()
     temps = exodus_reader.get_temperatures()
     exodus_reader.plot_3D(positions[:,0], positions[:,1], temps)
