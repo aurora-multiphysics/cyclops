@@ -57,7 +57,7 @@ class GraphManager():
     
     def draw_compare(self, all_positions, sensor_positions, true_temps, model_temps, lost_sensors, face):
         fig_1 = self.build_compare(all_positions, sensor_positions, true_temps, model_temps, lost_sensors, face)
-        fig_2 = self.build_compare(all_positions, sensor_positions, true_temps, model_temps, lost_sensors, face)
+        fig_2 = self.build_sensors(all_positions, sensor_positions, true_temps, model_temps, lost_sensors, face)
         plt.show()
         plt.close()
 
@@ -74,14 +74,15 @@ class GraphManager():
         ax_2.set_title('Predicted temperature field')
         ax_2.sharey(ax_1)
         cp_2 = self.plot_contour_field(ax_2, all_positions, model_temps)
-        self.scatter_sensor_positions(ax_2, sensor_positions)
-        self.scatter_sensor_positions(ax_2, lost_sensors, pen=('white', '*'))
+        self.plot_sensor_positions(ax_2, sensor_positions)
+        if len(lost_sensors > 1):
+            self.plot_sensor_positions(ax_2, lost_sensors, pen=('white', '*'))
         if face == 'f':
             self.plot_circle(ax_2)
 
 
         ax_3.set_title('Errors in temperature field reconstruction')
-        differences = np.abs(true_temps - model_temps)
+        differences = np.abs(true_temps.reshape(-1) - model_temps.reshape(-1))
         cp_3 = self.plot_field_errors(ax_3, all_positions, differences)
         if face == 'f':
             self.plot_circle(ax_3)
@@ -100,23 +101,10 @@ class GraphManager():
             self.plot_monoblock_grid(ax_4, all_positions, True)
         else:
             self.plot_monoblock_grid(ax_4, all_positions, False)
-        self.scatter_sensor_positions(ax_4, sensor_positions)
-        self.scatter_sensor_positions(ax_4, lost_sensors)
+        self.plot_sensor_positions(ax_4, sensor_positions)
+        if len(lost_sensors > 1):
+            self.plot_sensor_positions(ax_4, lost_sensors, pen=('white', '*'))
         return fig_2
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -130,7 +118,7 @@ class GraphManager():
         return ax.tricontourf(
             positions[:,0].reshape(-1), 
             positions[:,1].reshape(-1), 
-            field_values, 
+            field_values.reshape(-1), 
             cmap=cm.plasma, 
             levels=np.linspace(100, 1600, 30)
         )
@@ -170,8 +158,8 @@ class GraphManager():
         ax.set_ylabel('y (m)')
 
         return ax.tricontourf(
-            positions[:,0].reshape(-1), 
-            positions[:,1].reshape(-1), 
+            positions[:,0], 
+            positions[:,1], 
             differences, 
             cmap=cm.Blues, levels = 30
         )

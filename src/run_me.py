@@ -1,8 +1,8 @@
 from model_management import SymmetricManager, UniformManager, CSVReader
 from face_model import GPModel, RBFModel, CTModel, CSModel
 from optimisers import LossFunction, optimise_with_GA
+from graph_management import GraphManager, PDFManager
 from results_management import ResultsManager
-from graph_management import GraphManager
 import numpy as np
 
 
@@ -70,11 +70,22 @@ def optimise_sensor_layout(num_sensors=5, time_limit='00:00:10'):
 
 
 def show_results(res_x):
-    if len(res_x) > 2:
-        res_x = res_x[:2]
-    for setup in res_x:
-        show_sensor_layout(setup)
-
+    pdf_manager = PDFManager('Layouts.pdf')
+    positions = csv_reader.get_positions()
+    true_temperatures = csv_reader.get_temperatures()
+    
+    for layout in res_x:
+        model_temperatures, new_layout, lost_sensors = model_manager.find_temps_for_plotting(layout)
+        fig = graph_manager.build_compare(
+            positions, 
+            new_layout, 
+            true_temperatures, 
+            model_temperatures,
+            lost_sensors,
+            's'
+        )
+        pdf_manager.save_figure(fig)
+    pdf_manager.close_file()
 
 
 
