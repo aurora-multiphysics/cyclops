@@ -1,10 +1,14 @@
 from scipy.interpolate import RBFInterpolator, CloughTocher2DInterpolator, CubicSpline
 from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.gaussian_process.kernels import RBF
 from sklearn import preprocessing
 import numpy as np
+import warnings
 
 
+
+warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
 
 
 
@@ -78,5 +82,5 @@ class CSModel():
 
     def get_temp(self, pos_xy):
         scaled_pos_xy = self.__scaler.transform(pos_xy.reshape(1, -1))
-        return self.__cubic_spline(scaled_pos_xy)
+        return self.__cubic_spline(scaled_pos_xy)[0][0]
 

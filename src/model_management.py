@@ -1,12 +1,78 @@
-from exodus_reader import ExodusReader
+from scipy.interpolate import LinearNDInterpolator
 from sensors import Thermocouple
+import pandas as pd
 import numpy as np
+import os
+
+
+
+#Monoblock values
+X_BOUNDS = (-0.0135, 0.0135)
+Y_BOUNDS = (-0.0135, 0.0215)
+Z_BOUNDS = (0, 0.012)
+MONOBLOCK_RADIUS = 0.006
+THERMOCOUPLE_RADIUS = 0.000075
+
+
+
+
+class CSVReader():
+    def __init__(self, csv_name):
+        # Load the file
+        parent_path = os.path.dirname(os.path.dirname(__file__))
+        full_path = os.path.join(os.path.sep,parent_path,'simulation', csv_name)
+        dataframe = pd.read_csv(full_path)
+        
+        self.__interpolation_pos = self.generate_positions(dataframe)
+        self.__interpolation_temps = dataframe['T'].values
+        self.__interpolater = LinearNDInterpolator(self.__interpolation_pos, self.__interpolation_temps)
+        self.__mean_kernel = self.generate_kernel()
+    
+
+    def get_positions(self) -> np.ndarray:
+        return self.__interpolation_pos
+
+
+    def get_temperatures(self) -> np.ndarray:
+        return self.__interpolation_temps
+
+
+    def generate_positions(self, dataframe):
+        # Get the position and temperature vectors from the file
+        x_values = (dataframe['X'].values)
+        y_values = (dataframe['Y'].values)
+        return np.concatenate((x_values.reshape(-1, 1), y_values.reshape(-1, 1)), 1)
+
+
+    def generate_kernel(self, num_x = 5, num_y = 5) -> np.ndarray:
+        # Produces the kernel used for calculating the mean temperature in a circle
+        x_values = np.linspace(-THERMOCOUPLE_RADIUS, THERMOCOUPLE_RADIUS, num_x)
+        y_values = np.linspace(-THERMOCOUPLE_RADIUS, THERMOCOUPLE_RADIUS, num_y)
+        pos_in_radius = []
+        for x in x_values:
+            for y in y_values:
+                if x**2 + y**2 <= THERMOCOUPLE_RADIUS**2:
+                    pos = np.array([x, y])
+                    pos_in_radius.append(pos)
+        return np.array(pos_in_radius) 
+
+
+    def find_temps(self, pos) -> np.ndarray:
+        return self.__interpolater(pos)
+
+
+    def find_mean_temp(self, pos):
+        # Calculates the mean temperature in a circle
+        pos_in_radius = self.__mean_kernel + np.ones(self.__mean_kernel.shape)*pos
+        temps = self.find_temps(pos_in_radius)
+        return np.mean(temps)
+
 
 
 
 
 class ModelUser():
-    def __init__(self, model_type: type, reader: ExodusReader) -> None:
+    def __init__(self, model_type: type, reader: CSVReader) -> None:
         self._comparison_temps = reader.get_temperatures()
         self._comparison_pos = reader.get_positions()
         self._model_type = model_type
@@ -27,8 +93,8 @@ class ModelUser():
 
     def compare_fields(self, model):
         loss = 0
-        for pos in self._positions:
-            loss += np.square(self._reader.get_temperatures(pos)[0] - self.find_model_temp(pos, model))
+        for i, pos in enumerate(self._comparison_pos):
+            loss += np.square(self._comparison_temps[i] - self.find_model_temp(pos, model))
         return loss
     
     
@@ -54,11 +120,15 @@ class ModelUser():
         for i, sensor_pos in enumerate(sensor_layout):
             mean_temp = self._reader.find_mean_temp(sensor_pos)
             sensor_temp = sensor.get_measured_temp(mean_temp)
-            
+
             if sensor_temp != None:
                 sensor_temperatures.append(sensor_temp)
                 adjusted_sensor_layout.append(sensor_pos)
-
+        
+        while len(sensor_temperatures) < 3:
+            sensor_temperatures.append(0)
+            adjusted_sensor_layout.append(np.array([0.01, 0.01]))
+        
         return np.array(adjusted_sensor_layout), np.array(sensor_temperatures)
     
 

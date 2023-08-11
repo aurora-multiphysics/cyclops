@@ -13,9 +13,9 @@ class Thermocouple():
         if chance < self.__failure_chance:
             return None
         elif mean_temp > self.__range[1]:
-            return 1200
+            return None
         elif mean_temp < self.__range[0]:
-            return -270
+            return None
         else:
             return mean_temp + self.__error/3 * np.random.normal()
 

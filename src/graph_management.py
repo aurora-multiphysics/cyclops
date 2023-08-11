@@ -28,7 +28,7 @@ class GraphManager():
             positions[:,0].reshape(-1), 
             positions[:,1].reshape(-1), 
             true_temps, 
-            cmap=cm.jet
+            cmap=cm.plasma
         )
         surf_2 = ax.plot_trisurf(
             positions[:,0].reshape(-1), 
@@ -79,6 +79,7 @@ class GraphManager():
         cp_1 = self.plot_contour_temp_field(ax_1, all_positions, true_temps)
 
         ax_2.set_title('Predicted temperature field')
+        ax_2.sharey(ax_1)
         cp_2 = self.plot_contour_temp_field(ax_2, all_positions, model_temps)
         self.scatter_sensor_positions(ax_2, sensor_positions)
         self.scatter_sensor_positions(ax_2, lost_sensors, pen=('red', '*'))
@@ -111,7 +112,8 @@ class GraphManager():
             positions[:,0].reshape(-1), 
             positions[:,1].reshape(-1), 
             temp_values, 
-            cmap=cm.plasma, levels = 30
+            cmap=cm.plasma, 
+            levels=np.linspace(100, 1600, 30)
         )
 
 

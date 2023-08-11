@@ -37,7 +37,7 @@ class LossFunction(ElementwiseProblem):
 
 
     def _evaluate(self, sensor_layout, out, *args, **kwargs):
-        loss, deviation = self.__model_manager.get_loss(sensor_layout)
+        loss, deviation = self.__model_manager.find_loss(sensor_layout)
         out['F'] = [loss, deviation]
 
 
@@ -57,7 +57,7 @@ def optimise_with_GA(problem, time_limit):
     res = minimize(problem,
                 algorithm,
                 termination,
-                seed=2,
+                seed=1,
                 save_history=True,
                 verbose=True)
     return res

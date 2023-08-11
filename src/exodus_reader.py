@@ -2,6 +2,7 @@ from scipy.interpolate import LinearNDInterpolator
 from matplotlib import pyplot as plt
 from matplotlib import cm
 from tqdm import tqdm
+import pandas as pd
 import numpy as np
 import meshio
 import os
@@ -24,8 +25,8 @@ THERMOCOUPLE_RADIUS = 0.000075
 
 
 class ExodusReader():
-    def __init__(self, file_name, face):
-        # Load the file
+    def __init__(self, file_name: str) -> None:
+        # Load the exodus file and read it
         parent_path = os.path.dirname(os.path.dirname(__file__))
         full_path = os.path.join(os.path.sep,parent_path,'simulation', file_name)
 
@@ -34,52 +35,14 @@ class ExodusReader():
         mesh_positions = mesh.points
         temperatures = mesh.point_data['temperature']
         self.__interpolater = LinearNDInterpolator(mesh_positions, temperatures)
-
-        if face == 'f':
-            self.__comparison_pos, self.__comparison_temps = self.generate_front()
-        else:
-            self.__comparison_pos, self.__comparison_temps = self.generate_side()
-
-        self.__mean_kernel = self.generate_kernel()
-        self.__face = face
-
-
-    def get_face_ID(self):
-        return self.__face
-
-
-    def get_positions(self):
-        return self.__comparison_pos
-
-
-    def get_temperatures(self):
-        return self.__comparison_temps
     
 
-    def find_temps(self, pos):
+    def find_temps(self, pos: np.ndarray) -> np.ndarray:
         return self.__interpolater(pos)
-    
-
-    def find_mean_temp(self, pos):
-        pos_in_radius = self.__mean_kernel + np.ones(pos.shape)*pos
-        print(pos_in_radius)
-        temps = self.find_temps(pos_in_radius)
-        return np.mean(temps)
 
 
-    def generate_kernel(self, num_x = 5, num_y = 5):
-        x_values = np.linspace(-THERMOCOUPLE_RADIUS, THERMOCOUPLE_RADIUS, num_x)
-        y_values = np.linspace(-THERMOCOUPLE_RADIUS, THERMOCOUPLE_RADIUS, num_y)
-        pos_in_radius = []
-        for x in x_values:
-            for y in y_values:
-                if x**2 + y**2 <= THERMOCOUPLE_RADIUS**2:
-                    pos = np.array([x, y])
-                    pos_in_radius.append(pos)
-        return np.array(pos_in_radius) 
-
-
-    def generate_front(self, num_x = 20, num_y = 20):
+    def generate_front(self, num_x = 20, num_y = 20) -> tuple:
+        # Returns the grid of position and temperature values at the front of the monoblock
         x_values = np.linspace(X_BOUNDS[0], X_BOUNDS[1], num_x)
         y_values = np.linspace(Y_BOUNDS[0], Y_BOUNDS[1], num_y)
 
@@ -99,10 +62,11 @@ class ExodusReader():
         
         x = np.array(x).reshape(-1, 1)
         y = np.array(y).reshape(-1, 1)
-        return np.concatenate((x, y), axis=1), temps
+        return (np.concatenate((x, y), axis=1), temps)
     
 
-    def generate_side(self, num_z = 20, num_y = 20, double=True):
+    def generate_side(self, num_z = 20, num_y = 20, double=True) -> tuple:
+        # Returns the grid of position and temperature values at the front of the monoblock
         z_values = np.linspace(Z_BOUNDS[0], Z_BOUNDS[1], num_z)
         y_values = np.linspace(Y_BOUNDS[0], Y_BOUNDS[1], num_y)
 
@@ -126,14 +90,30 @@ class ExodusReader():
 
         z = np.array(z).reshape(-1, 1)
         y = np.array(y).reshape(-1, 1)
-        return np.concatenate((z, y), axis=1), temps
+        return (np.concatenate((z, y), axis=1), temps)
 
     
-    def check_front_face(self, x, y):
+    def check_front_face(self, x, y) -> bool:
         # Check if a point is not in the monoblock's hole
         if x**2 + y ** 2 <= MONOBLOCK_RADIUS**2:
             return False
         return True
+
+
+    def send_to_csv(self, x, y, temp, csv_name):
+        # Stores the position and temperature data in the columns of a csv file
+        data = {
+            'X': x, 
+            'Y': y,
+            'T': temp
+        }
+
+        dataframe = pd.DataFrame(data)
+        print('\n', dataframe)
+
+        parent_path = os.path.dirname(os.path.dirname(__file__))
+        full_path = os.path.join(os.path.sep,parent_path,'simulation', csv_name)
+        dataframe.to_csv(full_path, index=False)
 
 
     def plot_3D(self, x_positions, y_positions, temp_values):
@@ -143,12 +123,11 @@ class ExodusReader():
         fig.colorbar(surf, shrink=0.5, aspect=5)
         plt.show()
         plt.close()
-        
 
 
 
-if __name__ == "__main__":
-    exodus_reader = ExodusReader('monoblock_out.e', 's')
-    positions = exodus_reader.get_positions()
-    temps = exodus_reader.get_temperatures()
-    exodus_reader.plot_3D(positions[:,0], positions[:,1], temps)
+if __name__ == '__main__':
+    exodus_reader = ExodusReader('monoblock_out.e')
+    pos, temps = exodus_reader.generate_side()
+    exodus_reader.plot_3D(pos[:,0], pos[:,1], temps)
+    exodus_reader.send_to_csv(pos[:,0], pos[:,1], temps, 'side_field.csv')
