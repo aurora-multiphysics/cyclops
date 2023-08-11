@@ -35,6 +35,10 @@ def show_sensor_layout(layout):
     true_temperatures = csv_reader.get_temperatures()
     model_temperatures, new_layout, lost_sensors = model_manager.find_temps_for_plotting(layout)
     
+    if hasattr(model_temperatures, '__iter__') == False:
+        print('Not enough working sensors.')
+        return None
+
     graph_manager.draw_double_3D_temp_field(
         positions, 
         true_temperatures, 
@@ -47,7 +51,6 @@ def show_sensor_layout(layout):
         model_temperatures,
         lost_sensors
     )
-    print('\nLoss', model_manager.find_loss(layout))
 
 
 

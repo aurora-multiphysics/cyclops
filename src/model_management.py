@@ -100,6 +100,8 @@ class ModelUser():
     
     def find_loss(self, proposed_sensor_layout):
         model = self.build_trained_model(proposed_sensor_layout)
+        if model == None:
+            return 1e10, 1e10
         loss = self.compare_fields(model)
         return loss, 1.0
     
@@ -124,10 +126,6 @@ class ModelUser():
             if sensor_temp != None:
                 sensor_temperatures.append(sensor_temp)
                 adjusted_sensor_layout.append(sensor_pos)
-        
-        while len(sensor_temperatures) < 3:
-            sensor_temperatures.append(0)
-            adjusted_sensor_layout.append(np.array([0.01, 0.01]))
         
         return np.array(adjusted_sensor_layout), np.array(sensor_temperatures)
     
@@ -174,12 +172,18 @@ class SymmetricManager(ModelUser):
     def build_trained_model(self, proposed_sensor_layout):
         symmetric_sensor_layout = self.reflect_position(proposed_sensor_layout)
         adjusted_sensor_layout, training_temperatures = self.find_train_temps(symmetric_sensor_layout)
-        return self._model_type(adjusted_sensor_layout, training_temperatures)
+        if len(training_temperatures) > 3:
+            return self._model_type(adjusted_sensor_layout, training_temperatures)
+        else:
+            return None
     
 
     def find_temps_for_plotting(self, proposed_sensor_layout):
         symmetric_sensor_layout = self.reflect_position(proposed_sensor_layout)
         adjusted_sensor_layout, training_temperatures = self.find_train_temps(symmetric_sensor_layout)
+
+        if len(training_temperatures) < 3:
+            return None, None, None
         model = self._model_type(adjusted_sensor_layout, training_temperatures)
 
         lost_sensors = self.compare_arrays(adjusted_sensor_layout, symmetric_sensor_layout)
@@ -206,12 +210,18 @@ class UniformManager(ModelUser):
         uniform_sensor_layout = proposed_sensor_layout.reshape(-1, 2)
         adjusted_sensor_layout, training_temperatures = self.find_train_temps(uniform_sensor_layout)
         sensor_y_values = adjusted_sensor_layout[:,1].reshape(-1, 1)
-        return self._model_type(sensor_y_values, training_temperatures)
+        if len(sensor_y_values) > 3:
+            return self._model_type(sensor_y_values, training_temperatures)
+        else:
+            return None
     
 
     def find_temps_for_plotting(self, proposed_sensor_layout):
         uniform_sensor_layout = proposed_sensor_layout.reshape(-1, 2)
         adjusted_sensor_layout, training_temperatures = self.find_train_temps(uniform_sensor_layout)
+
+        if len(training_temperatures) < 3:
+            return None, None, None
         sensor_y_values = adjusted_sensor_layout[:,1].reshape(-1, 1)
         model = self._model_type(sensor_y_values, training_temperatures)
 
