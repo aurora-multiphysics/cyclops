@@ -11,13 +11,13 @@ X_BOUNDS = (-0.0135, 0.0135)
 Y_BOUNDS = (-0.0135, 0.0215)
 Z_BOUNDS = (0, 0.012)
 MONOBLOCK_RADIUS = 0.006
-THERMOCOUPLE_RADIUS = 0.000075
+THERMOCOUPLE_RADIUS = 0.00075
 
 
 
 
 class CSVReader():
-    def __init__(self, csv_name):
+    def __init__(self, csv_name) -> None:
         # Load the file
         parent_path = os.path.dirname(os.path.dirname(__file__))
         full_path = os.path.join(os.path.sep,parent_path,'simulation', csv_name)
@@ -37,7 +37,7 @@ class CSVReader():
         return self.__interpolation_temps
 
 
-    def generate_positions(self, dataframe):
+    def generate_positions(self, dataframe) -> np.ndarray:
         # Get the position and temperature vectors from the file
         x_values = (dataframe['X'].values)
         y_values = (dataframe['Y'].values)
@@ -61,7 +61,7 @@ class CSVReader():
         return self.__interpolater(pos)
 
 
-    def find_mean_temp(self, pos):
+    def find_mean_temp(self, pos) -> float:
         # Calculates the mean temperature in a circle
         pos_in_radius = self.__mean_kernel + np.ones(self.__mean_kernel.shape)*pos
         temps = self.find_temps(pos_in_radius)
@@ -87,45 +87,92 @@ class ModelUser():
     def find_model_temps(self, pos, model):
         return None
 
+    
+    def rearrange_sensor_layout(self, proposed_sensor_layout):
+        pass
+
 
     def build_trained_model(self, proposed_sensor_layout):
         return None
 
 
-    def compare_fields(self, model):
+    def compare_fields(self, model) -> float:
         loss_array = np.square(self._comparison_temps- self.find_model_temps(self._comparison_pos, model))
         return np.sum(loss_array)
     
     
-    def find_loss(self, proposed_sensor_layout, repetitions=20):
-        losses = np.zeros(repetitions)
-        setups_failed = 0
-        for i in range(repetitions):
-            model = self.build_trained_model(proposed_sensor_layout)
-            if model == None:
-                setups_failed += 1
-            else:
-                losses[i] = self.compare_fields(model)
-        return np.mean(losses), setups_failed/repetitions
-    
+    def find_loss(self, proposed_sensor_layout) -> tuple:
+        rearranged_layout = self.rearrange_sensor_layout(proposed_sensor_layout)
+        sensor_keys, sensor_chances = self.find_sensor_keys_chances(rearranged_layout)
+        losses = np.zeros(sensor_keys.shape)
 
-    def find_train_temps(self, sensor_layout):
-        # Return an array containing the temperature at each sensor position
-        adjusted_sensor_layout = []
-        sensor_temperatures = []
-
-        for i, sensor_pos in enumerate(sensor_layout):
-            mean_temp = self._reader.find_mean_temp(sensor_pos)
-            sensor_temp = self._sensor.get_measured_temp(mean_temp)
-
-            if sensor_temp != None:
-                sensor_temperatures.append(sensor_temp)
-                adjusted_sensor_layout.append(sensor_pos)
+        for i, sensor_key in enumerate(sensor_keys):
+            adjusted_layout = self.key_to_layout(rearranged_layout, sensor_key)
+            model = self.build_trained_model(adjusted_layout)
+            losses[i] = self.compare_fields(model)
         
-        return np.array(adjusted_sensor_layout), np.array(sensor_temperatures)
+        expected_value = np.mean(sensor_chances * losses)
+        success_chance = 1.0
+        return expected_value, success_chance
+
+    
+    def key_to_layout(self, rearranged_sensor_layout, sensor_key) -> np.ndarray:
+        new_layout = []
+        for i, c in enumerate(sensor_key):
+            if c == 'O':
+                new_layout.append(rearranged_sensor_layout[i])
+        return np.array(new_layout)
+
+
+    def key_to_lost(self, rearranged_sensor_layout, sensor_key) -> np.ndarray:
+        lost_sensors = []
+        for i, c in enumerate(sensor_key):
+            if c == 'X':
+                lost_sensors.append(rearranged_sensor_layout[i])
+        return np.array(lost_sensors)
+
+
+    def find_sensor_keys_chances(self, sensor_layout) -> tuple:
+        # Returns a string describing which sensors failed
+        num_sensors = len(sensor_layout)
+        sensor_keys = ['O'*num_sensors]
+        sensor_chances = []
+
+        for i in range(num_sensors):
+            for j in range(num_sensors):
+                setup = ['O']*num_sensors
+                setup[i]='X'
+                setup[j]='X'
+                str_setup = ''.join(setup)
+                sensor_keys.append(str_setup)
+        
+        for sensor_key in sensor_keys:
+            sensor_chances.append(self.find_chance(sensor_key))
+
+        return np.array(sensor_keys), np.array(sensor_chances)
+
+
+    def find_chance(self, sensor_key) -> float:
+        chance = 1.0
+        for letter in sensor_key:
+            if letter == 'O':
+                chance *= (1-self._sensor.get_failure_chance())
+            else:
+                chance *= self._sensor.get_failure_chance()
+        return chance
     
 
-    def compare_arrays(self, arr_1, arr_2):
+    def find_train_temps(self, sensor_layout) -> np.ndarray:
+        # Return an array containing the temperature at each sensor position
+        sensor_temperatures = self._reader.find_temps(sensor_layout)
+        sensor_temperatures.reshape(-1)
+        for i, temp in enumerate(sensor_temperatures):
+            sensor_temperatures[i] = self._sensor.get_linearised_temp(temp)
+            #senor_temperatures[i] += self._sensor.get_error()
+        return sensor_temperatures
+    
+
+    def compare_arrays(self, arr_1, arr_2) -> np.ndarray:
         only_in_2 = []
         for pos in arr_2:
             if np.sum(np.square(pos)) not in np.sum(np.square(arr_1), axis=1):
@@ -133,7 +180,25 @@ class ModelUser():
         return np.array(only_in_2)
 
 
+    def find_temps_for_plotting(self, proposed_sensor_layout) -> tuple:
+        rearranged_layout = self.rearrange_sensor_layout(proposed_sensor_layout)
+        sensor_keys, sensor_chances = self.find_sensor_keys_chances(rearranged_layout)
+        losses = np.zeros(sensor_keys.shape)
+        sensor_layouts = []
+        lost_sensors = []
+        model_temps = []
 
+        print('\nDescribing temperature fields...')
+        for i, sensor_key in enumerate(sensor_keys):
+            adjusted_layout = self.key_to_layout(rearranged_layout, sensor_key)
+            model = self.build_trained_model(adjusted_layout)
+            losses[i] = self.compare_fields(model)
+
+            sensor_layouts.append(adjusted_layout)
+            lost_sensors.append(self.key_to_lost(rearranged_layout, sensor_key))
+            model_temps.append(self.find_model_temps(self._comparison_pos, model))
+        
+        return sensor_layouts, lost_sensors, model_temps, losses, sensor_chances
 
     
     
@@ -145,11 +210,11 @@ class ModelUser():
 
 
 class SymmetricManager(ModelUser):
-    def __init__(self, model_type, exodus_reader):
+    def __init__(self, model_type, exodus_reader) -> None:
         ModelUser.__init__(self, model_type, exodus_reader)
         
     
-    def is_symmetric(self):
+    def is_symmetric(self) -> bool:
         return True
 
 
@@ -157,32 +222,16 @@ class SymmetricManager(ModelUser):
         return model.get_temp(positions)
 
 
-    def reflect_position(self, proposed_sensor_layout):
+    def rearrange_sensor_layout(self, proposed_sensor_layout):
         # Add all of the sensor coordinates that need to be reflected in the x-axis onto the monoblock
         proposed_sensor_layout = proposed_sensor_layout.reshape(-1, 2)
         multiplier = np.array([[-1, 1]]*proposed_sensor_layout.shape[0])
         return np.concatenate((proposed_sensor_layout, multiplier * proposed_sensor_layout), axis=0)
 
 
-    def build_trained_model(self, proposed_sensor_layout):
-        symmetric_sensor_layout = self.reflect_position(proposed_sensor_layout)
-        adjusted_sensor_layout, training_temperatures = self.find_train_temps(symmetric_sensor_layout)
-        if len(training_temperatures) > 3:
-            return self._model_type(adjusted_sensor_layout, training_temperatures)
-        else:
-            return None
-    
-
-    def find_temps_for_plotting(self, proposed_sensor_layout):
-        symmetric_sensor_layout = self.reflect_position(proposed_sensor_layout)
-        adjusted_sensor_layout, training_temperatures = self.find_train_temps(symmetric_sensor_layout)
-
-        if len(training_temperatures) < 3:
-            return None, None, None
-        model = self._model_type(adjusted_sensor_layout, training_temperatures)
-
-        lost_sensors = self.compare_arrays(adjusted_sensor_layout, symmetric_sensor_layout)
-        return self.find_model_temps(self._comparison_pos, model), adjusted_sensor_layout, lost_sensors
+    def build_trained_model(self, adjusted_layout):
+        training_temperatures = self.find_train_temps(adjusted_layout)
+        return self._model_type(adjusted_layout, training_temperatures)
 
     
 
@@ -202,24 +251,11 @@ class UniformManager(ModelUser):
         return model.get_temp(y_values)
 
 
-    def build_trained_model(self, proposed_sensor_layout):
-        uniform_sensor_layout = proposed_sensor_layout.reshape(-1, 2)
-        adjusted_sensor_layout, training_temperatures = self.find_train_temps(uniform_sensor_layout)
-        sensor_y_values = adjusted_sensor_layout[:,1].reshape(-1, 1)
-        if len(sensor_y_values) > 3:
-            return self._model_type(sensor_y_values, training_temperatures)
-        else:
-            return None
-    
+    def rearrange_sensor_layout(self, proposed_sensor_layout):
+        return proposed_sensor_layout.reshape(-1, 2)
 
-    def find_temps_for_plotting(self, proposed_sensor_layout):
-        uniform_sensor_layout = proposed_sensor_layout.reshape(-1, 2)
-        adjusted_sensor_layout, training_temperatures = self.find_train_temps(uniform_sensor_layout)
 
-        if len(training_temperatures) < 3:
-            return None, None, None
-        sensor_y_values = adjusted_sensor_layout[:,1].reshape(-1, 1)
-        model = self._model_type(sensor_y_values, training_temperatures)
-
-        lost_sensors = self.compare_arrays(adjusted_sensor_layout, uniform_sensor_layout)
-        return self.find_model_temps(self._comparison_pos, model), adjusted_sensor_layout, lost_sensors
+    def build_trained_model(self, adjusted_layout):
+        training_temperatures = self.find_train_temps(adjusted_layout)
+        sensor_y_values = adjusted_layout[:,1].reshape(-1, 1)
+        return self._model_type(sensor_y_values, training_temperatures)

@@ -8,7 +8,7 @@ import os
 class Thermocouple():
     def __init__(self, csv_name):
         self.__failure_chance = 0.1
-        self.__error = 2.2                      # +/- 2.2 degrees C
+        self.__error = 0.0                      # +/- 2.2 degrees C
 
         parent_path = os.path.dirname(os.path.dirname(__file__))
         file_path = os.path.join(os.path.sep,parent_path, 'simulation', csv_name)
@@ -30,14 +30,13 @@ class Thermocouple():
             voltage = self.__extrapolator(start_temp)
         return self.__regressor.predict(voltage.reshape(-1, 1))[0]
             
+    
+    def get_failure_chance(self):
+        return self.__failure_chance
 
     
-    def get_measured_temp(self, mean_temp, add_error=True):
-        chance = np.random.rand()
-        if chance < self.__failure_chance:
-            return None
-        else:
-            return self.get_linearised_temp(mean_temp) + self.__error/3 * np.random.normal()
+    def get_error(self):
+        return self.__error/3 * np.random.normal()
         
 
     

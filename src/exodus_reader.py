@@ -25,7 +25,7 @@ THERMOCOUPLE_RADIUS = 0.000075
 
 
 class ExodusReader():
-    def __init__(self, file_name: str) -> None:
+    def __init__(self, file_name) -> None:
         # Load the exodus file and read it
         parent_path = os.path.dirname(os.path.dirname(__file__))
         full_path = os.path.join(os.path.sep,parent_path,'simulation', file_name)
@@ -37,7 +37,7 @@ class ExodusReader():
         self.__interpolater = LinearNDInterpolator(mesh_positions, temperatures)
     
 
-    def find_temps(self, pos: np.ndarray) -> np.ndarray:
+    def find_temps(self, pos) -> np.ndarray:
         return self.__interpolater(pos)
 
 
@@ -100,7 +100,7 @@ class ExodusReader():
         return True
 
 
-    def send_to_csv(self, x, y, temp, csv_name):
+    def send_to_csv(self, x, y, temp, csv_name) -> None:
         # Stores the position and temperature data in the columns of a csv file
         data = {
             'X': x, 
@@ -116,7 +116,7 @@ class ExodusReader():
         dataframe.to_csv(full_path, index=False)
 
 
-    def plot_3D(self, x_positions, y_positions, temp_values):
+    def plot_3D(self, x_positions, y_positions, temp_values) -> None:
         # Plot a smart 3D graph of the temperature at various points of the monoblock
         fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
         surf = ax.plot_trisurf(x_positions, y_positions, temp_values, cmap=cm.plasma, linewidth=0.1)

@@ -55,7 +55,7 @@ def show_sensor_layout(layout):
 
 
 
-def optimise_sensor_layout(num_sensors=5, time_limit='00:00:10'):
+def optimise_sensor_layout(num_sensors=5, time_limit='00:10:00'):
     # Optimises the sensor placement
     print('\nOptimising...')
     problem = LossFunction(num_sensors, model_manager)
@@ -88,8 +88,26 @@ def show_results(res_x):
     pdf_manager.close_file()
 
 
+def show_setup(layout):
+    positions = csv_reader.get_positions()
+    true_temperatures = csv_reader.get_temperatures()
+
+    sensor_layouts, lost_sensors, model_temperatures, losses, chances = model_manager.find_temps_for_plotting(layout)
+    graph_manager.create_pdf(
+        positions, 
+        sensor_layouts, 
+        true_temperatures, 
+        model_temperatures, 
+        lost_sensors, 
+        's', 
+        losses, 
+        chances
+    )
+
+
 
 
 if __name__ == '__main__':
-    #print(model_manager.find_loss(np.array([0.001, -0.01, 0.001, 0, 0.001, 0.01, 0.001, 0.02])))
-    optimise_sensor_layout()
+    # Note that for GP we need num_sensors >= 5 
+    print(model_manager.find_loss(np.array([0.001, -0.01, 0.001, 0, 0.001, 0.01, 0.001, 0.02])))
+    show_setup(np.array([0.001, -0.01, 0.001, 0, 0.001, 0.01, 0.001, 0.02]))

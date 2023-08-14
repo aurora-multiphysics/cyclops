@@ -27,7 +27,7 @@ class GraphManager():
         plt.style.use('science')
 
 
-    def draw_double_3D_temp_field(self, positions, true_temps, model_temps):
+    def build_double_3D_temp_field(self, positions, true_temps, model_temps):
         # Draw the 3D double temperature field
         fig, ax = plt.subplots(subplot_kw={"projection": "3d"}, figsize=(8, 6))
 
@@ -43,15 +43,17 @@ class GraphManager():
             positions[:,1].reshape(-1), 
             model_temps.reshape(-1)
         )
-        plt.show()
-        plt.close()
+        return fig
 
 
-    def create_pdf(self, all_positions, all_layouts, true_temps, model_temps, lost_sensors, face):
-        manager = PDFManager('Layouts.pdf')
-        for sensor_positions in all_layouts:
-            fig_1 = self.build_front_compare(all_positions, sensor_positions, true_temps, model_temps, lost_sensors, face)
+    def create_pdf(self, all_positions, all_layouts, true_temps, all_model_temps, all_lost_sensors, face, loss, chance):
+        manager = PDFManager('Sensors.pdf')
+        for i, sensor_positions in enumerate(all_layouts):
+            fig_1 = self.build_compare(all_positions, sensor_positions, true_temps, all_model_temps[i], all_lost_sensors[i], face)
+            fig_1.suptitle('Layout: '+str(i)+', chance: '+str(np.round(chance[i]*100, 4))+'\%% loss: '+str(np.round(loss[i])), fontsize=16)
             manager.save_figure(fig_1)
+            fig_2 = self.build_double_3D_temp_field(all_positions, true_temps, all_model_temps[i])
+            manager.save_figure(fig_2)
         manager.close_file()
 
     
@@ -103,7 +105,7 @@ class GraphManager():
             self.plot_monoblock_grid(ax_4, all_positions, False)
         self.plot_sensor_positions(ax_4, sensor_positions)
         if len(lost_sensors > 1):
-            self.plot_sensor_positions(ax_4, lost_sensors, pen=('white', '*'))
+            self.plot_sensor_positions(ax_4, lost_sensors, pen=('red', '*'))
         return fig_2
 
 
