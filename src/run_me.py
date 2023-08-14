@@ -39,7 +39,6 @@ def optimise_sensor_layout(num_sensors=5, time_limit='00:00:30'):
     
     print('\nResult:')
     print(res.X)
-    print('\nDisplay:')
     show_setup(res.X[0])
 
 
