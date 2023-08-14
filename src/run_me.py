@@ -29,32 +29,6 @@ model_manager = UniformManager(RBFModel, csv_reader)
 
 
 
-
-def show_sensor_layout(layout):
-    positions = csv_reader.get_positions()
-    true_temperatures = csv_reader.get_temperatures()
-    model_temperatures, new_layout, lost_sensors = model_manager.find_temps_for_plotting(layout)
-
-    if hasattr(model_temperatures, '__iter__') == False:
-        print('Not enough working sensors.')
-        return None
-
-    graph_manager.draw_double_3D_temp_field(
-        positions, 
-        true_temperatures, 
-        model_temperatures
-    )
-    graph_manager.draw_compare(
-        positions, 
-        new_layout, 
-        true_temperatures, 
-        model_temperatures,
-        lost_sensors,
-        's'
-    )
-
-
-
 def optimise_sensor_layout(num_sensors=5, time_limit='00:10:00'):
     # Optimises the sensor placement
     print('\nOptimising...')
@@ -66,26 +40,7 @@ def optimise_sensor_layout(num_sensors=5, time_limit='00:10:00'):
     print('\nResult:')
     print(res.X)
     print('\nDisplay:')
-    show_results(res.X)
-
-
-def show_results(res_x):
-    pdf_manager = PDFManager('Layouts.pdf')
-    positions = csv_reader.get_positions()
-    true_temperatures = csv_reader.get_temperatures()
-    
-    for layout in res_x:
-        model_temperatures, new_layout, lost_sensors = model_manager.find_temps_for_plotting(layout)
-        fig = graph_manager.build_compare(
-            positions, 
-            new_layout, 
-            true_temperatures, 
-            model_temperatures,
-            lost_sensors,
-            's'
-        )
-        pdf_manager.save_figure(fig)
-    pdf_manager.close_file()
+    show_setup(res.X[0])
 
 
 def show_setup(layout):
@@ -101,7 +56,8 @@ def show_setup(layout):
         lost_sensors, 
         's', 
         losses, 
-        chances
+        chances,
+        MODEL_TO_STRING[model_manager.get_model_type()]
     )
 
 

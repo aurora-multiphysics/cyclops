@@ -27,27 +27,13 @@ class GraphManager():
         plt.style.use('science')
 
 
-    def build_double_3D_temp_field(self, positions, true_temps, model_temps):
-        # Draw the 3D double temperature field
-        fig, ax = plt.subplots(subplot_kw={"projection": "3d"}, figsize=(8, 6))
-
-        ax.set_title('Model and simulation temperature fields')
-        surf_1 = ax.plot_trisurf(
-            positions[:,0].reshape(-1), 
-            positions[:,1].reshape(-1), 
-            true_temps.reshape(-1), 
-            cmap=cm.plasma
-        )
-        surf_2 = ax.plot_trisurf(
-            positions[:,0].reshape(-1), 
-            positions[:,1].reshape(-1), 
-            model_temps.reshape(-1)
-        )
-        return fig
-
-
-    def create_pdf(self, all_positions, all_layouts, true_temps, all_model_temps, all_lost_sensors, face, loss, chance):
+    def create_pdf(self, all_positions, all_layouts, true_temps, all_model_temps, all_lost_sensors, face, loss, chance, model_type):
         manager = PDFManager('Sensors.pdf')
+
+        fig_0 = self.build_histogram(loss, chance)
+        fig_0.suptitle('Model type: '+model_type)
+        
+        manager.save_figure(fig_0)
 
         sorting_matrix = []
         for i in range(len(chance)):
@@ -68,7 +54,7 @@ class GraphManager():
         
         for i, sensor_positions in enumerate(all_layouts):
             fig_1 = self.build_compare(all_positions, sensor_positions, true_temps, all_model_temps[i], all_lost_sensors[i], face)
-            fig_1.suptitle('Layout: '+str(i)+', chance: '+str(np.round(chance[i]*100, 4))+'\% loss: '+str(np.round(loss[i])), fontsize=16)
+            fig_1.suptitle('Layout: '+str(i)+', chance: '+str(np.round(chance[i]*100, 4))+'\%, loss: '+str(np.round(loss[i])), fontsize=16)
             manager.save_figure(fig_1)
             fig_2 = self.build_double_3D_temp_field(all_positions, true_temps, all_model_temps[i])
             manager.save_figure(fig_2)
@@ -80,6 +66,19 @@ class GraphManager():
         fig_2 = self.build_sensors(all_positions, sensor_positions, true_temps, model_temps, lost_sensors, face)
         plt.show()
         plt.close()
+
+    
+    def build_histogram(self, losses, chances):  
+        fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+        ax.set_title('Experiment possibilities')
+        ax.set_xlabel('Loss')
+        ax.set_ylabel('Frequency density')
+        data = []
+        for i, loss in enumerate(losses):
+            for j in range(int(chances[i]*100)):
+                data.append(loss)
+        ax.hist(data)
+        return fig
 
     
     def build_compare(self, all_positions, sensor_positions, true_temps, model_temps, lost_sensors, face):
@@ -99,7 +98,6 @@ class GraphManager():
             self.plot_sensor_positions(ax_2, lost_sensors, pen=('red', '*'))
         if face == 'f':
             self.plot_circle(ax_2)
-
 
         ax_3.set_title('Errors in temperature field reconstruction')
         differences = np.abs(true_temps.reshape(-1) - model_temps.reshape(-1))
@@ -127,7 +125,23 @@ class GraphManager():
         return fig_2
 
 
+    def build_double_3D_temp_field(self, positions, true_temps, model_temps):
+        # Draw the 3D double temperature field
+        fig, ax = plt.subplots(subplot_kw={"projection": "3d"}, figsize=(8, 6))
 
+        ax.set_title('Model and simulation temperature fields')
+        surf_1 = ax.plot_trisurf(
+            positions[:,0].reshape(-1), 
+            positions[:,1].reshape(-1), 
+            true_temps.reshape(-1), 
+            cmap=cm.plasma
+        )
+        surf_2 = ax.plot_trisurf(
+            positions[:,0].reshape(-1), 
+            positions[:,1].reshape(-1), 
+            model_temps.reshape(-1)
+        )
+        return fig
 
 
     def plot_contour_field(self, ax, positions, field_values):
