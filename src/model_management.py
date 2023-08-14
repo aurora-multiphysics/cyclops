@@ -112,8 +112,12 @@ class ModelUser():
             losses[i] = self.compare_fields(model)
         
         expected_value = np.mean(sensor_chances * losses)
-        success_chance = 1.0
-        return expected_value, success_chance
+        success_chance = 0.0
+        for i, sensor_chance in enumerate(sensor_chances):
+            if losses[i] < 1e6:
+                success_chance += sensor_chance
+
+        return expected_value, 1-success_chance
 
     
     def key_to_layout(self, rearranged_sensor_layout, sensor_key) -> np.ndarray:
