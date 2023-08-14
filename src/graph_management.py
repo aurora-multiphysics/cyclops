@@ -48,9 +48,27 @@ class GraphManager():
 
     def create_pdf(self, all_positions, all_layouts, true_temps, all_model_temps, all_lost_sensors, face, loss, chance):
         manager = PDFManager('Sensors.pdf')
+
+        sorting_matrix = []
+        for i in range(len(chance)):
+            sorting_matrix.append((chance[i], loss[i], all_layouts[i], all_model_temps[i], all_lost_sensors[i]))
+        sorting_matrix.sort(key=lambda a: a[0], reverse=True)
+
+        all_layouts = []
+        all_model_temps = []
+        all_lost_sensors = []
+        loss = []
+        chance = []
+        for sequence in sorting_matrix:
+            chance.append(sequence[0])
+            loss.append(sequence[1])
+            all_layouts.append(sequence[2])
+            all_model_temps.append(sequence[3])
+            all_lost_sensors.append(sequence[4])
+        
         for i, sensor_positions in enumerate(all_layouts):
             fig_1 = self.build_compare(all_positions, sensor_positions, true_temps, all_model_temps[i], all_lost_sensors[i], face)
-            fig_1.suptitle('Layout: '+str(i)+', chance: '+str(np.round(chance[i]*100, 4))+'\%% loss: '+str(np.round(loss[i])), fontsize=16)
+            fig_1.suptitle('Layout: '+str(i)+', chance: '+str(np.round(chance[i]*100, 4))+'\% loss: '+str(np.round(loss[i])), fontsize=16)
             manager.save_figure(fig_1)
             fig_2 = self.build_double_3D_temp_field(all_positions, true_temps, all_model_temps[i])
             manager.save_figure(fig_2)
@@ -78,7 +96,7 @@ class GraphManager():
         cp_2 = self.plot_contour_field(ax_2, all_positions, model_temps)
         self.plot_sensor_positions(ax_2, sensor_positions)
         if len(lost_sensors > 1):
-            self.plot_sensor_positions(ax_2, lost_sensors, pen=('white', '*'))
+            self.plot_sensor_positions(ax_2, lost_sensors, pen=('red', '*'))
         if face == 'f':
             self.plot_circle(ax_2)
 
