@@ -32,7 +32,7 @@ class GraphManager():
 
         fig_0 = self.build_histogram(loss, chance)
         fig_0.suptitle('Model type: '+model_type)
-        
+
         manager.save_figure(fig_0)
 
         sorting_matrix = []
@@ -74,10 +74,16 @@ class GraphManager():
         ax.set_xlabel('Loss')
         ax.set_ylabel('Frequency density')
         data = []
+        count = 0
         for i, loss in enumerate(losses):
             for j in range(int(chances[i]*100)):
                 data.append(loss)
+                count += chances[i]
+        for i in range(int(100-count)):
+            data.append(-1)
+        #print(data)
         ax.hist(data)
+        ax.set_xlim(left=0)
         return fig
 
     
@@ -145,7 +151,7 @@ class GraphManager():
 
 
     def plot_contour_field(self, ax, positions, field_values):
-        # Plot a sincle temperature contour field
+        # Plot a single temperature contour field
         ax.set_xlabel('x (m)')
         ax.set_ylabel('y (m)')
 
