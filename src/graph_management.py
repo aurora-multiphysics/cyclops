@@ -27,10 +27,9 @@ class GraphManager():
         plt.style.use('science')
 
 
-    def create_pdf(self, all_positions, all_layouts, true_temps, all_model_temps, all_lost_sensors, face, loss, chance, model_type):
+    def create_pdf(self, all_positions, all_layouts, true_temps, all_model_temps, all_lost_sensors, face, loss, chance, model_type, sensor_keys):
         manager = PDFManager('Sensors.pdf')
-
-        fig_0 = self.build_histogram(loss, chance)
+        fig_0 = self.build_chart(chance, loss, sensor_keys)
         fig_0.suptitle('Model type: '+model_type)
 
         manager.save_figure(fig_0)
@@ -53,6 +52,7 @@ class GraphManager():
             all_lost_sensors.append(sequence[4])
         
         for i, sensor_positions in enumerate(all_layouts):
+            print(sensor_keys[i])
             fig_1 = self.build_compare(all_positions, sensor_positions, true_temps, all_model_temps[i], all_lost_sensors[i], face)
             fig_1.suptitle('Layout: '+str(i)+', chance: '+str(np.round(chance[i]*100, 4))+'\%, loss: '+str(np.round(loss[i])), fontsize=16)
             manager.save_figure(fig_1)
@@ -68,23 +68,34 @@ class GraphManager():
         plt.close()
 
     
-    def build_histogram(self, losses, chances):  
+    def build_chart(self, chances, losses, sensor_keys):  
         fig, ax = plt.subplots(1, 1, figsize=(6, 6))
-        ax.set_title('Experiment possibilities')
-        ax.set_xlabel('Loss')
-        ax.set_ylabel('Frequency density')
-        data = []
-        count = 0
-        for i, loss in enumerate(losses):
-            for j in range(int(chances[i]*100)):
-                data.append(loss)
-                count += chances[i]
-        for i in range(int(100-count)):
-            data.append(-1)
-        #print(data)
-        ax.hist(data)
-        ax.set_xlim(left=0)
+        labels_and_sizes = {}
+
+        cumulative_total = 0
+        for i, chance in enumerate(chances):
+            if sensor_keys[i].count('X')==0:
+                labels_and_sizes['No sensor failures'] = chances[i]
+            elif sensor_keys[i].count('X') == 1:
+                if '1 sensor failure' not in labels_and_sizes:
+                    labels_and_sizes['1 sensor failure'] = chances[i]
+                else:
+                    labels_and_sizes['1 sensor failure'] = labels_and_sizes['1 sensor failure']+chances[i]
+            elif sensor_keys[i].count('X') == 2:
+                if '2 sensor failures' not in labels_and_sizes:
+                    labels_and_sizes['2 sensor failures'] = chances[i]
+                else:
+                    labels_and_sizes['2 sensor failures'] = labels_and_sizes['2 sensor failures']+chances[i]
+            
+        cumulative_total = sum(labels_and_sizes.values())
+        labels_and_sizes['> 2 sensor failures'] = 1 - cumulative_total
+        ax.pie(
+            labels_and_sizes.values(), 
+            labels=labels_and_sizes.keys(), 
+            autopct='%1.1f%%')
+            
         return fig
+
 
     
     def build_compare(self, all_positions, sensor_positions, true_temps, model_temps, lost_sensors, face):
