@@ -282,6 +282,17 @@ class GraphManager():
         plt.close()
 
 
+    def save_reliability_pareto(self, F, name):
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ax.scatter(F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
+        ax.set_xlabel('Reconstruction loss')
+        ax.set_ylabel('Reconstruction reliability')
+        ax.set_title('Pareto front')
+        parent_path = os.path.dirname(os.path.dirname(__file__))
+        file_path = os.path.join(os.path.sep,parent_path, 'results', name)
+        fig.savefig(file_path)
+        plt.close()
+
 
 
 

@@ -1,5 +1,5 @@
 from model_management import SymmetricManager, UniformManager, CSVReader
-from face_model import GPModel, RBFModel, CTModel, CSModel
+from face_model import GPModel, RBFModel, CTModel, CSModel, LSModel
 from optimisers import LossFunction, optimise_with_GA
 from graph_management import GraphManager, PDFManager
 from results_management import ResultsManager
@@ -11,30 +11,31 @@ MODEL_TO_STRING = {
     GPModel:'GP',
     RBFModel:'RBF',
     CTModel:'CT',
-    CSModel:'CS'
+    CSModel:'CS',
+    LSModel:'LS'
 }
 
 STRING_TO_MODEL = {
     'GP':GPModel,
     'RBF':RBFModel,
     'CT':CTModel,
-    'CS':CSModel
+    'CS':CSModel,
+    'LS':LSModel
 }
 
 graph_manager = GraphManager()
 results_manager = ResultsManager('best_setups.txt')
 csv_reader = CSVReader('side_field.csv')
-model_manager = UniformManager(RBFModel, csv_reader)
 
 
 
 
-def optimise_sensor_layout(num_sensors=5, time_limit='00:30:00'):
+def optimise_sensor_layout(model_manager, num_sensors=5, time_limit='00:00:10'):
     # Optimises the sensor placement
     print('\nOptimising...')
     problem = LossFunction(num_sensors, model_manager)
     res = optimise_with_GA(problem, time_limit)
-    graph_manager.draw_reliability_pareto(res.F)
+    #graph_manager.draw_reliability_pareto(res.F)
     
     print('\nResult:')
     print(res.X)
@@ -42,10 +43,10 @@ def optimise_sensor_layout(num_sensors=5, time_limit='00:30:00'):
         MODEL_TO_STRING[model_manager.get_model_type()], 
         res.X.tolist())
     results_manager.save_updates()
-    save_setup(res.X[0], 'RBF.pdf')
+    return res
 
 
-def save_setup(layout, name):
+def save_setup(model_manager, layout, name):
     positions = csv_reader.get_positions()
     true_temperatures = csv_reader.get_temperatures()
 
@@ -65,9 +66,33 @@ def save_setup(layout, name):
     )
 
 
+def pareto_search(time_of_search='00:60:00'):
+    for num_s in range(4, 9):
+        model_manager = UniformManager(RBFModel, csv_reader)
+        res = optimise_sensor_layout(model_manager, num_sensors=num_s, time_limit=time_of_search)
+        graph_manager.save_reliability_pareto(res.F, str(num_s)+'RBF.png')
+        for i, setup in enumerate(res.X):
+            save_setup(model_manager, setup, str(num_s)+'RBF'+str(i)+'.pdf')
+
+        if num_s >= 5:
+            model_manager = UniformManager(GPModel, csv_reader)
+            res = optimise_sensor_layout(model_manager, num_sensors=num_s, time_limit=time_of_search)
+            graph_manager.save_reliability_pareto(res.F, str(num_s)+'GP.png')
+            for i, setup in enumerate(res.X):
+                save_setup(model_manager, setup, str(num_s)+'GP'+str(i)+'.pdf')
+        
+        model_manager = UniformManager(CSModel, csv_reader)
+        res = optimise_sensor_layout(model_manager, num_sensors=num_s, time_limit=time_of_search)
+        graph_manager.save_reliability_pareto(res.F, str(num_s)+'CS.png')
+        for i, setup in enumerate(res.X):
+            save_setup(model_manager, setup, str(num_s)+'CS'+str(i)+'.pdf')  
+
+
+
 
 if __name__ == '__main__':
     # Note that for GP we need num_sensors >= 5 
-    #print(model_manager.find_loss(np.array([0.001, -0.01, 0.001, 0, 0.001, 0.01, 0.001, 0.02])))
-    #show_setup(np.array([0.001, -0.01, 0.001, 0, 0.001, 0.01, 0.001, 0.02]))
-    optimise_sensor_layout()
+    #model_manager = UniformManager(LSModel, csv_reader)
+    #res = optimise_sensor_layout(model_manager)
+    #save_setup(model_manager, res.X[0], 'test.pdf')
+    pareto_search()

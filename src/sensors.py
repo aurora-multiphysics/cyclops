@@ -7,7 +7,7 @@ import os
 
 class Thermocouple():
     def __init__(self, csv_name):
-        self.__failure_chance = 0.3
+        self.__failure_chance = 0.6
         self.__error = 2.2                      # +/- 2.2 degrees C
 
         parent_path = os.path.dirname(os.path.dirname(__file__))

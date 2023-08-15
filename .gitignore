@@ -161,3 +161,4 @@ cython_debug/
 
 # Ignore all pdfs
 *.pdf
+*.png

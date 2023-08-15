@@ -9,7 +9,7 @@ import warnings
 
 
 warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
-
+warnings.filterwarnings(action='ignore', category=np.RankWarning)
 
 
 class GPModel():
@@ -83,3 +83,20 @@ class CSModel():
         scaled_pos_xy = self.__scaler.transform(pos_xy)
         return self.__cubic_spline(scaled_pos_xy)
 
+
+
+class LSModel():
+    def __init__(self, sensor_pos, sensor_temps):
+        # IMPORTANT: Can only be used with the uniform model_manager
+        self.__scaler = preprocessing.StandardScaler().fit(sensor_pos)
+        scaled_pos = self.__scaler.transform(sensor_pos)
+
+        pos_temp_matrix = np.concatenate((scaled_pos, sensor_temps.reshape(-1, 1)), axis=1)
+        pos_temp_matrix = pos_temp_matrix[pos_temp_matrix[:, 0].argsort()]
+
+        self.__polynomial_fit = np.polynomial.polynomial.Polynomial.fit(pos_temp_matrix[:,0].reshape(-1), pos_temp_matrix[:,1].reshape(-1), deg=3)
+
+
+    def get_temp(self, pos_xy):
+        scaled_pos_xy = self.__scaler.transform(pos_xy)
+        return self.__polynomial_fit(scaled_pos_xy)
