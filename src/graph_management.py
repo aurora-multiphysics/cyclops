@@ -27,8 +27,8 @@ class GraphManager():
         plt.style.use('science')
 
 
-    def create_pdf(self, all_positions, all_layouts, true_temps, all_model_temps, all_lost_sensors, face, loss, chance, model_type, sensor_keys):
-        manager = PDFManager('Sensors.pdf')
+    def create_pdf(self, all_positions, all_layouts, true_temps, all_model_temps, all_lost_sensors, face, loss, chance, model_type, sensor_keys, name):
+        manager = PDFManager(name)
         fig_0 = self.build_chart(chance, loss, sensor_keys)
         fig_0.suptitle('Model type: '+model_type)
 

@@ -29,7 +29,7 @@ model_manager = UniformManager(RBFModel, csv_reader)
 
 
 
-def optimise_sensor_layout(num_sensors=5, time_limit='00:00:10'):
+def optimise_sensor_layout(num_sensors=5, time_limit='00:30:00'):
     # Optimises the sensor placement
     print('\nOptimising...')
     problem = LossFunction(num_sensors, model_manager)
@@ -42,10 +42,10 @@ def optimise_sensor_layout(num_sensors=5, time_limit='00:00:10'):
         MODEL_TO_STRING[model_manager.get_model_type()], 
         res.X.tolist())
     results_manager.save_updates()
-    save_setup(res.X[0])
+    save_setup(res.X[0], 'RBF.pdf')
 
 
-def save_setup(layout):
+def save_setup(layout, name):
     positions = csv_reader.get_positions()
     true_temperatures = csv_reader.get_temperatures()
 
@@ -60,7 +60,8 @@ def save_setup(layout):
         losses, 
         chances,
         MODEL_TO_STRING[model_manager.get_model_type()],
-        sensor_keys
+        sensor_keys,
+        name
     )
 
 
@@ -69,5 +70,4 @@ if __name__ == '__main__':
     # Note that for GP we need num_sensors >= 5 
     #print(model_manager.find_loss(np.array([0.001, -0.01, 0.001, 0, 0.001, 0.01, 0.001, 0.02])))
     #show_setup(np.array([0.001, -0.01, 0.001, 0, 0.001, 0.01, 0.001, 0.02]))
-
     optimise_sensor_layout()
