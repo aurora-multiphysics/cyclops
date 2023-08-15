@@ -12,7 +12,7 @@ Y_BOUNDS = (-0.0135, 0.0215)
 Z_BOUNDS = (0, 0.012)
 MONOBLOCK_RADIUS = 0.006
 THERMOCOUPLE_RADIUS = 0.00075
-
+LOSS_LIMIT = 1e6
 
 
 
@@ -114,7 +114,7 @@ class ModelUser():
         expected_value = np.mean(sensor_chances * losses)
         success_chance = 0.0
         for i, sensor_chance in enumerate(sensor_chances):
-            if losses[i] < 1e6:
+            if losses[i] < LOSS_LIMIT:
                 success_chance += sensor_chance
 
         return expected_value, 1-success_chance

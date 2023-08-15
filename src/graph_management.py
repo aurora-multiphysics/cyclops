@@ -11,7 +11,7 @@ import os
 
 # This constant is for removing the middle lines across the void in the monoblock setup diagram
 RADIUS = 0.006
-
+LOSS_LIMIT = 1e6
 
 # Function naming
 # draw_ create entire window (and may also create a figure/fill in the figure)
@@ -71,9 +71,9 @@ class GraphManager():
     def build_chart(self, chances, losses, sensor_keys):  
         fig, ax = plt.subplots(1, 1, figsize=(6, 6))
         labels_and_sizes = {}
+        adequate = [0, 0]
 
-        cumulative_total = 0
-        for i, chance in enumerate(chances):
+        for i in range(len(chances)):
             if sensor_keys[i].count('X')==0:
                 labels_and_sizes['No sensor failures'] = chances[i]
             elif sensor_keys[i].count('X') == 1:
@@ -86,14 +86,35 @@ class GraphManager():
                     labels_and_sizes['2 sensor failures'] = chances[i]
                 else:
                     labels_and_sizes['2 sensor failures'] = labels_and_sizes['2 sensor failures']+chances[i]
+            if losses[i] < LOSS_LIMIT:
+                adequate[0] += chances[i]
+            else:
+                adequate[1] += chances[i]
             
         cumulative_total = sum(labels_and_sizes.values())
-        labels_and_sizes['> 2 sensor failures'] = 1 - cumulative_total
-        ax.pie(
-            labels_and_sizes.values(), 
-            labels=labels_and_sizes.keys(), 
-            autopct='%1.1f%%')
-            
+        labels_and_sizes['$>$2 sensor failures'] = 1 - cumulative_total
+        adequate[1] += 1-cumulative_total
+
+        cmap = plt.colormaps["tab20"]
+        outer_colors = cmap([0, 2, 8, 12])
+        inner_colors = cmap([4, 6])
+
+        size=0.3
+        wedges = ax.pie(
+            labels_and_sizes.values(),
+            labels = labels_and_sizes.keys(),
+            radius=1, 
+            colors=outer_colors,
+            wedgeprops=dict(width=size, edgecolor='w')
+        )
+        print(str(round(adequate[0]*100))+' % chance of success')
+        wedges_2 = ax.pie(
+            adequate,
+            radius=1-size, 
+            colors=inner_colors,
+            wedgeprops=dict(width=size, edgecolor='w')
+        )
+        ax.set(aspect="equal")
         return fig
 
 
