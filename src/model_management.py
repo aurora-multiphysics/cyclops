@@ -143,7 +143,7 @@ class ModelUser():
         sensor_chances = []
 
         for i in range(num_sensors):
-            for j in range(num_sensors):
+            for j in range(i, num_sensors):
                 setup = ['O']*num_sensors
                 setup[i]='X'
                 setup[j]='X'
@@ -172,7 +172,7 @@ class ModelUser():
         sensor_temperatures.reshape(-1)
         for i, temp in enumerate(sensor_temperatures):
             sensor_temperatures[i] = self._sensor.get_linearised_temp(temp)
-            #senor_temperatures[i] += self._sensor.get_error()
+            sensor_temperatures[i] += self._sensor.get_error()
         return sensor_temperatures
     
 
@@ -202,7 +202,7 @@ class ModelUser():
             lost_sensors.append(self.key_to_lost(rearranged_layout, sensor_key))
             model_temps.append(self.find_model_temps(self._comparison_pos, model))
         
-        return sensor_layouts, lost_sensors, model_temps, losses, sensor_chances
+        return sensor_layouts, lost_sensors, model_temps, losses, sensor_chances, sensor_keys
 
     
     

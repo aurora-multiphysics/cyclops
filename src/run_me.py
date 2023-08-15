@@ -29,24 +29,27 @@ model_manager = UniformManager(RBFModel, csv_reader)
 
 
 
-def optimise_sensor_layout(num_sensors=5, time_limit='00:00:30'):
+def optimise_sensor_layout(num_sensors=5, time_limit='00:00:10'):
     # Optimises the sensor placement
     print('\nOptimising...')
     problem = LossFunction(num_sensors, model_manager)
     res = optimise_with_GA(problem, time_limit)
-
     graph_manager.draw_reliability_pareto(res.F)
     
     print('\nResult:')
     print(res.X)
-    show_setup(res.X[0])
+    results_manager.write_file(
+        MODEL_TO_STRING[model_manager.get_model_type()], 
+        res.X.tolist())
+    results_manager.save_updates()
+    save_setup(res.X[0])
 
 
-def show_setup(layout):
+def save_setup(layout):
     positions = csv_reader.get_positions()
     true_temperatures = csv_reader.get_temperatures()
 
-    sensor_layouts, lost_sensors, model_temperatures, losses, chances = model_manager.find_temps_for_plotting(layout)
+    sensor_layouts, lost_sensors, model_temperatures, losses, chances, sensor_keys = model_manager.find_temps_for_plotting(layout)
     graph_manager.create_pdf(
         positions, 
         sensor_layouts, 
@@ -56,7 +59,8 @@ def show_setup(layout):
         's', 
         losses, 
         chances,
-        MODEL_TO_STRING[model_manager.get_model_type()]
+        MODEL_TO_STRING[model_manager.get_model_type()],
+        sensor_keys
     )
 
 

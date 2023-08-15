@@ -30,9 +30,9 @@ class ResultsManager():
         f.close()
 
 
-    def write_file(self, write_ID, write_model, write_layouts):
+    def write_file(self, write_model, write_layouts):
         # Update the best result & setup for a certain number of sensors
-        self.__IDs.append(write_ID)
+        self.__IDs.append(str(int(self.__IDs[-1])+1))
         self.__models.append(write_model)
         self.__sensor_layouts.append(write_layouts)
 
