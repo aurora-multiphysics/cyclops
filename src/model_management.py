@@ -101,7 +101,7 @@ class ModelUser():
         return np.sum(loss_array)
     
     
-    def find_loss(self, proposed_sensor_layout, repetitions=100) -> tuple:
+    def find_loss(self, proposed_sensor_layout, repetitions=6000) -> tuple:
         rearranged_layout = self.rearrange_sensor_layout(proposed_sensor_layout)
         sensor_keys, sensor_chances = self.find_sensor_keys_chances(rearranged_layout)
         losses = np.zeros(sensor_keys.shape)
@@ -146,12 +146,18 @@ class ModelUser():
         sensor_chances = []
 
         for i in range(num_sensors):
+            setup = ['O']*num_sensors
+            setup[i]='X'
+            str_setup = ''.join(setup)
+            sensor_keys.append(str_setup)
             for j in range(i, num_sensors):
-                setup = ['O']*num_sensors
-                setup[i]='X'
-                setup[j]='X'
-                str_setup = ''.join(setup)
-                sensor_keys.append(str_setup)
+                for k in range(j+1, num_sensors):
+                    setup = ['O']*num_sensors
+                    setup[i]='X'
+                    setup[j]='X'
+                    setup[k]='X'
+                    str_setup = ''.join(setup)
+                    sensor_keys.append(str_setup)
         
         for sensor_key in sensor_keys:
             sensor_chances.append(self.find_chance(sensor_key))

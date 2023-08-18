@@ -57,7 +57,7 @@ def optimise_with_GA(problem, time_limit):
     res = minimize(problem,
                 algorithm,
                 termination,
-                seed=1,
+                seed=2,
                 save_history=True,
                 verbose=True)
     return res

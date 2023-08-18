@@ -66,33 +66,26 @@ def save_setup(model_manager, layout, name):
     )
 
 
-def pareto_search(time_of_search='00:60:00'):
-    for num_s in range(4, 9):
-        model_manager = UniformManager(RBFModel, csv_reader)
-        res = optimise_sensor_layout(model_manager, num_sensors=num_s, time_limit=time_of_search)
-        graph_manager.save_reliability_pareto(res.F, str(num_s)+'RBF.png')
-        for i, setup in enumerate(res.X):
-            save_setup(model_manager, setup, str(num_s)+'RBF'+str(i)+'.pdf')
+def pareto_search(time_of_search='08:00:00'):
+    for num_s in range(6, 8):
+        # model_manager = UniformManager(RBFModel, csv_reader)
+        # res = optimise_sensor_layout(model_manager, num_sensors=num_s, time_limit=time_of_search)
+        # graph_manager.save_reliability_pareto(res.F, str(num_s)+'RBF.png')
+        # for i, setup in enumerate(res.X):
+        #     save_setup(model_manager, setup, str(num_s)+'RBF'+str(i)+'.pdf')
 
-        if num_s >= 5:
-            model_manager = UniformManager(GPModel, csv_reader)
-            res = optimise_sensor_layout(model_manager, num_sensors=num_s, time_limit=time_of_search)
-            graph_manager.save_reliability_pareto(res.F, str(num_s)+'GP.png')
-            for i, setup in enumerate(res.X):
-                save_setup(model_manager, setup, str(num_s)+'GP'+str(i)+'.pdf')
-        
-        model_manager = UniformManager(CSModel, csv_reader)
+        model_manager = UniformManager(GPModel, csv_reader)
         res = optimise_sensor_layout(model_manager, num_sensors=num_s, time_limit=time_of_search)
-        graph_manager.save_reliability_pareto(res.F, str(num_s)+'CS.png')
+        graph_manager.save_reliability_pareto(res.F, str(num_s)+'GP.png')
         for i, setup in enumerate(res.X):
-            save_setup(model_manager, setup, str(num_s)+'CS'+str(i)+'.pdf')  
+            save_setup(model_manager, setup, str(num_s)+'GP'+str(i)+'.pdf')
 
 
 
 
 if __name__ == '__main__':
     # Note that for GP we need num_sensors >= 5 
-    #model_manager = UniformManager(LSModel, csv_reader)
-    #res = optimise_sensor_layout(model_manager)
-    #save_setup(model_manager, res.X[0], 'test.pdf')
+    # model_manager = UniformManager(RBFModel, csv_reader)
+    # res = optimise_sensor_layout(model_manager, num_sensors=6)
+    # save_setup(model_manager, res.X[0], 'test.pdf')
     pareto_search()

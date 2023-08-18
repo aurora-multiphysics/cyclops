@@ -70,46 +70,55 @@ class GraphManager():
     
     def build_chart(self, chances, losses, sensor_keys):  
         fig, ax = plt.subplots(1, 1, figsize=(6, 6))
-        labels_and_sizes = {}
-        adequate = [0, 0]
+        areas = np.zeros((5,2))
+        labels = [
+            'No sensor failures',
+            '1 sensor failure',
+            '2 sensor failures',
+            '3 sensor failures',
+            '$>$3 sensor failures'
+        ]
 
         for i in range(len(chances)):
             if sensor_keys[i].count('X')==0:
-                labels_and_sizes['No sensor failures'] = chances[i]
+                if losses[i] < LOSS_LIMIT:
+                    areas[0][0] += chances[i]
+                else:
+                    areas[0][1] += chances[i]
             elif sensor_keys[i].count('X') == 1:
-                if '1 sensor failure' not in labels_and_sizes:
-                    labels_and_sizes['1 sensor failure'] = chances[i]
+                if losses[i] < LOSS_LIMIT:
+                    areas[1][0] += chances[i]
                 else:
-                    labels_and_sizes['1 sensor failure'] = labels_and_sizes['1 sensor failure']+chances[i]
+                    areas[1][1] += chances[i]
             elif sensor_keys[i].count('X') == 2:
-                if '2 sensor failures' not in labels_and_sizes:
-                    labels_and_sizes['2 sensor failures'] = chances[i]
+                if losses[i] < LOSS_LIMIT:
+                    areas[2][0] += chances[i]
                 else:
-                    labels_and_sizes['2 sensor failures'] = labels_and_sizes['2 sensor failures']+chances[i]
-            if losses[i] < LOSS_LIMIT:
-                adequate[0] += chances[i]
-            else:
-                adequate[1] += chances[i]
-            
-        cumulative_total = sum(labels_and_sizes.values())
-        labels_and_sizes['$>$2 sensor failures'] = 1 - cumulative_total
-        adequate[1] += 1-cumulative_total
+                    areas[2][1] += chances[i]
+            elif sensor_keys[i].count('X') == 3:
+                if losses[i] < LOSS_LIMIT:
+                    areas[3][0] += chances[i]
+                else:
+                    areas[3][1] += chances[i]
+        
+        cumulative_total = sum(areas.flatten())
+        areas[4][1]= 1 - cumulative_total
 
         cmap = plt.colormaps["tab20"]
-        outer_colors = cmap([0, 2, 8, 12])
-        inner_colors = cmap([4, 6])
+        outer_colors = cmap([0, 2, 8, 12, 18])
+        inner_colors = cmap([4, 6]*5)
 
         size=0.3
         wedges = ax.pie(
-            labels_and_sizes.values(),
-            labels = labels_and_sizes.keys(),
+            areas.sum(axis=1),
+            labels = labels,
             radius=1, 
             colors=outer_colors,
             wedgeprops=dict(width=size, edgecolor='w')
         )
-        print(str(round(adequate[0]*100))+' % chance of success')
+        #print(str(round(adequate[0]*100))+' % chance of success')
         wedges_2 = ax.pie(
-            adequate,
+            areas.flatten(),
             radius=1-size, 
             colors=inner_colors,
             wedgeprops=dict(width=size, edgecolor='w')
