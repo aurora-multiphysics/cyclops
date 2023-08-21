@@ -56,6 +56,7 @@ class GraphManager():
             fig_2 = self.build_double_3D_temp_field(all_positions, true_temps, all_model_temps[i])
             manager.save_figure(fig_2)
         manager.close_file()
+        plt.close()
 
     
     def draw_compare(self, all_positions, sensor_positions, true_temps, model_temps, lost_sensors, face):

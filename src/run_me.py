@@ -25,7 +25,6 @@ STRING_TO_MODEL = {
 
 graph_manager = GraphManager()
 results_manager = ResultsManager('best_setups.txt')
-csv_reader = CSVReader('side_field.csv')
 
 
 
@@ -46,10 +45,7 @@ def optimise_sensor_layout(model_manager, num_sensors=5, time_limit='00:00:10'):
     return res
 
 
-def save_setup(model_manager, layout, name):
-    positions = csv_reader.get_positions()
-    true_temperatures = csv_reader.get_temperatures()
-
+def save_setup(model_manager, positions, true_temperatures, layout, name):
     sensor_layouts, lost_sensors, model_temperatures, losses, chances, sensor_keys = model_manager.find_temps_for_plotting(layout)
     graph_manager.create_pdf(
         positions, 
@@ -66,26 +62,19 @@ def save_setup(model_manager, layout, name):
     )
 
 
-def pareto_search(time_of_search='08:00:00'):
-    for num_s in range(6, 8):
-        # model_manager = UniformManager(RBFModel, csv_reader)
-        # res = optimise_sensor_layout(model_manager, num_sensors=num_s, time_limit=time_of_search)
-        # graph_manager.save_reliability_pareto(res.F, str(num_s)+'RBF.png')
-        # for i, setup in enumerate(res.X):
-        #     save_setup(model_manager, setup, str(num_s)+'RBF'+str(i)+'.pdf')
+def pareto_search(csv_reader, model_type=RBFModel, time_of_search='08:00:00', suffix='RBF_test', sensor_range=(6,8)):
+    for num_s in range(sensor_range[0], sensor_range[1]):
+        positions = csv_reader.get_positions()
+        true_temperatures = csv_reader.get_temperatures()
 
-        model_manager = UniformManager(GPModel, csv_reader)
+        model_manager = UniformManager(model_type, csv_reader)
         res = optimise_sensor_layout(model_manager, num_sensors=num_s, time_limit=time_of_search)
-        graph_manager.save_reliability_pareto(res.F, str(num_s)+'GP.png')
+        graph_manager.save_reliability_pareto(res.F, str(num_s)+suffix+'.png')
         for i, setup in enumerate(res.X):
-            save_setup(model_manager, setup, str(num_s)+'GP'+str(i)+'.pdf')
+            save_setup(model_manager, positions, true_temperatures, str(num_s)+suffix+str(i)+'.pdf')
 
 
 
-
-if __name__ == '__main__':
-    # Note that for GP we need num_sensors >= 5 
-    model_manager = UniformManager(RBFModel, csv_reader)
-    res = optimise_sensor_layout(model_manager, num_sensors=6)
-    save_setup(model_manager, res.X[0], 'test.pdf')
-    #pareto_search()
+def show_optimsiation(res, file_name):
+    graph_manager.draw_optimisation(res.history)
+    graph_manager.save_reliability_pareto(res.F, file_name)
