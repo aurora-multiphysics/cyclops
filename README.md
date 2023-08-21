@@ -1,18 +1,23 @@
 # cyclops
 
-Have you ever wanted to make sure you've put the sensors in the right position for your experiment? If so, cyclops is about to become your new favorite software package!
+Cyclops is a sensor placement optimisation program. Originally designed for monoblocks at the bottom of nuclear fusion reactors it searches for the optimal layout of thermocouples (with IR cameras and DIC sensors to come) to maximise both the accuracy and reliability of the temperature field reconstruction.
 
-After replacing the 'monoblock.e' file with an exodus MOOSE simulation file of your choice, cyclops will convert this into a csv format, then given a number of sensors find the best places on the upper face of the object to put them in order to reconstruct the temperature field as well as possible. 
+If you plan on using it, we recommend you read the manual beforehand (in the manual folder).
+
+Requirements: Python 3.x, Latex (Latex is optional - see installation step 2 to get around it)
 
 
 # Installation
 
-Follow the following steps very carefully.
+Please follow the two steps below very carefully. 
 
-1. Clone this repository
-2. Install MOOSE
-3. Change your .bashrc file to include the MOOSE chigger library in the PYTHONPATH
-4. Install the libraries in the requirements.txt file
+1. Install the requirements as below
+
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements/app.txt
+
+2. Install Latex on your device to let latex style graphs be plotted. If you don't care about the latex style graphs and/or can't install latex then go to src/graph_management.py and then backspace the line in GraphManager.__init__() about plt.style.use('science').
 
 You are now ready to go!
 

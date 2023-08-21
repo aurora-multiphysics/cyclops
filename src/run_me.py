@@ -85,7 +85,7 @@ def pareto_search(time_of_search='08:00:00'):
 
 if __name__ == '__main__':
     # Note that for GP we need num_sensors >= 5 
-    # model_manager = UniformManager(RBFModel, csv_reader)
-    # res = optimise_sensor_layout(model_manager, num_sensors=6)
-    # save_setup(model_manager, res.X[0], 'test.pdf')
-    pareto_search()
+    model_manager = UniformManager(RBFModel, csv_reader)
+    res = optimise_sensor_layout(model_manager, num_sensors=6)
+    save_setup(model_manager, res.X[0], 'test.pdf')
+    #pareto_search()

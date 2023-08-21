@@ -4,6 +4,7 @@ from matplotlib import tri as tri
 from matplotlib import cm
 import scienceplots
 import numpy as np
+import warnings
 import os
 
 
@@ -18,7 +19,7 @@ LOSS_LIMIT = 1e6
 # build_ create a figure (and may also fill in the axes)
 # plot_ fill in the axes only
 
-
+warnings.filterwarnings(action='ignore', category=RuntimeWarning)
 
 
 

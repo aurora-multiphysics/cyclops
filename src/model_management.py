@@ -101,7 +101,7 @@ class ModelUser():
         return np.sum(loss_array)
     
     
-    def find_loss(self, proposed_sensor_layout, repetitions=6000) -> tuple:
+    def find_loss(self, proposed_sensor_layout, repetitions=100) -> tuple:
         rearranged_layout = self.rearrange_sensor_layout(proposed_sensor_layout)
         sensor_keys, sensor_chances = self.find_sensor_keys_chances(rearranged_layout)
         losses = np.zeros(sensor_keys.shape)
