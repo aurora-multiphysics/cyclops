@@ -5,13 +5,7 @@ from pymoo.operators.crossover.sbx import SBX
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.operators.mutation.pm import PM
 from pymoo.optimize import minimize
-
-
-
-#Monoblock values
-X_BOUNDS = (-0.0135, 0.0135)
-Y_BOUNDS = (-0.0135, 0.0215)
-Z_BOUNDS = (0, 0.012)
+from constants import *
 
 
 

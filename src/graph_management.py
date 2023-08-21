@@ -2,17 +2,13 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import pyplot as plt
 from matplotlib import tri as tri
 from matplotlib import cm
+from constants import *
 import scienceplots
 import numpy as np
 import warnings
 import os
 
 
-
-
-# This constant is for removing the middle lines across the void in the monoblock setup diagram
-RADIUS = 0.006
-LOSS_LIMIT = 1e6
 
 # Function naming
 # draw_ create entire window (and may also create a figure/fill in the figure)
@@ -219,7 +215,7 @@ class GraphManager():
     
     def plot_circle(self, ax):
         # Produce a white circle to overlay
-        circle = plt.Circle((0, 0), RADIUS, color='w')
+        circle = plt.Circle((0, 0), MONOBLOCK_RADIUS, color='w')
         ax.add_patch(circle)
 
 
@@ -230,7 +226,7 @@ class GraphManager():
             triang.set_mask(np.hypot(
                 positions[:, 0][triang.triangles].mean(axis=1),
                 positions[:, 1][triang.triangles].mean(axis=1)) 
-            < RADIUS)
+            < MONOBLOCK_RADIUS)
         ax.triplot(triang)
 
 

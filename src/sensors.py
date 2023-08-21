@@ -1,5 +1,6 @@
 from sklearn.linear_model import LinearRegression
 from scipy.interpolate import CubicSpline
+from constants import *
 import pandas as pd
 import numpy as np
 import os
@@ -7,8 +8,8 @@ import os
 
 class Thermocouple():
     def __init__(self, csv_name):
-        self.__failure_chance = 0.4
-        self.__error = 2.2                      # +/- 2.2 degrees C
+        self.__failure_chance = FAILURE_CHANCE
+        self.__error = THERMOCOUPLE_ERROR
 
         parent_path = os.path.dirname(os.path.dirname(__file__))
         file_path = os.path.join(os.path.sep,parent_path, 'simulation', csv_name)

@@ -1,18 +1,12 @@
 from scipy.interpolate import LinearNDInterpolator
 from sensors import Thermocouple
+from constants import *
 import pandas as pd
 import numpy as np
 import os
 
 
 
-#Monoblock values
-X_BOUNDS = (-0.0135, 0.0135)
-Y_BOUNDS = (-0.0135, 0.0215)
-Z_BOUNDS = (0, 0.012)
-MONOBLOCK_RADIUS = 0.006
-THERMOCOUPLE_RADIUS = 0.00075
-LOSS_LIMIT = 1e6
 
 
 

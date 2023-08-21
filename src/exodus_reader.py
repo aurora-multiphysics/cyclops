@@ -1,6 +1,7 @@
 from scipy.interpolate import LinearNDInterpolator
 from matplotlib import pyplot as plt
 from matplotlib import cm
+from constants import *
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
@@ -8,19 +9,13 @@ import meshio
 import os
 
 
-#Monoblock values
-X_BOUNDS = (-0.0135, 0.0135)
-Y_BOUNDS = (-0.0135, 0.0215)
-Z_BOUNDS = (0, 0.012)
-MONOBLOCK_RADIUS = 0.006
-THERMOCOUPLE_RADIUS = 0.000075
+
 
 # Function naming
 # get_ means getter
 # find_ means calculate that value
 # generate_ is for producing objects in the initialisation
 # build_ is for producing objects that are used all over the place
-
 
 
 
