@@ -71,10 +71,23 @@ def pareto_search(csv_reader, model_type=RBFModel, time_of_search='08:00:00', su
         res = optimise_sensor_layout(model_manager, num_sensors=num_s, time_limit=time_of_search)
         graph_manager.save_reliability_pareto(res.F, str(num_s)+suffix+'.png')
         for i, setup in enumerate(res.X):
-            save_setup(model_manager, positions, true_temperatures, str(num_s)+suffix+str(i)+'.pdf')
+            save_setup(model_manager, positions, true_temperatures, setup, str(num_s)+suffix+str(i)+'.pdf')
 
 
 
 def show_optimsiation(res, file_name):
     graph_manager.draw_optimisation(res.history)
     graph_manager.save_reliability_pareto(res.F, file_name)
+
+
+
+
+
+
+
+if __name__ == '__main__':
+    csv_reader = CSVReader('test.csv')
+    positions = csv_reader.get_positions()
+    true_temperatures = csv_reader.get_temperatures()
+
+    pareto_search(csv_reader, model_type=RBFModel, time_of_search='00:00:01', suffix='RBF_test', sensor_range=(5,8))
