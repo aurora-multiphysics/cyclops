@@ -30,6 +30,7 @@ class GraphManager():
         fig_0.suptitle('Model type: '+model_type)
 
         manager.save_figure(fig_0)
+        plt.close(fig_0)
 
         sorting_matrix = []
         for i in range(len(chance)):
@@ -55,8 +56,9 @@ class GraphManager():
             manager.save_figure(fig_1)
             fig_2 = self.build_double_3D_temp_field(all_positions, true_temps, all_model_temps[i])
             manager.save_figure(fig_2)
+            plt.close(fig_1)
+            plt.close(fig_2)
         manager.close_file()
-        plt.close()
 
     
     def draw_compare(self, all_positions, sensor_positions, true_temps, model_temps, lost_sensors, face):
@@ -247,25 +249,45 @@ class GraphManager():
     def draw_optimisation(self, history):
         # Draw the optimisation progress chart
         n_evals = []
-        average_loss = []
-        min_loss = []
+        average_loss0 = []
+        min_loss0 = []
+
+        average_loss1 = []
+        min_loss1 = []
 
         for algo in history:
             n_evals.append(algo.evaluator.n_eval)
             opt = algo.opt
 
-            min_loss.append(opt.get("F").min())
-            average_loss.append(algo.pop.get("F").mean())
+            min_loss0.append(opt.get("F")[:,0].min())
+            average_loss0.append(algo.pop.get("F")[:,0].mean())
+            min_loss1.append(opt.get("F")[:,1].min())
+            average_loss1.append(algo.pop.get("F")[:,1].mean())
 
         fig, ax = plt.subplots(figsize=(8, 6))
         plt.yscale('log')
-        plt.plot(n_evals, average_loss, label='average loss')
-        plt.plot(n_evals, min_loss, label = 'minimum loss')
+        plt.plot(n_evals, average_loss0, label='average loss')
+        plt.plot(n_evals, min_loss0, label = 'minimum loss')
         plt.xlabel('Function evaluations')
-        plt.ylabel('Function loss')
+        plt.ylabel('Expected error')
+        plt.title('Accuracy')
         plt.legend()
         plt.show()
         plt.close()
+
+        fig, ax = plt.subplots(figsize=(8, 6))
+        plt.yscale('log')
+        plt.plot(n_evals, average_loss1, label='average loss')
+        plt.plot(n_evals, min_loss1, label = 'minimum loss')
+        plt.xlabel('Function evaluations')
+        plt.ylabel('Chance of failure')
+        plt.title('Reliability')
+        plt.legend()
+        plt.show()
+        plt.close()
+
+
+
     
 
     def draw_num_pareto(self, numbers, results):

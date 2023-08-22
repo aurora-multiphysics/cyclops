@@ -75,9 +75,9 @@ def pareto_search(csv_reader, model_type=RBFModel, time_of_search='08:00:00', su
 
 
 
-def show_optimsiation(res, file_name):
+def show_optimsiation(res):
     graph_manager.draw_optimisation(res.history)
-    graph_manager.save_reliability_pareto(res.F, file_name)
+    graph_manager.draw_reliability_pareto(res.F)
 
 
 
