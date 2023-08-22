@@ -14,7 +14,9 @@ Please follow the two steps below very carefully.
 1. Install the requirements as below
 
 `python3 -m venv venv`
+
 `source venv/bin/activate`
+
 `pip install -r requirements/app.txt`
 
 2. Install Latex on your device to let latex style graphs be plotted. 
@@ -25,7 +27,7 @@ Please follow the two steps below very carefully.
 
 `sudo apt-get install dvipng texlive-latex-extra texlive-fonts-recommended cm-super`
 
-If you don't care about the latex style graphs or can't install latex then go to src/graph_management.py and then chance the line in GraphManager.__init__() about plt.style.use('science') to the line below.
+If you don't care about the latex style graphs or can't install latex then go to src/graph_management.py and then chance the line in `GraphManager.__init__()` about `plt.style.use('science')` to the line below.
 
 `plt.style.use(['science','no-latex'])`
 
