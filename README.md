@@ -1,6 +1,6 @@
 # cyclops
 
-Cyclops is a sensor placement optimisation program. Originally designed for monoblocks at the bottom of nuclear fusion reactors it searches for the optimal layout of thermocouples (with IR cameras and DIC sensors to come) to maximise both the accuracy and reliability of the temperature field reconstruction.
+Cyclops is a sensor placement optimisation program. Originally designed for monoblocks at the bottom of nuclear fusion reactors it searches for the optimal layout of thermocouples (with IR cameras and DIC sensors to come in a later version) to maximise both the accuracy and reliability of the temperature field reconstruction.
 
 After reading this, go straight to manual/overview.ipynb to find out how to use the software.
 
@@ -13,11 +13,21 @@ Please follow the two steps below very carefully.
 
 1. Install the requirements as below
 
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements/app.txt
+`python3 -m venv venv`
+`source venv/bin/activate`
+`pip install -r requirements/app.txt`
 
-2. Install Latex on your device to let latex style graphs be plotted. If you don't care about the latex style graphs or can't install latex then go to src/graph_management.py and then backspace the line in GraphManager.__init__() about plt.style.use('science'). Also don't bother importing scienceplots.
+2. Install Latex on your device to let latex style graphs be plotted. 
+
+* On MacOS I recommend MacTex https://www.tug.org/mactex/.
+* On Windows I recommend MikTex https://miktex.org/.
+* On Linux you can install Tex Live and other requirements with the command below.
+
+`sudo apt-get install dvipng texlive-latex-extra texlive-fonts-recommended cm-super`
+
+If you don't care about the latex style graphs or can't install latex then go to src/graph_management.py and then chance the line in GraphManager.__init__() about plt.style.use('science') to the line below.
+
+`plt.style.use(['science','no-latex'])`
 
 You are now ready to go!
 
