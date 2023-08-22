@@ -2,7 +2,7 @@
 
 Cyclops is a sensor placement optimisation program. Originally designed for monoblocks at the bottom of nuclear fusion reactors it searches for the optimal layout of thermocouples (with IR cameras and DIC sensors to come in a later version) to maximise both the accuracy and reliability of the temperature field reconstruction.
 
-After reading this, go straight to manual/overview.ipynb to find out how to use the software.
+After reading this, go straight to '*manual/overview.ipynb*' to find out how to use the software.
 
 Requirements: Python 3.x, Latex (Latex is very strongly recommended but not 100% essential - see installation step 2 to get around it)
 
