@@ -1,5 +1,8 @@
 from sklearn.linear_model import LinearRegression
 from scipy.interpolate import CubicSpline
+from sensors import RoundSensor
+import numpy as np
+import pickle
 import os
 
 
@@ -30,15 +33,9 @@ class ThermocoupleDataReader():
                                 voltages.append(float(volt))
                                 add_on += 1
                     next_temp += 10
-        return temperatures, voltages
+        return np.array(temperatures), np.array(voltages)
 
 
-    def save_sensor_data(self, temperatures, voltages, file_name):
-        parent_path = os.path.dirname(os.path.dirname(__file__))
-        full_path = os.path.join(os.path.sep,parent_path,'sensors', file_name)
-        
-        temp_to_voltage = CubicSpline(temperatures, voltages)
-        voltage_to_temp = LinearRegression(voltages, temperatures)
         
 
 
@@ -46,6 +43,17 @@ class ThermocoupleDataReader():
 
 
 if __name__ == '__main__':
-    reader = thermocouple_reader('k-type.txt')
-    temperatures, voltages = reader.generate_thermo_data()
-    reader.write_to_csv(temperatures, voltages, 'k-type.csv')
+    reader = ThermocoupleDataReader('k-type.txt')
+    temps, volts = reader.generate_sensor_data()
+
+    temp_to_volts = CubicSpline(temps, volts)
+    volt_to_temp = LinearRegression().fit(volts.reshape(-1), temps.reshape(-1))
+
+    def f(temp):
+        voltage = temp_to_volts(temp)
+        return volt_to_temp.predict(voltage.reshape(-1)) - temp.reshape(-1)
+
+    k_thermcouple = RoundSensor(0.6, f)
+    thermo_file = open('thermocouple-k.obj', 'wb')
+    pickle.dump(k_thermcouple, thermo_file)
+    thermo_file.close()

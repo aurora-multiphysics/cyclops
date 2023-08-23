@@ -19,6 +19,10 @@ class ScalarRegressionModel():
         self._scaler.fit(sensor_pos)
 
 
+    def get_temp(self, pos_xy):
+        return None
+
+
 
 class GPModel(ScalarRegressionModel):
     def __init__(self, sensor_pos, sensor_values):
