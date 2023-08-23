@@ -32,11 +32,11 @@ class ExodusReader():
     def __init__(self, file_name) -> None:
         # Load the exodus file and read it to get a mesh
         print('\nReading file...')
-        self.__mesh = self.generate_mesh(file_name)
+        self.__mesh = self.__generate_mesh(file_name)
         print(self.__mesh)
 
 
-    def generate_mesh(self, file_name):
+    def __generate_mesh(self, file_name):
         # Convert the file to a mesh
         dir_path = os.path.dirname(os.path.dirname(__file__))
         full_path = os.path.join(os.path.sep, dir_path,'simulation', file_name)
@@ -64,28 +64,27 @@ class ExodusReader():
 
 if __name__ == '__main__':
     reader = ExodusReader('monoblock_out.e')
-    
-    pos_3D = reader.read_pos('right')
+
+    sensor_region = 'right'
+    pos_3D = reader.read_pos(sensor_region)
     pos_2D = compress_2D(pos_3D)
-    temps = reader.read_scalar('right', 'temperature')
+    temps = reader.read_scalar(sensor_region, 'temperature')
 
     disp = np.array([
-        reader.read_scalar('right', 'disp_x'),
-        reader.read_scalar('right', 'disp_y'),
-        reader.read_scalar('right', 'disp_z')
+        reader.read_scalar(sensor_region, 'disp_x'),
+        reader.read_scalar(sensor_region, 'disp_y'),
+        reader.read_scalar(sensor_region, 'disp_z')
     ]).T
 
     temp_field = ScalarField(pos_2D, temps)
     disp_field = VectorField(pos_2D, disp)
 
-    temp_field.draw_field()
-    disp_field.draw_field()
+    temp_field.draw()
+    disp_field.draw()
 
     save_field(temp_field, 'field_temp.obj')
     save_field(disp_field, 'field_disp.obj')
 
     x = np.linspace(1, 100, 10).reshape(-1, 1)
     test_line = ScalarLine(x, np.sqrt(x))
-    test_line.draw_field() 
-
-    
+    test_line.draw()

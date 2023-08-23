@@ -29,7 +29,7 @@ class Field():
         return np.array(grid_pos)
 
 
-    def draw_field(self):
+    def draw(self):
         fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
         surf = ax.plot_trisurf(self._grid_pos[:,0], self._grid_pos[:,1], self._grid_magnitudes, cmap=cm.plasma, linewidth=0.1)
         fig.colorbar(surf, shrink=0.5, aspect=5)
@@ -50,7 +50,7 @@ class Line():
         return np.linspace(min_x, max_x, num_x)
 
 
-    def draw_field(self):
+    def draw(self):
         plt.plot(self._line_pos, self._line_magnitudes)
         plt.show()
         plt.close()

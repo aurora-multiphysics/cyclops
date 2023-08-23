@@ -1,6 +1,11 @@
 from sklearn.linear_model import LinearRegression
 from scipy.interpolate import CubicSpline
+import pandas as pd
 import numpy as np
+import pickle
+import os
+
+
 
 
 class Sensor():
@@ -36,31 +41,38 @@ class RoundSensor(Sensor):
 
 
 
+
+
 class Thermocouple(RoundSensor):
-    def __init__(self, noise_dev, voltages, temps, range) -> None:
-        self._regressor = LinearRegression()
-        self._regressor.fit(voltages.reshape(-1, 1), temps.reshape(-1, 1))
-        self._interpolator = CubicSpline(temps, voltages)
-        self._range = range
+    def __init__(self, csv_name) -> None:
+        super().__init__(
+            0.6, 
+            self._generate_offset_function(csv_name)
+        )
 
-        def error(self, temp):
-            voltage = self._interpolator(temp)
-            return self._regressor.predict(voltage.reshape(-1, 1))[0] - temp
 
-        super().__init__(noise_dev, self.error)
+    def _generate_offset_function(self, csv_name):
+        dir_path = os.path.dirname(os.path.dirname(__file__)) 
+        full_path = os.path.join(os.path.sep, dir_path,'sensors', csv_name)
+        dataframe = pd.read_csv(full_path)
 
-    
-    def set_value(self, ground_truth_array):
-        ground_truth = np.mean(ground_truth_array)
-        if 0 < ground_truth and ground_truth < 1370:
-            self._ground_truth = ground_truth
+        temps = dataframe['T'].values
+        voltages = dataframe['V'].values
 
+        regressor = LinearRegression()
+        regressor.fit(voltages.reshape(-1, 1), temps.reshape(-1, 1))
+        interpolator = CubicSpline(temps, voltages)
+
+        def offset(temp):
+            voltage = interpolator(temp)
+            new_temp = regressor(voltage)
+            return new_temp - temp
+        
+        return offset
 
 
 if __name__ == '__main__':
-    def f(x):
-        return 0
-    sensor = RoundSensor(0.1, f)
-    for i in range(10):
-        sensor.set_value([10, 11, 9, 12, 8])
-        print(sensor.get_value())
+    k_type = Thermocouple('k-type.csv')
+    sensor_file = open('k-type.obj', 'wb')
+    pickle.dump(k_type, sensor_file)
+    sensor_file.close()
