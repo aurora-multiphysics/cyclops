@@ -1,64 +1,55 @@
-from sklearn.linear_model import LinearRegression
-from scipy.interpolate import CubicSpline
-from constants import *
-import pandas as pd
 import numpy as np
+import pickle
 import os
 
 
-class Thermocouple():
-    def __init__(self, csv_name):
-        self.__failure_chance = FAILURE_CHANCE
-        self.__error = THERMOCOUPLE_ERROR
 
-        parent_path = os.path.dirname(os.path.dirname(__file__))
-        file_path = os.path.join(os.path.sep,parent_path, 'simulation', csv_name)
-        dataframe = pd.read_csv(file_path)
 
-        temps = dataframe['T'].values
-        voltages = dataframe['V'].values
-
-        self.__regressor = LinearRegression()
-        self.__regressor.fit(voltages.reshape(-1, 1), temps.reshape(-1, 1))
-        self.__extrapolator = np.polynomial.polynomial.Polynomial.fit(temps, voltages, deg=3)
-        self.__interpolator = CubicSpline(temps, voltages)
+class Sensor():
+    def __init__(self, random_error, linear_error) -> None:
+        self._noise_dev = random_error
+        self._error_function = linear_error
+        self._ground_truth = None
 
     
-    def get_linearised_temp(self, start_temp):
-        if 0 < start_temp and start_temp < 1370:
-            voltage = self.__interpolator(start_temp)
-        else:
-            voltage = self.__extrapolator(start_temp)
-        return self.__regressor.predict(voltage.reshape(-1, 1))[0]
-            
+    def set_value(self, ground_truth):
+        self._ground_truth = ground_truth
     
-    def get_failure_chance(self):
-        return self.__failure_chance
+
+    def get_value(self):
+        linear_temp = self._error_function(self._ground_truth)
+        return linear_temp + np.random.normal()*self._noise_dev
+
+
+
+
+class PointSensor(Sensor):
+    def __init__(self, random_error, error_function) -> None:
+        super().__init__(random_error, error_function)
+
+
+
+
+class RoundSensor(Sensor):
+    def __init__(self, random_error, error_function) -> None:
+        super().__init__(random_error, error_function)
 
     
-    def get_error(self):
-        return self.__error/3 * np.random.normal()
+    def set_value(self, ground_truth_array):
+        self._ground_truth = np.mean(ground_truth_array)
+
+
+
+
+
+class Thermocouple(RoundSensor):
+    def __init__(self, random_error, file_name) -> None:
+        dir_path = os.path.dirname(os.path.dirname(__file__))
+        full_path = os.path.join(os.path.sep, dir_path,'sensors', file_name)
         
-
-    
-
-
-
-
-
-class ThermalCamera():
-    pass
+        error_file = open(full_path, 'rb')
+        error_object = pickle.load(error_file)
+        error_file.close()
+        super().__init__(random_error, error_object.error_function)
 
 
-
-
-class DIC():
-    pass
-
-
-
-
-
-
-if __name__ == '__main__':
-    sensor = Thermocouple('k-type.csv')
