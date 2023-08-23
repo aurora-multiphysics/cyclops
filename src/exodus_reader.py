@@ -10,15 +10,6 @@ import os
 
 
 
-
-# Function naming
-# get_ means getter
-# find_ means calculate that value
-# generate_ is for producing objects in the initialisation
-# build_ is for producing objects that are used all over the place
-
-
-
 class ExodusReader():
     def __init__(self, file_name) -> None:
         # Load the exodus file and read it
