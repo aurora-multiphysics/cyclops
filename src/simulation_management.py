@@ -35,6 +35,15 @@ class Field():
         fig.colorbar(surf, shrink=0.5, aspect=5)
         plt.show()
         plt.close()
+    
+    
+    def get_bounds(self):
+        min_x = np.min(self._grid_pos[:,0])
+        max_x = np.max(self._grid_pos[:,0])
+        min_y = np.min(self._grid_pos[:,1])
+        max_y = np.max(self._grid_pos[:,1])
+        return ((min_x, min_y), (max_x, max_x))
+
 
 
 
@@ -55,6 +64,11 @@ class Line():
         plt.show()
         plt.close()
 
+    
+    def get_bounds(self):
+        min_x = np.min(self._line_pos)
+        max_x = np.max(self._line_pos)
+        return (min_x, max_x)
 
 
 
@@ -65,7 +79,6 @@ class ScalarInterpolator():
     
     def get_scalar(self, pos):
         return self._interpolator(pos)
-
 
 
 
@@ -82,7 +95,7 @@ class VectorInterpolator():
         return interpolators
 
 
-    def generate_magnitudes(self, vectors):
+    def _generate_magnitudes(self, vectors):
         magnitudes = []
         for v in vectors:
             magnitudes.append(np.linalg.norm(v))
@@ -97,7 +110,7 @@ class VectorInterpolator():
 
 
 
-    
+
 class ScalarLine(Line, ScalarInterpolator):
     def __init__(self, known_pos_1D, known_scalars, num_x=30) -> None:
         Line.__init__(self)
@@ -119,7 +132,7 @@ class VectorLine(Line, VectorInterpolator):
         
         self._line_pos = self._generate_strip(known_pos_1D, num_x)
         self._line_vectors = self.get_vector(self._line_pos)
-        self._line_magnitudes = self.generate_magnitudes(self._line_vectors)
+        self._line_magnitudes = self._generate_magnitudes(self._line_vectors)
 
 
 
@@ -146,4 +159,4 @@ class VectorField(Field, VectorInterpolator):
 
         self._grid_pos = self._generate_grid(known_pos_2D, num_x, num_y)
         self._grid_vectors = self.get_vector(self._grid_pos)
-        self._grid_magnitudes = self.generate_magnitudes(self._grid_vectors)
+        self._grid_magnitudes = self._generate_magnitudes(self._grid_vectors)
