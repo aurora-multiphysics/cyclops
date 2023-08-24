@@ -17,7 +17,7 @@ class Field():
         pass
 
 
-    def predict_value(self, pos):
+    def predict_values(self, pos):
         pass
 
 

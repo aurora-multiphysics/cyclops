@@ -8,7 +8,7 @@ class PickleManager():
         return os.path.join(os.path.sep, dir_path, folder, file_name)
 
 
-    def write_file(self, folder, file_name, save_object):
+    def save_file(self, folder, file_name, save_object):
         full_path = self.correct_path(folder, file_name)
         save_file = open(full_path, 'wb')
         pickle.dump(save_object, save_file)
