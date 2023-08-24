@@ -1,15 +1,10 @@
-from regressors import RBFModel, GPModel, NModel, LModel, CTModel, CSModel
+from regressors import RBFModel, GPModel, NNModel, LModel, CTModel, CSModel
 from optimisers import Problem, NSGA2Optimiser, PSOOptimiser, GAOptimiser
 from fields import ScalarField, VectorField
 from read_results import PickleManager
 from manage_sensors import SensorSuite
 from sensors import Sensor
 import numpy as np
-
-
-
-
-
 
 
 
@@ -61,11 +56,8 @@ if __name__ == '__main__':
     
     designer = ExperimentDesigner(true_temps, sensor_suite, grid)
 
-    low_border = [-0.011, -0.0115] * len(sensors)
+    low_border = [0, -0.0115] * len(sensors)
     high_border = [0.011, 0.019] * len(sensors)
-
-
-
 
 
     # sensor_array = np.array([0.0060719710037205514, 0.01720606611846788, 0.0031532261045091967, 0.005071218456956683, 0.010150584337864806, 0.005487546346333083, 0.0006967046228017783, -0.01013460765738274, 0.0010205573392144066, 0.011203007124517491])
@@ -73,4 +65,6 @@ if __name__ == '__main__':
 
     problem = Problem(len(sensors)*2, 1, designer.get_loss, (low_border, high_border))
     genetic_algo = PSOOptimiser('00:00:10')
-    print(genetic_algo.optimise(problem).X)
+    res = genetic_algo.optimise(problem)
+
+    #Plot the result now with the stuff I just did

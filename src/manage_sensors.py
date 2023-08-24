@@ -1,4 +1,4 @@
-from regressors import RBFModel, GPModel, NModel, LModel, CTModel, CSModel
+from regressors import RBFModel, GPModel, NNModel, LModel, CTModel, CSModel
 from fields import ScalarField, VectorField
 from read_results import PickleManager
 from sensors import Sensor

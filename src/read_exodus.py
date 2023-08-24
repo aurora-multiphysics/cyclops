@@ -1,9 +1,10 @@
-from regressors import RBFModel, GPModel, NModel, LModel, CTModel, CSModel
 from fields import ScalarField, VectorField
 from read_results import PickleManager
+from regressors import LModel, CSModel
 import numpy as np
 import meshio
 import os
+
 
 
 
@@ -79,12 +80,6 @@ if __name__ == '__main__':
     pos_3D = reader.read_pos(sensor_region)
     temps = reader.read_scalar(sensor_region, 'temperature')
 
-    disp = np.array([
-        reader.read_scalar(sensor_region, 'disp_x'),
-        reader.read_scalar(sensor_region, 'disp_y'),
-        reader.read_scalar(sensor_region, 'disp_z')
-    ]).T
-
     pos_2D = compress_2D(pos_3D)
     bounds = find_bounds(pos_2D)
     grid = generate_grid(bounds, 30, 30)
@@ -92,9 +87,16 @@ if __name__ == '__main__':
     temp_field = ScalarField(LModel, bounds, 2)
     temp_field.fit_model(pos_2D, temps)
 
-    disp_field = VectorField(LModel, bounds, 2)
-    disp_field.fit_model(pos_2D, disp)
-
     pickle_manager.save_file('simulation', 'field_temp.obj', temp_field)
-    pickle_manager.save_file('simulation', 'field_disp.obj', disp_field)
     pickle_manager.save_file('simulation', 'grid.obj', grid)
+
+
+
+    # disp = np.array([
+    #     reader.read_scalar(sensor_region, 'disp_x'),
+    #     reader.read_scalar(sensor_region, 'disp_y'),
+    #     reader.read_scalar(sensor_region, 'disp_z')
+    # ]).T
+    # disp_field = VectorField(LModel, bounds, 2)
+    # disp_field.fit_model(pos_2D, disp)
+    # pickle_manager.save_file('simulation', 'field_disp.obj', disp_field)

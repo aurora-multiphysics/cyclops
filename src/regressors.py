@@ -50,7 +50,7 @@ class RBFModel(RegressionModel):
 
 
 
-class NModel(RegressionModel):
+class NNModel(RegressionModel):
     def __init__(self) -> None:
         # No restrictions!
         super().__init__()
@@ -76,14 +76,12 @@ class LModel(RegressionModel):
 
 
     def fit(self, train_x, train_y):
-        # Note that train_x is 2D and train_y is 2D
         self._scaler.fit(train_x)
         scaled_x = self._scaler.transform(train_x)
         self._regressor = LinearNDInterpolator(scaled_x, train_y)
 
 
     def predict(self, predict_x):
-        # Note that predict_x is 2D and predict_y is 2D
         scaled_x = self._scaler.transform(predict_x)
         return self._regressor(scaled_x)    
 
@@ -96,7 +94,6 @@ class GPModel(RegressionModel):
 
 
     def fit(self, train_x, train_y):
-        # Note that train_x is 2D and train_y is 2D
         self._scaler.fit(train_x)
         scaled_x = self._scaler.transform(train_x)
         self._regressor = GaussianProcessRegressor(
@@ -108,7 +105,6 @@ class GPModel(RegressionModel):
 
 
     def predict(self, predict_x):
-        # Note that predict_x is 2D and predict_y is 2D
         scaled_x = self._scaler.transform(predict_x)
         return self._regressor.predict(scaled_x)
 
@@ -122,14 +118,12 @@ class CSModel(RegressionModel):
 
 
     def fit(self, train_x, train_y):
-        # Note that train_x is 2D and train_y is 2D
         self._scaler.fit(train_x)
         scaled_x = self._scaler.transform(train_x)
         self._regressor = CubicSpline(scaled_x.reshape(-1), train_y.reshape(-1))
 
 
     def predict(self, predict_x):
-        # Note that predict_x is 2D and predict_y is 2D
         scaled_x = self._scaler.transform(predict_x)
         return self._regressor(scaled_x).reshape(-1, 1)
 
@@ -144,13 +138,11 @@ class CTModel(RegressionModel):
 
 
     def fit(self, train_x, train_y):
-        # Note that train_x is 2D and train_y is 2D
         self._scaler.fit(train_x)
         scaled_x = self._scaler.transform(train_x)
         self._regressor = CloughTocher2DInterpolator(scaled_x, train_y)
 
 
     def predict(self, predict_x):
-        # Note that predict_x is 2D and predict_y is 2D
         scaled_x = self._scaler.transform(predict_x)
         return self._regressor(scaled_x).reshape(-1, 1)
