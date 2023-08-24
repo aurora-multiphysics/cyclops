@@ -1,4 +1,4 @@
-from results_management import PickleManager
+from read_results import PickleManager
 from sensors import Thermocouple
 import numpy as np
 import os

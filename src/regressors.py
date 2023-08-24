@@ -6,7 +6,7 @@ from sklearn import preprocessing
 import numpy as np
 import warnings
 
-from matplotlib import pyplot as plt
+
 
 warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
 warnings.filterwarnings(action='ignore', category=np.RankWarning)

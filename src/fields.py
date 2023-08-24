@@ -4,13 +4,18 @@ import numpy as np
 
 
 class Field():
-    def __init__(self, regression_type, field_bounds) -> None:
+    def __init__(self, regression_type, bounds, num_dim) -> None:
         self._regression_type = regression_type
-        self._bounds = field_bounds
+        self._bounds = bounds
+        self._num_dim = num_dim
 
 
     def get_bounds(self):
         return self._bounds
+
+    
+    def get_dim(self):
+        return self._num_dim
     
 
     def fit_model(self, known_pos, known_values):
@@ -25,8 +30,8 @@ class Field():
 
 
 class ScalarField(Field):
-    def __init__(self, regression_type, bounds) -> None:
-        super().__init__(regression_type, bounds)
+    def __init__(self, regression_type, bounds, num_dim) -> None:
+        super().__init__(regression_type, bounds, num_dim)
         self._regressor = None
 
 
@@ -43,15 +48,14 @@ class ScalarField(Field):
 
 
 class VectorField(Field):
-    def __init__(self, regression_type, bounds) -> None:
-        super().__init__(regression_type, bounds)
+    def __init__(self, regression_type, bounds, num_dim) -> None:
+        super().__init__(regression_type, bounds, num_dim)
         self._regressors = []
-        self._num_dim = None
 
 
     def fit_model(self, known_pos, known_vectors):
-        self._num_dim = len(known_vectors[0])
-        for i in range(self._num_dim):
+        vector_dim = len(known_vectors[0])
+        for i in range(vector_dim):
             regressor = self._regression_type()
             regressor.fit(known_pos, known_vectors[:, i])
             self._regressors.append(regressor)

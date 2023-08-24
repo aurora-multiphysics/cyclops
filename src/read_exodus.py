@@ -1,6 +1,6 @@
 from regressors import RBFModel, GPModel, NModel, LModel, CTModel, CSModel
-from field_management import ScalarField, VectorField
-from results_management import PickleManager
+from fields import ScalarField, VectorField
+from read_results import PickleManager
 from matplotlib import pyplot as plt
 from matplotlib import cm
 import numpy as np
@@ -19,18 +19,14 @@ def compress_2D(pos_3D):
 
 
 
-def generate_grid(pos_2D, num_x, num_y):
-    min_x = np.min(pos_2D[:, 0])
-    max_x = np.max(pos_2D[:, 0])
-    min_y = np.min(pos_2D[:, 1])
-    max_y = np.max(pos_2D[:, 1])
-
+def generate_grid(bounds, num_x, num_y):
+    (min_x, min_y), (max_x, max_y) = bounds
     x_values = np.linspace(min_x, max_x, num_x).reshape(-1)
     y_values = np.linspace(min_y, max_y, num_y).reshape(-1)
 
     grid_pos = []
-    for x in x_values:
-        for y in y_values:
+    for x in x_values[1:-1]:
+        for y in y_values[1:-1]:
             grid_pos.append(np.array([x, y]))
     return np.array(grid_pos)
 
@@ -90,12 +86,14 @@ if __name__ == '__main__':
     min_y = np.min(pos_2D[:, 1])
     max_y = np.max(pos_2D[:, 1])
     bounds = ((min_x, min_y), (max_x, max_x))
+    grid = generate_grid(bounds, 30, 30)
 
-    temp_field = ScalarField(LModel, bounds)
+    temp_field = ScalarField(LModel, bounds, 2)
     temp_field.fit_model(pos_2D, temps)
 
-    disp_field = VectorField(LModel, bounds)
+    disp_field = VectorField(LModel, bounds, 2)
     disp_field.fit_model(pos_2D, disp)
 
-    pickle_manager.save_file('simulation', 'temp.obj', temp_field)
-    pickle_manager.save_file('simulation', 'disp.obj', disp_field)
+    pickle_manager.save_file('simulation', 'field_temp.obj', temp_field)
+    pickle_manager.save_file('simulation', 'field_disp.obj', disp_field)
+    pickle_manager.save_file('simulation', 'grid.obj', grid)
