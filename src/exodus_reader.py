@@ -1,4 +1,5 @@
-from simulation_management import ScalarLine, VectorLine, ScalarField, VectorField
+from simulation_management import ScalarField, VectorField, ScalarLine, VectorLine
+from results_management import PickleManager
 import numpy as np
 import pickle
 import meshio
@@ -13,17 +14,6 @@ def compress_2D(pos_3D):
     for pos in pos_3D:
         pos_2D.append(np.array([pos[2], pos[1]]))
     return np.array(pos_2D)
-
-
-
-
-def save_field(field, file_name):
-    dir_path = os.path.dirname(os.path.dirname(__file__))
-    full_path = os.path.join(os.path.sep, dir_path,'simulation', file_name)
-
-    field_file = open(full_path, 'wb')
-    pickle.dump(field, field_file)
-    field_file.close()
 
 
 
@@ -64,10 +54,10 @@ class ExodusReader():
 
 if __name__ == '__main__':
     reader = ExodusReader('monoblock_out.e')
+    pickle_manager = PickleManager()
 
     sensor_region = 'right'
     pos_3D = reader.read_pos(sensor_region)
-    pos_2D = compress_2D(pos_3D)
     temps = reader.read_scalar(sensor_region, 'temperature')
 
     disp = np.array([
@@ -76,14 +66,15 @@ if __name__ == '__main__':
         reader.read_scalar(sensor_region, 'disp_z')
     ]).T
 
+    pos_2D = compress_2D(pos_3D)
     temp_field = ScalarField(pos_2D, temps)
     disp_field = VectorField(pos_2D, disp)
 
     temp_field.draw()
     disp_field.draw()
 
-    save_field(temp_field, 'field_temp.obj')
-    save_field(disp_field, 'field_disp.obj')
+    pickle_manager.write_file('simulation', 'temp.obj', temp_field)
+    pickle_manager.write_file('simulation', 'disp.obj', disp_field)
 
     x = np.linspace(1, 100, 10).reshape(-1, 1)
     test_line = ScalarLine(x, np.sqrt(x))

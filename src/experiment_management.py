@@ -1,3 +1,4 @@
+from results_management import PickleManager
 import numpy as np
 import pickle
 import os
@@ -26,6 +27,7 @@ class Experiment():
             sensor_file.close()
         return sensors
 
+
 class SensorSuite():
     def __init__(self, sensor_dict) -> None:
         self._sensors = self.__generate_sensors(sensor_dict)
@@ -34,4 +36,4 @@ class SensorSuite():
 
 
     def set_sensors(sensor_values):
-        
+        pass

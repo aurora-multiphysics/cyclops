@@ -1,5 +1,6 @@
-from matplotlib import pyplot as plt
-import pandas as pd
+from results_management import PickleManager
+from sensors import Thermocouple
+import numpy as np
 import os
 
 
@@ -30,20 +31,7 @@ class ThermocoupleReader():
                                 voltages.append(float(volt))
                                 add_on += 1
                     next_temp += 10
-        return temperatures, voltages
-
-
-    def write_to_csv(self, temperatures, voltages, csv_name):
-        data = {
-            'T': temperatures, 
-            'V': voltages
-        }
-        dataframe = pd.DataFrame(data)
-        print('\n', dataframe)
-
-        parent_path = os.path.dirname(os.path.dirname(__file__))
-        full_path = os.path.join(os.path.sep,parent_path,'sensors', csv_name)
-        dataframe.to_csv(full_path, index=False)
+        return np.array(temperatures), np.array(voltages)
 
 
 
@@ -51,5 +39,8 @@ class ThermocoupleReader():
 
 if __name__ == '__main__':
     reader = ThermocoupleReader('k-type.txt')
+    pickle_manager = PickleManager()
+
     temperatures, voltages = reader.generate_thermo_data()
-    reader.write_to_csv(temperatures, voltages, 'k-type.csv')
+    k_type = Thermocouple(temperatures, voltages)
+    pickle_manager.write_file('sensors', 'k-type.obj', k_type)

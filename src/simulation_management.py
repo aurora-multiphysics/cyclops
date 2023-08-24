@@ -42,7 +42,7 @@ class Field():
         max_x = np.max(self._grid_pos[:,0])
         min_y = np.min(self._grid_pos[:,1])
         max_y = np.max(self._grid_pos[:,1])
-        return ((min_x, min_y), (max_x, max_x))
+        return ((min_x, min_y), (max_x, max_y))
 
 
 
@@ -107,6 +107,11 @@ class VectorInterpolator():
         for i, interpolator in enumerate(self._interpolators):
             vector_out.append(interpolator(pos))
         return np.array(vector_out).T
+
+
+
+
+
 
 
 
