@@ -1,12 +1,9 @@
 from regressors import RBFModel, GPModel, NModel, LModel, CTModel, CSModel
 from fields import ScalarField, VectorField
 from read_results import PickleManager
-from matplotlib import pyplot as plt
-from matplotlib import cm
 import numpy as np
 import meshio
 import os
-
 
 
 
@@ -16,7 +13,6 @@ def compress_2D(pos_3D):
     for pos in pos_3D:
         pos_2D.append(np.array([pos[2], pos[1]]))
     return np.array(pos_2D)
-
 
 
 def generate_grid(bounds, num_x, num_y):
@@ -29,6 +25,15 @@ def generate_grid(bounds, num_x, num_y):
         for y in y_values[1:-1]:
             grid_pos.append(np.array([x, y]))
     return np.array(grid_pos)
+
+
+def find_bounds(pos_2D):
+    min_x = np.min(pos_2D[:, 0])
+    max_x = np.max(pos_2D[:, 0])
+    min_y = np.min(pos_2D[:, 1])
+    max_y = np.max(pos_2D[:, 1])
+    return (min_x, min_y), (max_x, max_y)
+
 
 
 
@@ -69,7 +74,7 @@ class ExodusReader():
 if __name__ == '__main__':
     reader = ExodusReader('monoblock_out.e')
     pickle_manager = PickleManager()
-
+    
     sensor_region = 'right'
     pos_3D = reader.read_pos(sensor_region)
     temps = reader.read_scalar(sensor_region, 'temperature')
@@ -81,11 +86,7 @@ if __name__ == '__main__':
     ]).T
 
     pos_2D = compress_2D(pos_3D)
-    min_x = np.min(pos_2D[:, 0])
-    max_x = np.max(pos_2D[:, 0])
-    min_y = np.min(pos_2D[:, 1])
-    max_y = np.max(pos_2D[:, 1])
-    bounds = ((min_x, min_y), (max_x, max_x))
+    bounds = find_bounds(pos_2D)
     grid = generate_grid(bounds, 30, 30)
 
     temp_field = ScalarField(LModel, bounds, 2)

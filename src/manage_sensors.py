@@ -8,14 +8,13 @@ import numpy as np
 
 
 class SensorSuite():
-    def __init__(self, field, sensor_array) -> None:
+    def __init__(self, field, sensors) -> None:
         self.__field = field
-        self.__sensors = sensor_array
+        self.__sensors = sensors
 
 
     def set_sensors(self, sensor_pos, sensor_values):
         measured_values = self.__set_sensor_values(sensor_values)
-        print(measured_values)
         self.__field.fit_model(sensor_pos, measured_values)
 
     
