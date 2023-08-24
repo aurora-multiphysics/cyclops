@@ -1,4 +1,4 @@
-from scipy.interpolate import RBFInterpolator, CloughTocher2DInterpolator, CubicSpline
+from scipy.interpolate import RBFInterpolator, CloughTocher2DInterpolator, CubicSpline, LinearNDInterpolator, NearestNDInterpolator
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.gaussian_process.kernels import RBF
@@ -6,51 +6,151 @@ from sklearn import preprocessing
 import numpy as np
 import warnings
 
-
+from matplotlib import pyplot as plt
 
 warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
 warnings.filterwarnings(action='ignore', category=np.RankWarning)
 
 
 
-class ScalarRegressionModel():
-    def __init__(self, sensor_pos):
+class RegressionModel():
+    def __init__(self) -> None:
         self._scaler = preprocessing.StandardScaler()
-        self._scaler.fit(sensor_pos)
+        self._regressor = None
 
 
-    def get_temp(self, pos_xy):
-        return None
+    def fit(self, train_x, train_y):
+        # Note that train_x is 2D and train_y is 2D
+        pass
+
+
+    def predict(self, predict_x):
+        # Note that predict_x is 2D and predict_y is 2D
+        pass
 
 
 
-class GPModel(ScalarRegressionModel):
-    def __init__(self, sensor_pos, sensor_values):
-        super().__init__(sensor_pos)
-        scaled_pos = self._scaler.transform(sensor_pos)
 
-        self.__interpolator = GaussianProcessRegressor(
+class RBFModel(RegressionModel):
+    def __init__(self) -> None:
+        # No restrictions!
+        super().__init__()
+
+
+    def fit(self, train_x, train_y):
+        self._scaler.fit(train_x)
+        scaled_x = self._scaler.transform(train_x)
+        self._regressor = RBFInterpolator(scaled_x, train_y)
+
+
+    def predict(self, predict_x):
+        scaled_x = self._scaler.transform(predict_x)
+        return self._regressor(scaled_x)
+
+
+
+
+class NModel(RegressionModel):
+    def __init__(self) -> None:
+        # No restrictions!
+        super().__init__()
+
+
+    def fit(self, train_x, train_y):
+        self._scaler.fit(train_x)
+        scaled_x = self._scaler.transform(train_x)
+        self._regressor = NearestNDInterpolator(scaled_x, train_y)
+
+
+    def predict(self, predict_x):
+        scaled_x = self._scaler.transform(predict_x)
+        return self._regressor(scaled_x)
+
+
+
+class LModel(RegressionModel):
+    def __init__(self) -> None:
+        # Only for > 1D inputs
+        # Only for interpolation
+        super().__init__()
+
+
+    def fit(self, train_x, train_y):
+        # Note that train_x is 2D and train_y is 2D
+        self._scaler.fit(train_x)
+        scaled_x = self._scaler.transform(train_x)
+        self._regressor = LinearNDInterpolator(scaled_x, train_y)
+
+
+    def predict(self, predict_x):
+        # Note that predict_x is 2D and predict_y is 2D
+        scaled_x = self._scaler.transform(predict_x)
+        return self._regressor(scaled_x)    
+
+
+
+
+class GPModel(RegressionModel):
+    def __init__(self) -> None:
+        super().__init__()
+
+
+    def fit(self, train_x, train_y):
+        # Note that train_x is 2D and train_y is 2D
+        self._scaler.fit(train_x)
+        scaled_x = self._scaler.transform(train_x)
+        self._regressor = GaussianProcessRegressor(
             kernel=RBF(), 
             n_restarts_optimizer=10, 
             normalize_y=True
         )
-        self.__interpolator.fit(scaled_pos, sensor_values)
+        self._regressor.fit(scaled_x, train_y)
 
 
-    def get_temp(self, pos_xy):
-        scaled_pos_xy = self._scaler.transform(pos_xy)
-        return self.__interpolator.predict(scaled_pos_xy)
+    def predict(self, predict_x):
+        # Note that predict_x is 2D and predict_y is 2D
+        scaled_x = self._scaler.transform(predict_x)
+        return self._regressor.predict(scaled_x)
 
 
 
 
-class RBFModel(ScalarRegressionModel):
-    def __init__(self, sensor_pos, sensor_values):
-        super().__init__(sensor_pos)
-        scaled_pos = self._scaler.transform(sensor_pos)
-        self.__interpolater = RBFInterpolator(scaled_pos, sensor_values)
+class CSModel(RegressionModel):
+    def __init__(self) -> None:
+        # Only for 1D inputs
+        super().__init__()
 
 
-    def get_temp(self, pos_xy):
-        scaled_pos_xy = self.__scaler.transform(pos_xy)
-        return self.__interpolater(scaled_pos_xy)
+    def fit(self, train_x, train_y):
+        # Note that train_x is 2D and train_y is 2D
+        self._scaler.fit(train_x)
+        scaled_x = self._scaler.transform(train_x)
+        self._regressor = CubicSpline(scaled_x.reshape(-1), train_y.reshape(-1))
+
+
+    def predict(self, predict_x):
+        # Note that predict_x is 2D and predict_y is 2D
+        scaled_x = self._scaler.transform(predict_x)
+        return self._regressor(scaled_x).reshape(-1, 1)
+
+
+
+
+class CTModel(RegressionModel):
+    def __init__(self) -> None:
+        # Only for 2D inputs
+        # Only for interpolation
+        super().__init__()
+
+
+    def fit(self, train_x, train_y):
+        # Note that train_x is 2D and train_y is 2D
+        self._scaler.fit(train_x)
+        scaled_x = self._scaler.transform(train_x)
+        self._regressor = CloughTocher2DInterpolator(scaled_x, train_y)
+
+
+    def predict(self, predict_x):
+        # Note that predict_x is 2D and predict_y is 2D
+        scaled_x = self._scaler.transform(predict_x)
+        return self._regressor(scaled_x).reshape(-1, 1)

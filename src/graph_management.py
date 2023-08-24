@@ -2,7 +2,6 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import pyplot as plt
 from matplotlib import tri as tri
 from matplotlib import cm
-from constants import *
 import scienceplots
 import numpy as np
 import warnings
@@ -24,107 +23,106 @@ class GraphManager():
         plt.style.use('science')
 
 
-    def create_pdf(self, all_positions, all_layouts, true_temps, all_model_temps, all_lost_sensors, face, loss, chance, model_type, sensor_keys, name):
-        manager = PDFManager(name)
-        fig_0 = self.build_chart(chance, loss, sensor_keys)
-        fig_0.suptitle('Model type: '+model_type)
+    # def create_pdf(self, all_positions, all_layouts, true_temps, all_model_temps, all_lost_sensors, face, loss, chance, model_type, sensor_keys, name):
+    #     manager = PDFManager(name)
+    #     fig_0 = self.build_chart(chance, loss, sensor_keys)
+    #     fig_0.suptitle('Model type: '+model_type)
 
-        manager.save_figure(fig_0)
-        plt.close(fig_0)
+    #     manager.save_figure(fig_0)
+    #     plt.close(fig_0)
 
-        sorting_matrix = []
-        for i in range(len(chance)):
-            sorting_matrix.append((chance[i], loss[i], all_layouts[i], all_model_temps[i], all_lost_sensors[i]))
-        sorting_matrix.sort(key=lambda a: a[0], reverse=True)
+    #     sorting_matrix = []
+    #     for i in range(len(chance)):
+    #         sorting_matrix.append((chance[i], loss[i], all_layouts[i], all_model_temps[i], all_lost_sensors[i]))
+    #     sorting_matrix.sort(key=lambda a: a[0], reverse=True)
 
-        all_layouts = []
-        all_model_temps = []
-        all_lost_sensors = []
-        loss = []
-        chance = []
-        for sequence in sorting_matrix:
-            chance.append(sequence[0])
-            loss.append(sequence[1])
-            all_layouts.append(sequence[2])
-            all_model_temps.append(sequence[3])
-            all_lost_sensors.append(sequence[4])
+    #     all_layouts = []
+    #     all_model_temps = []
+    #     all_lost_sensors = []
+    #     loss = []
+    #     chance = []
+    #     for sequence in sorting_matrix:
+    #         chance.append(sequence[0])
+    #         loss.append(sequence[1])
+    #         all_layouts.append(sequence[2])
+    #         all_model_temps.append(sequence[3])
+    #         all_lost_sensors.append(sequence[4])
         
-        for i, sensor_positions in enumerate(all_layouts):
-            print(sensor_keys[i])
-            fig_1 = self.build_compare(all_positions, sensor_positions, true_temps, all_model_temps[i], all_lost_sensors[i], face)
-            fig_1.suptitle('Layout: '+str(i)+', chance: '+str(np.round(chance[i]*100, 4))+'\%, loss: '+str(np.round(loss[i])), fontsize=16)
-            manager.save_figure(fig_1)
-            fig_2 = self.build_double_3D_temp_field(all_positions, true_temps, all_model_temps[i])
-            manager.save_figure(fig_2)
-            plt.close(fig_1)
-            plt.close(fig_2)
-        manager.close_file()
+    #     for i, sensor_positions in enumerate(all_layouts):
+    #         print(sensor_keys[i])
+    #         fig_1 = self.build_compare(all_positions, sensor_positions, true_temps, all_model_temps[i], all_lost_sensors[i], face)
+    #         fig_1.suptitle('Layout: '+str(i)+', chance: '+str(np.round(chance[i]*100, 4))+'\%, loss: '+str(np.round(loss[i])), fontsize=16)
+    #         manager.save_figure(fig_1)
+    #         fig_2 = self.build_double_3D_temp_field(all_positions, true_temps, all_model_temps[i])
+    #         manager.save_figure(fig_2)
+    #         plt.close(fig_1)
+    #         plt.close(fig_2)
+    #     manager.close_file()
 
     
     def draw_compare(self, all_positions, sensor_positions, true_temps, model_temps, lost_sensors, face):
         fig_1 = self.build_compare(all_positions, sensor_positions, true_temps, model_temps, lost_sensors, face)
-        fig_2 = self.build_sensors(all_positions, sensor_positions, true_temps, model_temps, lost_sensors, face)
         plt.show()
         plt.close()
 
     
-    def build_chart(self, chances, losses, sensor_keys):  
-        fig, ax = plt.subplots(1, 1, figsize=(6, 6))
-        areas = np.zeros((5,2))
-        labels = [
-            'No sensor failures',
-            '1 sensor failure',
-            '2 sensor failures',
-            '3 sensor failures',
-            '$>$3 sensor failures'
-        ]
+    # def build_chart(self, chances, losses, sensor_keys):  
+    #     fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+    #     areas = np.zeros((5,2))
+    #     labels = [
+    #         'No sensor failures',
+    #         '1 sensor failure',
+    #         '2 sensor failures',
+    #         '3 sensor failures',
+    #         '$>$3 sensor failures'
+    #     ]
 
-        for i in range(len(chances)):
-            if sensor_keys[i].count('X')==0:
-                if losses[i] < LOSS_LIMIT:
-                    areas[0][0] += chances[i]
-                else:
-                    areas[0][1] += chances[i]
-            elif sensor_keys[i].count('X') == 1:
-                if losses[i] < LOSS_LIMIT:
-                    areas[1][0] += chances[i]
-                else:
-                    areas[1][1] += chances[i]
-            elif sensor_keys[i].count('X') == 2:
-                if losses[i] < LOSS_LIMIT:
-                    areas[2][0] += chances[i]
-                else:
-                    areas[2][1] += chances[i]
-            elif sensor_keys[i].count('X') == 3:
-                if losses[i] < LOSS_LIMIT:
-                    areas[3][0] += chances[i]
-                else:
-                    areas[3][1] += chances[i]
+    #     for i in range(len(chances)):
+    #         if sensor_keys[i].count('X')==0:
+    #             if losses[i] < LOSS_LIMIT:
+    #                 areas[0][0] += chances[i]
+    #             else:
+    #                 areas[0][1] += chances[i]
+    #         elif sensor_keys[i].count('X') == 1:
+    #             if losses[i] < LOSS_LIMIT:
+    #                 areas[1][0] += chances[i]
+    #             else:
+    #                 areas[1][1] += chances[i]
+    #         elif sensor_keys[i].count('X') == 2:
+    #             if losses[i] < LOSS_LIMIT:
+    #                 areas[2][0] += chances[i]
+    #             else:
+    #                 areas[2][1] += chances[i]
+    #         elif sensor_keys[i].count('X') == 3:
+    #             if losses[i] < LOSS_LIMIT:
+    #                 areas[3][0] += chances[i]
+    #             else:
+    #                 areas[3][1] += chances[i]
         
-        cumulative_total = sum(areas.flatten())
-        areas[4][1]= 1 - cumulative_total
+    #     cumulative_total = sum(areas.flatten())
+    #     areas[4][1]= 1 - cumulative_total
 
-        cmap = plt.colormaps["tab20"]
-        outer_colors = cmap([0, 2, 8, 12, 18])
-        inner_colors = cmap([4, 6]*5)
+    #     cmap = plt.colormaps["tab20"]
+    #     outer_colors = cmap([0, 2, 8, 12, 18])
+    #     inner_colors = cmap([4, 6]*5)
 
-        size=0.3
-        wedges = ax.pie(
-            areas.sum(axis=1),
-            labels = labels,
-            radius=1, 
-            colors=outer_colors,
-            wedgeprops=dict(width=size, edgecolor='w')
-        )
-        #print(str(round(adequate[0]*100))+' % chance of success')
-        wedges_2 = ax.pie(
-            areas.flatten(),
-            radius=1-size, 
-            colors=inner_colors,
-            wedgeprops=dict(width=size, edgecolor='w')
-        )
-        ax.set(aspect="equal")
-        return fig
+    #     size=0.3
+    #     wedges = ax.pie(
+    #         areas.sum(axis=1),
+    #         labels = labels,
+    #         radius=1, 
+    #         colors=outer_colors,
+    #         wedgeprops=dict(width=size, edgecolor='w')
+    #     )
+    #     #print(str(round(adequate[0]*100))+' % chance of success')
+    #     wedges_2 = ax.pie(
+    #         areas.flatten(),
+    #         radius=1-size, 
+    #         colors=inner_colors,
+    #         wedgeprops=dict(width=size, edgecolor='w')
+    #     )
+    #     ax.set(aspect="equal")
+    #     return fig
 
 
     
@@ -216,21 +214,21 @@ class GraphManager():
         )
 
     
-    def plot_circle(self, ax):
-        # Produce a white circle to overlay
-        circle = plt.Circle((0, 0), MONOBLOCK_RADIUS, color='w')
-        ax.add_patch(circle)
+    # def plot_circle(self, ax):
+    #     # Produce a white circle to overlay
+    #     circle = plt.Circle((0, 0), MONOBLOCK_RADIUS, color='w')
+    #     ax.add_patch(circle)
 
 
-    def plot_monoblock_grid(self, ax, positions, block_circle):
-        # Produce a grid of the monoblock potential positions
-        triang = tri.Triangulation(positions[:, 0], positions[:, 1])
-        if block_circle == True:
-            triang.set_mask(np.hypot(
-                positions[:, 0][triang.triangles].mean(axis=1),
-                positions[:, 1][triang.triangles].mean(axis=1)) 
-            < MONOBLOCK_RADIUS)
-        ax.triplot(triang)
+    # def plot_monoblock_grid(self, ax, positions, block_circle):
+    #     # Produce a grid of the monoblock potential positions
+    #     triang = tri.Triangulation(positions[:, 0], positions[:, 1])
+    #     if block_circle == True:
+    #         triang.set_mask(np.hypot(
+    #             positions[:, 0][triang.triangles].mean(axis=1),
+    #             positions[:, 1][triang.triangles].mean(axis=1)) 
+    #         < MONOBLOCK_RADIUS)
+    #     ax.triplot(triang)
 
 
     def plot_field_errors(self, ax, positions, differences):

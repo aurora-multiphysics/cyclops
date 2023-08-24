@@ -7,7 +7,7 @@ import numpy as np
 
 
 
-class Field():
+class Plane():
     def __init__(self) -> None:
         self._grid_pos = None
         self._grid_magnitudes = None
@@ -44,6 +44,14 @@ class Field():
         max_y = np.max(self._grid_pos[:,1])
         return ((min_x, min_y), (max_x, max_y))
 
+    
+    def get_pos(self):
+        return self._grid_pos
+
+
+    def get_values(self):
+        return self._grid_magnitudes
+
 
 
 
@@ -69,6 +77,10 @@ class Line():
         min_x = np.min(self._line_pos)
         max_x = np.max(self._line_pos)
         return (min_x, max_x)
+
+    
+    def get_pos(self):
+        return self._line_pos
 
 
 
@@ -142,9 +154,9 @@ class VectorLine(Line, VectorInterpolator):
 
 
 
-class ScalarField(Field, ScalarInterpolator):
+class ScalarPlane(Plane, ScalarInterpolator):
     def __init__(self, known_pos_2D, known_scalars, num_x=30, num_y=30) -> None:
-        Field.__init__(self)
+        Plane.__init__(self)
         ScalarInterpolator.__init__(self)
         self._interpolator = LinearNDInterpolator(known_pos_2D, known_scalars)
 
@@ -154,10 +166,10 @@ class ScalarField(Field, ScalarInterpolator):
 
 
 
-class VectorField(Field, VectorInterpolator):
+class VectorPlane(Plane, VectorInterpolator):
     def __init__(self, known_pos_2D, known_vectors, num_x=30, num_y=30) -> None:
         self._num_dim = len(known_vectors[0])
-        Field.__init__(self)
+        Plane.__init__(self)
         VectorInterpolator.__init__(self)
         self._interpolators = self._generate_interpolators(known_pos_2D, known_vectors, LinearNDInterpolator)
 

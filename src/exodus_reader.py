@@ -1,7 +1,9 @@
-from simulation_management import ScalarField, VectorField, ScalarLine, VectorLine
+from regressors import RBFModel, GPModel, NModel, LModel, CTModel, CSModel
+from field_management import ScalarField, VectorField
 from results_management import PickleManager
+from matplotlib import pyplot as plt
+from matplotlib import cm
 import numpy as np
-import pickle
 import meshio
 import os
 
@@ -14,6 +16,24 @@ def compress_2D(pos_3D):
     for pos in pos_3D:
         pos_2D.append(np.array([pos[2], pos[1]]))
     return np.array(pos_2D)
+
+
+
+
+def generate_grid(pos_2D, num_x, num_y):
+    min_x = np.min(pos_2D[:, 0])
+    max_x = np.max(pos_2D[:, 0])
+    min_y = np.min(pos_2D[:, 1])
+    max_y = np.max(pos_2D[:, 1])
+
+    x_values = np.linspace(min_x, max_x, num_x).reshape(-1)
+    y_values = np.linspace(min_y, max_y, num_y).reshape(-1)
+
+    grid_pos = []
+    for x in x_values:
+        for y in y_values:
+            grid_pos.append(np.array([x, y]))
+    return np.array(grid_pos)
 
 
 
@@ -67,15 +87,35 @@ if __name__ == '__main__':
     ]).T
 
     pos_2D = compress_2D(pos_3D)
-    temp_field = ScalarField(pos_2D, temps)
-    disp_field = VectorField(pos_2D, disp)
+    min_x = np.min(pos_2D[:, 0])
+    max_x = np.max(pos_2D[:, 0])
+    min_y = np.min(pos_2D[:, 1])
+    max_y = np.max(pos_2D[:, 1])
+    bounds = ((min_x, min_y), (max_x, max_x))
 
-    temp_field.draw()
-    disp_field.draw()
+    temp_field = ScalarField(LModel, bounds)
+    temp_field.fit_model(pos_2D, temps)
 
-    pickle_manager.write_file('simulation', 'temp.obj', temp_field)
-    pickle_manager.write_file('simulation', 'disp.obj', disp_field)
+    disp_field = VectorField(LModel, bounds)
+    disp_field.fit_model(pos_2D, disp)
 
-    x = np.linspace(1, 100, 10).reshape(-1, 1)
-    test_line = ScalarLine(x, np.sqrt(x))
-    test_line.draw()
+
+    grid = generate_grid(pos_2D, 30, 30)
+    new_temps = temp_field.predict_values(grid)
+
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+    surf = ax.plot_trisurf(grid[:,0], grid[:,1], new_temps, cmap=cm.plasma, linewidth=0.1)
+    fig.colorbar(surf, shrink=0.5, aspect=5)
+    plt.show()
+    plt.close()
+
+    new_disps = disp_field.predict_values(grid)
+    mags = []
+    for v in new_disps:
+        mags.append(np.linalg.norm(v))
+    
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+    surf = ax.plot_trisurf(grid[:,0], grid[:,1], mags, cmap=cm.plasma, linewidth=0.1)
+    fig.colorbar(surf, shrink=0.5, aspect=5)
+    plt.show()
+    plt.close()
