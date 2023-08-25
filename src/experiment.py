@@ -26,6 +26,10 @@ class Experiment():
         self.__problem = self.__build_problem(sensor_bounds, num_sensors, 1)
 
 
+    def plan_moo(self, sensor_suite :SensorSuite, sensor_bounds :np.ndarray) -> None:
+        pass
+
+
     def __build_problem(self, sensor_bounds :np.ndarray, num_sensors :int, num_obj :int) -> Problem:
         low_border = list(sensor_bounds[0]) * num_sensors
         high_border = list(sensor_bounds[1]) * num_sensors

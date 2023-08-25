@@ -25,7 +25,7 @@ class GraphManager():
 
 
         ax_2.set_title('Errors in temperature field reconstruction')
-        differences = np.abs(model_field - model_field)
+        differences = np.abs(model_field - true_field)
         ax_2.plot(all_positions.reshape(-1), differences.reshape(-1))
         ax_2.set_xlabel('x (m)')
         ax_2.set_ylabel('difference (C)')
@@ -84,7 +84,6 @@ class GraphManager():
             marker=pen[1]
         )
         ax.legend()
-
 
 
     def plot_contour_field(self, ax, positions, field_values):
