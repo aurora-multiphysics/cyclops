@@ -14,8 +14,24 @@ class GraphManager():
         plt.show()
         plt.close()
 
+    
+    def build_1D_compare(self, all_positions, sensor_positions, sensor_values, true_field, model_field):
+        # Draw the first plot
+        fig_1, (ax_1, ax_2) = plt.subplots(1,2, figsize=(18, 5))
 
-    def build_compare(self, all_positions, sensor_positions, true_temps, model_temps):
+        ax_1.set_title('Temperature fields')
+        # Plot lines of both temperature fields
+        self.plot_line_fields(ax_1, all_positions, sensor_positions, sensor_values, true_field, model_field)
+
+
+        ax_2.set_title('Errors in temperature field reconstruction')
+        differences = np.abs(model_field - model_field)
+        ax_2.plot(all_positions.reshape(-1), differences.reshape(-1))
+        ax_2.set_xlabel('x (m)')
+        ax_2.set_ylabel('difference (C)')
+
+
+    def build_2D_compare(self, all_positions, sensor_positions, true_temps, model_temps):
         # Draw the first plot
         fig_1, (ax_1, ax_2, ax_3) = plt.subplots(1,3, figsize=(18, 5))
 
@@ -28,15 +44,15 @@ class GraphManager():
         self.plot_sensor_positions(ax_2, sensor_positions)
 
         ax_3.set_title('Errors in temperature field reconstruction')
-        differences = np.abs(true_temps.reshape(-1) - model_temps.reshape(-1))
-        cp_3 = self.plot_field_errors(ax_3, all_positions, differences)
+        differences = np.abs(true_temps - model_temps)
+        cp_3 = self.plot_field_errors(ax_3, all_positions, differences.reshape(-1))
 
         fig_1.colorbar(cp_2, ax=[ax_1, ax_2])
         fig_1.colorbar(cp_3)
         return fig_1
 
 
-    def build_double_3D_temp_field(self, positions, true_temps, model_temps):
+    def build_3D_compare(self, positions, true_temps, model_temps):
         # Draw the 3D double temperature field
         fig, ax = plt.subplots(subplot_kw={"projection": "3d"}, figsize=(8, 6))
 
@@ -53,6 +69,22 @@ class GraphManager():
             model_temps.reshape(-1)
         )
         return fig
+
+    
+    def plot_line_fields(self, ax, positions, sensor_positions, sensor_values, true_field, model_field, pen=('black', '*')):
+        ax.set_xlabel('x (m)')
+        ax.set_ylabel('T (C)')
+        ax.plot(positions, true_field, label='True field')
+        ax.plot(positions, model_field, label = 'Predicted field')
+        ax.scatter(
+            sensor_positions, 
+            sensor_values, 
+            s=20,
+            color=pen[0],
+            marker=pen[1]
+        )
+        ax.legend()
+
 
 
     def plot_contour_field(self, ax, positions, field_values):

@@ -1,6 +1,7 @@
-from scipy.interpolate import RBFInterpolator, CloughTocher2DInterpolator, CubicSpline, LinearNDInterpolator, NearestNDInterpolator
+from scipy.interpolate import RBFInterpolator, CloughTocher2DInterpolator, CubicSpline, LinearNDInterpolator
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import LinearRegression
 from sklearn.gaussian_process.kernels import RBF
 from sklearn import preprocessing
 import numpy as np
@@ -8,8 +9,8 @@ import warnings
 
 
 
-warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
-warnings.filterwarnings(action='ignore', category=np.RankWarning)
+warnings.filterwarnings('ignore')
+
 
 
 
@@ -113,6 +114,33 @@ class GPModel(RegressionModel):
 
 
 
+class PModel(RegressionModel):
+    def __init__(self, num_input_dim, degree=3) -> None:
+        super().__init__(num_input_dim)
+        self.check_dim([1])
+        self._degree = degree
+
+    
+    def fit(self, train_x, train_y):
+        self._scaler.fit(train_x)
+        scaled_x = self._scaler.transform(train_x)
+
+        pos_val_matrix = np.concatenate((scaled_x, train_y.reshape(-1, 1)), axis=1)
+        pos_val_matrix = pos_val_matrix[pos_val_matrix[:, 0].argsort()]
+
+        self._regressor = np.polynomial.polynomial.Polynomial.fit(
+            pos_val_matrix[:,0].reshape(-1), 
+            pos_val_matrix[:,1].reshape(-1), 
+            deg=self._degree
+        )
+
+
+    def predict(self, predict_x):
+        scaled_x = self._scaler.transform(predict_x)
+        return self._regressor(scaled_x).reshape(-1, 1)
+
+
+
 
 class CSModel(RegressionModel):
     def __init__(self, num_input_dim) -> None:
@@ -123,7 +151,14 @@ class CSModel(RegressionModel):
     def fit(self, train_x, train_y):
         self._scaler.fit(train_x)
         scaled_x = self._scaler.transform(train_x)
-        self._regressor = CubicSpline(scaled_x.reshape(-1), train_y.reshape(-1))
+        
+        pos_val_matrix = np.concatenate((scaled_x, train_y.reshape(-1, 1)), axis=1)
+        pos_val_matrix = pos_val_matrix[pos_val_matrix[:, 0].argsort()]
+
+        self._regressor = CubicSpline(
+            pos_val_matrix[:,0].reshape(-1), 
+            pos_val_matrix[:,1].reshape(-1)
+        )
 
 
     def predict(self, predict_x):

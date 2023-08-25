@@ -55,4 +55,4 @@ class Experiment():
         sensor_values = self.__true_field.predict_values(sensor_pos)
         self.__sensor_suite.set_sensors(sensor_pos, sensor_values)
         predicted_values = self.__sensor_suite.predict_data(self.__comparison_pos)
-        return sensor_pos, self.__comparison_values, predicted_values
+        return sensor_pos, self.__comparison_values, predicted_values, sensor_values

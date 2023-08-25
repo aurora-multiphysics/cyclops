@@ -29,7 +29,7 @@ class Field():
 
 
 class ScalarField(Field):
-    def __init__(self, regression_type :type, bounds :tuple, num_dim :int) -> None:
+    def __init__(self, regression_type :type, bounds :np.ndarray, num_dim :int) -> None:
         super().__init__(regression_type, bounds, num_dim)
         self._regressor = None
 
@@ -46,7 +46,7 @@ class ScalarField(Field):
 
 
 class VectorField(Field):
-    def __init__(self, regression_type :type, bounds :tuple, num_dim :int) -> None:
+    def __init__(self, regression_type :type, bounds :np.ndarray, num_dim :int) -> None:
         super().__init__(regression_type, bounds, num_dim)
         self._regressors = []
 

@@ -1,4 +1,4 @@
-from regressors import RBFModel, LModel, GPModel, CSModel, CTModel
+from regressors import RBFModel, LModel, GPModel, CSModel, CTModel, PModel
 from optimisers import NSGA2Optimiser, PSOOptimiser, GAOptimiser
 from fields import ScalarField, VectorField
 from experiment import Experiment
@@ -14,17 +14,19 @@ import numpy as np
 if __name__ == '__main__':
     pickle_manager = PickleManager()
     graph_manager = GraphManager()
-    true_temp_field = pickle_manager.read_file('simulation', 'field_temp.obj')
-    grid = pickle_manager.read_file('simulation', 'grid.obj')
+    true_temp_field = pickle_manager.read_file('simulation', 'field_temp_line.obj')
+    #grid = pickle_manager.read_file('simulation', 'grid.obj')
 
     bounds = true_temp_field.get_bounds()
-    sensor_bounds = bounds+np.ones(bounds.shape)*0.002
+    #sensor_bounds = bounds+np.ones(bounds.shape)*0.002
+    sensor_bounds = bounds+np.array([[1], [-1]])*0.001
+    grid = np.linspace(bounds[0], bounds[1]).reshape(-1, 1)
 
     def f(x): return 0
     sensor = Sensor(0, f)
-    sensors = np.array([sensor]*5)
+    sensors = np.array([sensor]*3)
     sensor_suite = SensorSuite(
-        ScalarField(GPModel, bounds, 2), 
+        ScalarField(PModel, bounds, true_temp_field.get_dim()), 
         sensors
     )
 
@@ -40,20 +42,28 @@ if __name__ == '__main__':
     )
     res = experiment.design()
 
-    proposed_layout, true_temps, model_temps = experiment.get_plotting_arrays(res.X)
+    proposed_layout, true_temps, model_temps, sensor_values = experiment.get_plotting_arrays(res.X)
 
 
     graph_manager.draw(graph_manager.build_optimisation(
         res.history
     ))
-    graph_manager.draw(graph_manager.build_compare(
+    # graph_manager.draw(graph_manager.build_2D_compare(
+    #     grid,
+    #     proposed_layout,
+    #     true_temps,
+    #     model_temps
+    # ))
+    graph_manager.draw(graph_manager.build_1D_compare(
         grid,
         proposed_layout,
+        sensor_values,
         true_temps,
-        model_temps
+        model_temps,
     ))
-    graph_manager.draw(graph_manager.build_double_3D_temp_field(
-        grid,
-        true_temps,
-        model_temps
-    ))
+    print(np.abs(true_temps - model_temps))
+    # graph_manager.draw(graph_manager.build_3D_compare(
+    #     grid,
+    #     true_temps,
+    #     model_temps
+    # ))

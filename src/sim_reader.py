@@ -35,6 +35,19 @@ class GridManager():
         max_y = np.max(pos_2D[:, 1])
         return np.array([[min_x, min_y], [max_x, max_y]])
 
+    
+    def compress_1D(self, points):
+        # Tales (x, y) and returns y
+        return points[:, 1].reshape(-1, 1)
+
+
+    def field_to_line(self, field, points, new_field_type):
+        point_values = field.predict_values(points)
+        line_points = self.compress_1D(points)
+        line_bounds = np.array([[line_points[0, 0]], [line_points[-1, 0]]])
+        line_field = new_field_type(CSModel, line_bounds, 1)
+        line_field.fit_model(line_points, point_values)
+        return line_field
 
 
 
@@ -88,9 +101,17 @@ if __name__ == '__main__':
     temp_field = ScalarField(LModel, bounds, 2)
     temp_field.fit_model(pos_2D, temps)
 
+    line_length = 100
+    line_x = np.zeros(line_length)
+    line_y = np.linspace(bounds[0, 1], bounds[1, 1], line_length)
+    line_points = np.concatenate((line_x.reshape(-1, 1), line_y.reshape(-1, 1)), axis=1)
+    temp_line = grid_manager.field_to_line(temp_field, line_points, ScalarField)
+
+    pickle_manager.save_file('simulation', 'field_temp_line.obj', temp_line)
     pickle_manager.save_file('simulation', 'field_temp.obj', temp_field)
     pickle_manager.save_file('simulation', 'grid.obj', grid)
 
+    print(temp_line.get_bounds())
 
 
     # disp = np.array([
