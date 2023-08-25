@@ -7,13 +7,19 @@ import os
 
 
 
-class GridManager():
+class Unfolder():
     def compress_2D(self, pos_3D):
         # Takes in (x, y, z) and returns (x, y)
         pos_2D = []
         for pos in pos_3D:
             pos_2D.append(np.array([pos[2], pos[1]]))
         return np.array(pos_2D)
+
+
+    def compress_1D(self, points):
+        # Tales (x, y) and returns y
+        diff = points - points[0]*np.ones(points.shape)
+        return np.sqrt((diff*diff).sum(axis=1))
 
 
     def generate_grid(self, bounds, num_x, num_y):
@@ -27,6 +33,13 @@ class GridManager():
                 grid_pos.append(np.array([x, y]))
         return np.array(grid_pos)
 
+    
+    def generate_line(self, pos1, pos2, num_points):
+        x_values = np.linspace(pos1[0], pos2[0], num_points).reshape(-1, 1)
+        y_values = np.linspace(pos1[1], pos2[1], num_points).reshape(-1, 1)
+        line_pos = np.concatenate((x_values, y_values), axis=1)
+        return line_pos
+
 
     def find_bounds(self, pos_2D):
         min_x = np.min(pos_2D[:, 0])
@@ -34,20 +47,6 @@ class GridManager():
         min_y = np.min(pos_2D[:, 1])
         max_y = np.max(pos_2D[:, 1])
         return np.array([[min_x, min_y], [max_x, max_y]])
-
-    
-    def compress_1D(self, points):
-        # Tales (x, y) and returns y
-        return points[:, 1].reshape(-1, 1)
-
-
-    def field_to_line(self, field, points, new_field_type):
-        point_values = field.predict_values(points)
-        line_points = self.compress_1D(points)
-        line_bounds = np.array([[line_points[0, 0]], [line_points[-1, 0]]])
-        line_field = new_field_type(CSModel, line_bounds, 1)
-        line_field.fit_model(line_points, point_values)
-        return line_field
 
 
 
@@ -81,44 +80,3 @@ class ExodusReader():
         for point_index in self.__mesh.point_sets[set_name]:
             set_values.append(all_values[point_index])
         return np.array(set_values)
-
-
-
-
-if __name__ == '__main__':
-    reader = ExodusReader('monoblock_out.e')
-    pickle_manager = PickleManager()
-    grid_manager = GridManager()
-    
-    sensor_region = 'right'
-    pos_3D = reader.read_pos(sensor_region)
-    temps = reader.read_scalar(sensor_region, 'temperature')
-
-    pos_2D = grid_manager.compress_2D(pos_3D)
-    bounds = grid_manager.find_bounds(pos_2D)
-    grid = grid_manager.generate_grid(bounds, 30, 30)
-
-    temp_field = ScalarField(LModel, bounds, 2)
-    temp_field.fit_model(pos_2D, temps)
-
-    line_length = 100
-    line_x = np.zeros(line_length)
-    line_y = np.linspace(bounds[0, 1], bounds[1, 1], line_length)
-    line_points = np.concatenate((line_x.reshape(-1, 1), line_y.reshape(-1, 1)), axis=1)
-    temp_line = grid_manager.field_to_line(temp_field, line_points, ScalarField)
-
-    pickle_manager.save_file('simulation', 'field_temp_line.obj', temp_line)
-    pickle_manager.save_file('simulation', 'field_temp.obj', temp_field)
-    pickle_manager.save_file('simulation', 'grid.obj', grid)
-
-    print(temp_line.get_bounds())
-
-
-    # disp = np.array([
-    #     reader.read_scalar(sensor_region, 'disp_x'),
-    #     reader.read_scalar(sensor_region, 'disp_y'),
-    #     reader.read_scalar(sensor_region, 'disp_z')
-    # ]).T
-    # disp_field = VectorField(LModel, bounds, 2)
-    # disp_field.fit_model(pos_2D, disp)
-    # pickle_manager.save_file('simulation', 'field_disp.obj', disp_field)

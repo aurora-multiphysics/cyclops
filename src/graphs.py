@@ -22,6 +22,8 @@ class GraphManager():
         ax_1.set_title('Temperature fields')
         # Plot lines of both temperature fields
         self.plot_line_fields(ax_1, all_positions, sensor_positions, sensor_values, true_field, model_field)
+        ax_1.set_xlabel('x (m)')
+        ax_1.set_ylabel('T (C)')
 
 
         ax_2.set_title('Errors in temperature field reconstruction')
@@ -72,8 +74,6 @@ class GraphManager():
 
     
     def plot_line_fields(self, ax, positions, sensor_positions, sensor_values, true_field, model_field, pen=('black', '*')):
-        ax.set_xlabel('x (m)')
-        ax.set_ylabel('T (C)')
         ax.plot(positions, true_field, label='True field')
         ax.plot(positions, model_field, label = 'Predicted field')
         ax.scatter(
