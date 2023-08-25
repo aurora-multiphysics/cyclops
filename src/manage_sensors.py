@@ -9,11 +9,16 @@ class SensorSuite():
     def __init__(self, field :Field, sensors :list[Sensor]) -> None:
         self.__field = field
         self.__sensors = sensors
+        self.__num_sensors = len(self.__sensors)
 
 
     def set_sensors(self, sensor_pos :np.ndarray, sensor_values :np.ndarray):
         measured_values = self.__set_sensor_values(sensor_values)
         self.__field.fit_model(sensor_pos, measured_values)
+
+
+    def get_num_sensors(self):
+        return self.__num_sensors
 
     
     def __set_sensor_values(self, sensor_values :np.ndarray):

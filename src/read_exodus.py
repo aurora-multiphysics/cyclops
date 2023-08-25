@@ -8,7 +8,7 @@ import os
 
 
 class GridManager():
-    def compress_2D(pos_3D):
+    def compress_2D(self, pos_3D):
         # Takes in (x, y, z) and returns (x, y)
         pos_2D = []
         for pos in pos_3D:
@@ -16,7 +16,7 @@ class GridManager():
         return np.array(pos_2D)
 
 
-    def generate_grid(bounds, num_x, num_y):
+    def generate_grid(self, bounds, num_x, num_y):
         (min_x, min_y), (max_x, max_y) = bounds
         x_values = np.linspace(min_x, max_x, num_x).reshape(-1)
         y_values = np.linspace(min_y, max_y, num_y).reshape(-1)
@@ -28,12 +28,12 @@ class GridManager():
         return np.array(grid_pos)
 
 
-    def find_bounds(pos_2D):
+    def find_bounds(self, pos_2D):
         min_x = np.min(pos_2D[:, 0])
         max_x = np.max(pos_2D[:, 0])
         min_y = np.min(pos_2D[:, 1])
         max_y = np.max(pos_2D[:, 1])
-        return (min_x, min_y), (max_x, max_y)
+        return np.array([[min_x, min_y], [max_x, max_y]])
 
 
 

@@ -4,7 +4,7 @@ import numpy as np
 
 
 class Field():
-    def __init__(self, regression_type :type, bounds :tuple, num_dim :int) -> None:
+    def __init__(self, regression_type :type, bounds :np.ndarray, num_dim :int) -> None:
         self._regression_type = regression_type
         self._bounds = bounds
         self._num_dim = num_dim
@@ -39,14 +39,14 @@ class ScalarField(Field):
         self._regressor.fit(known_pos, known_scalars)
 
     
-    def predict_values(self, pos):
+    def predict_values(self, pos :np.ndarray):
         return self._regressor.predict(pos)
 
 
 
 
 class VectorField(Field):
-    def __init__(self, regression_type, bounds, num_dim) -> None:
+    def __init__(self, regression_type :type, bounds :tuple, num_dim :int) -> None:
         super().__init__(regression_type, bounds, num_dim)
         self._regressors = []
 
@@ -59,7 +59,7 @@ class VectorField(Field):
             self._regressors.append(regressor)
 
 
-    def predict_values(self, pos):
+    def predict_values(self, pos :np.ndarray):
         vector_out = []
         for regressor in self._regressors:
             vector_out.append(regressor.predict(pos))
