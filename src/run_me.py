@@ -1,10 +1,10 @@
 from regressors import RBFModel, LModel, GPModel, CSModel, CTModel
 from optimisers import NSGA2Optimiser, PSOOptimiser, GAOptimiser
 from fields import ScalarField, VectorField
-from manage_experiment import Experiment
-from read_results import PickleManager
-from manage_sensors import SensorSuite
-from manage_graphs import GraphManager
+from experiment import Experiment
+from file_reader import PickleManager
+from sensor_group import SensorSuite
+from graphs import GraphManager
 from sensors import Sensor
 import numpy as np
 
@@ -18,13 +18,13 @@ if __name__ == '__main__':
     grid = pickle_manager.read_file('simulation', 'grid.obj')
 
     bounds = true_temp_field.get_bounds()
-    sensor_bounds = bounds+np.array([[0.001, 0.001], [-0.001, -0.001]])
+    sensor_bounds = bounds+np.ones(bounds.shape)*0.002
 
     def f(x): return 0
     sensor = Sensor(0, f)
     sensors = np.array([sensor]*5)
     sensor_suite = SensorSuite(
-        ScalarField(RBFModel, bounds, 2), 
+        ScalarField(GPModel, bounds, 2), 
         sensors
     )
 

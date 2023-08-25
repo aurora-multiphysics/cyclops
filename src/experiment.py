@@ -1,5 +1,5 @@
 from optimisers import Problem, Optimiser
-from manage_sensors import SensorSuite
+from sensor_group import SensorSuite
 from fields import Field
 import numpy as np
 

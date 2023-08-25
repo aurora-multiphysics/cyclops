@@ -1,5 +1,5 @@
 from fields import ScalarField, VectorField
-from read_results import PickleManager
+from file_reader import PickleManager
 from regressors import LModel, CSModel
 import numpy as np
 import meshio
