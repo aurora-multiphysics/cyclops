@@ -7,33 +7,33 @@ import os
 
 
 
-
-def compress_2D(pos_3D):
-    # Takes in (x, y, z) and returns (x, y)
-    pos_2D = []
-    for pos in pos_3D:
-        pos_2D.append(np.array([pos[2], pos[1]]))
-    return np.array(pos_2D)
-
-
-def generate_grid(bounds, num_x, num_y):
-    (min_x, min_y), (max_x, max_y) = bounds
-    x_values = np.linspace(min_x, max_x, num_x).reshape(-1)
-    y_values = np.linspace(min_y, max_y, num_y).reshape(-1)
-
-    grid_pos = []
-    for x in x_values[1:-1]:
-        for y in y_values[1:-1]:
-            grid_pos.append(np.array([x, y]))
-    return np.array(grid_pos)
+class GridManager():
+    def compress_2D(pos_3D):
+        # Takes in (x, y, z) and returns (x, y)
+        pos_2D = []
+        for pos in pos_3D:
+            pos_2D.append(np.array([pos[2], pos[1]]))
+        return np.array(pos_2D)
 
 
-def find_bounds(pos_2D):
-    min_x = np.min(pos_2D[:, 0])
-    max_x = np.max(pos_2D[:, 0])
-    min_y = np.min(pos_2D[:, 1])
-    max_y = np.max(pos_2D[:, 1])
-    return (min_x, min_y), (max_x, max_y)
+    def generate_grid(bounds, num_x, num_y):
+        (min_x, min_y), (max_x, max_y) = bounds
+        x_values = np.linspace(min_x, max_x, num_x).reshape(-1)
+        y_values = np.linspace(min_y, max_y, num_y).reshape(-1)
+
+        grid_pos = []
+        for x in x_values[1:-1]:
+            for y in y_values[1:-1]:
+                grid_pos.append(np.array([x, y]))
+        return np.array(grid_pos)
+
+
+    def find_bounds(pos_2D):
+        min_x = np.min(pos_2D[:, 0])
+        max_x = np.max(pos_2D[:, 0])
+        min_y = np.min(pos_2D[:, 1])
+        max_y = np.max(pos_2D[:, 1])
+        return (min_x, min_y), (max_x, max_y)
 
 
 
@@ -75,14 +75,15 @@ class ExodusReader():
 if __name__ == '__main__':
     reader = ExodusReader('monoblock_out.e')
     pickle_manager = PickleManager()
+    grid_manager = GridManager()
     
     sensor_region = 'right'
     pos_3D = reader.read_pos(sensor_region)
     temps = reader.read_scalar(sensor_region, 'temperature')
 
-    pos_2D = compress_2D(pos_3D)
-    bounds = find_bounds(pos_2D)
-    grid = generate_grid(bounds, 30, 30)
+    pos_2D = grid_manager.compress_2D(pos_3D)
+    bounds = grid_manager.find_bounds(pos_2D)
+    grid = grid_manager.generate_grid(bounds, 30, 30)
 
     temp_field = ScalarField(LModel, bounds, 2)
     temp_field.fit_model(pos_2D, temps)

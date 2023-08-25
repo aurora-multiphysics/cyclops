@@ -14,9 +14,10 @@ warnings.filterwarnings(action='ignore', category=np.RankWarning)
 
 
 class RegressionModel():
-    def __init__(self) -> None:
+    def __init__(self, num_input_dim) -> None:
         self._scaler = preprocessing.StandardScaler()
         self._regressor = None
+        self._x_dim = num_input_dim
 
 
     def fit(self, train_x, train_y):
@@ -29,12 +30,20 @@ class RegressionModel():
         pass
 
 
+    def check_dim(self, acceptable_dim):
+        if self._x_dim not in acceptable_dim:
+            raise Exception('''
+                Invalid dimension of input data!
+                Instead your input data should be a numpy array of shape (-1, x)
+                Where x is an element of '''+str(acceptable_dim)
+            )
+
+
 
 
 class RBFModel(RegressionModel):
-    def __init__(self) -> None:
-        # No restrictions!
-        super().__init__()
+    def __init__(self, num_input_dim) -> None:
+        super().__init__(num_input_dim)
 
 
     def fit(self, train_x, train_y):
@@ -45,52 +54,46 @@ class RBFModel(RegressionModel):
 
     def predict(self, predict_x):
         scaled_x = self._scaler.transform(predict_x)
-        return self._regressor(scaled_x)
-
-
-
-
-class NNModel(RegressionModel):
-    def __init__(self) -> None:
-        # No restrictions!
-        super().__init__()
-
-
-    def fit(self, train_x, train_y):
-        self._scaler.fit(train_x)
-        scaled_x = self._scaler.transform(train_x)
-        self._regressor = NearestNDInterpolator(scaled_x, train_y)
-
-
-    def predict(self, predict_x):
-        scaled_x = self._scaler.transform(predict_x)
-        return self._regressor(scaled_x)
+        return self._regressor(scaled_x).reshape(-1, 1)
 
 
 
 class LModel(RegressionModel):
-    def __init__(self) -> None:
-        # Only for > 1D inputs
-        # Only for interpolation
-        super().__init__()
+    def __init__(self, num_input_dim) -> None:
+        super().__init__(num_input_dim)
+        self.check_dim(None)
+
+
+    def check_dim(self, acceptable_dim):
+        if self._x_dim <= 1:
+            raise Exception('''
+                Invalid dimension of input data!
+                Instead your input data should be a numpy array of shape (-1, x)
+                where x > 1'''
+            )
 
 
     def fit(self, train_x, train_y):
         self._scaler.fit(train_x)
         scaled_x = self._scaler.transform(train_x)
-        self._regressor = LinearNDInterpolator(scaled_x, train_y)
+        self._regressor = LinearNDInterpolator(
+            scaled_x, 
+            train_y,
+            fill_value = np.mean(train_y)
+        )
 
 
     def predict(self, predict_x):
         scaled_x = self._scaler.transform(predict_x)
-        return self._regressor(scaled_x)    
+        value = self._regressor(scaled_x).reshape(-1, 1)
+        return value
 
 
 
 
 class GPModel(RegressionModel):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, num_input_dim) -> None:
+        super().__init__(num_input_dim)
 
 
     def fit(self, train_x, train_y):
@@ -106,15 +109,15 @@ class GPModel(RegressionModel):
 
     def predict(self, predict_x):
         scaled_x = self._scaler.transform(predict_x)
-        return self._regressor.predict(scaled_x)
+        return self._regressor.predict(scaled_x).reshape(-1, 1)
 
 
 
 
 class CSModel(RegressionModel):
-    def __init__(self) -> None:
-        # Only for 1D inputs
-        super().__init__()
+    def __init__(self, num_input_dim) -> None:
+        super().__init__(num_input_dim)
+        self.check_dim([1])
 
 
     def fit(self, train_x, train_y):
@@ -131,18 +134,23 @@ class CSModel(RegressionModel):
 
 
 class CTModel(RegressionModel):
-    def __init__(self) -> None:
-        # Only for 2D inputs
-        # Only for interpolation
-        super().__init__()
+    def __init__(self, num_input_dim) -> None:
+        super().__init__(num_input_dim)
+        self.check_dim([2])
+        self._output_mean = 0
 
 
     def fit(self, train_x, train_y):
         self._scaler.fit(train_x)
         scaled_x = self._scaler.transform(train_x)
-        self._regressor = CloughTocher2DInterpolator(scaled_x, train_y)
+        self._regressor = CloughTocher2DInterpolator(
+            scaled_x, 
+            train_y,
+            fill_value = np.mean(train_y)
+        )
 
 
     def predict(self, predict_x):
         scaled_x = self._scaler.transform(predict_x)
-        return self._regressor(scaled_x).reshape(-1, 1)
+        value = self._regressor(scaled_x).reshape(-1, 1)
+        return value
