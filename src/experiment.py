@@ -48,28 +48,28 @@ class Experiment():
 
 
     def get_MSE(self, sensor_array :np.ndarray[float]) -> list[float]:
-        # Figure out where to find the temperatures
+        # Setup the sensor suite to reflect the input array
         sensor_pos = sensor_array.reshape(-1, self.__num_dim)
         predict_pos = self.__sensor_suite.get_predict_pos(sensor_pos)
-
-        # Get the sensor values at those positions
         sensor_values = self.__true_field.predict_values(predict_pos)
-        self.__sensor_suite.set_sensors(sensor_pos, sensor_values)
+
+        measured_values = self.__sensor_suite.set_sensor_values(sensor_values)
+        self.__sensor_suite.fit_sensor_model(sensor_pos, measured_values)
         predicted_values = self.__sensor_suite.predict_data(self.__comparison_pos)
 
-        # Calcualte the error
+        # Calculate the error
         differences = np.square(predicted_values - self.__comparison_values)
         return [np.sum(differences)/self.__num_pos]
 
 
     def get_plotting_arrays(self, sensor_array :np.ndarray[float]) -> tuple:
-        # Figure out where to find the temperatures
+        # Setup the sensor suite to reflect the input array
         sensor_pos = sensor_array.reshape(-1, self.__num_dim)
         predict_pos = self.__sensor_suite.get_predict_pos(sensor_pos)
-
-        # Get the sensor values at those positions
         sensor_values = self.__true_field.predict_values(predict_pos)
-        real_values = self.__sensor_suite.set_sensors(sensor_pos, sensor_values)
+
+        measured_values = self.__sensor_suite.set_sensor_values(sensor_values)
+        self.__sensor_suite.fit_sensor_model(sensor_pos, measured_values)
         predicted_values = self.__sensor_suite.predict_data(self.__comparison_pos)
 
-        return sensor_pos, self.__comparison_values, predicted_values, real_values
+        return sensor_pos, self.__comparison_values, predicted_values, measured_values

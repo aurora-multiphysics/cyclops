@@ -1,7 +1,5 @@
 from scipy.interpolate import RBFInterpolator, CloughTocher2DInterpolator, CubicSpline, LinearNDInterpolator
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.exceptions import ConvergenceWarning
-from sklearn.linear_model import LinearRegression
 from sklearn.gaussian_process.kernels import RBF
 from sklearn import preprocessing
 import numpy as np

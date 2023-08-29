@@ -1,5 +1,4 @@
-from sklearn.linear_model import LinearRegression
-from scipy.interpolate import CubicSpline
+from regressors import CSModel, PModel
 import numpy as np
 
 
@@ -77,17 +76,18 @@ class RoundSensor(Sensor):
 
 class Thermocouple(RoundSensor):
     def __init__(self, temps, voltages, noise_dev=0.6, failure_chance=0.4, radius=0.00075) -> None:
-        self._regressor = LinearRegression()
-        self._regressor.fit(voltages.reshape(-1, 1), temps.reshape(-1, 1))
-        self._interpolator = CubicSpline(temps, voltages)
+        self._regressor = PModel(1, degree=1)
+        self._regressor.fit(voltages, temps)
+        self._interpolator = CSModel(1)
+        self._interpolator.fit(temps, voltages)
 
         value_range = np.array([min(temps), max(temps)])
-        super().__init__(noise_dev, self.non_linear_error, False, failure_chance, value_range, radius)
+        super().__init__(noise_dev, self.non_linear_error, failure_chance, value_range, radius)
 
     
     def non_linear_error(self, temp):
-        voltage = self._interpolator(temp)
-        new_temp = self._regressor(voltage)
+        voltage = self._interpolator.predict(np.array([[temp]]))
+        new_temp = self._regressor.predict(voltage)
         return new_temp - temp
 
 

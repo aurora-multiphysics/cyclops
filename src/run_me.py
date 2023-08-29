@@ -22,11 +22,12 @@ if __name__ == '__main__':
     sensor_bounds = bounds + np.array([[1], [-1]])*0.002
 
     # Setup the sensor suite
-    def f(x): return 0
-    sensor = RoundSensor(0, f, 0, [-500, 5000], 0.001)
+    temps = pickle_manager.read_file('sensors', 'k-type-T.obj')
+    voltages = pickle_manager.read_file('sensors', 'k-type-V.obj')
+    sensor = Thermocouple(temps, voltages)
     sensors = np.array([sensor]*5)
     sensor_suite = SensorSuite(
-        ScalarField(GPModel, bounds, true_temp_field.get_dim()), 
+        ScalarField(RBFModel, bounds, true_temp_field.get_dim()), 
         sensors,
         symmetry=[]
     )

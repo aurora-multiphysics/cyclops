@@ -77,21 +77,19 @@ class SensorSuite():
         return np.array(record_pos)
 
 
-    def set_sensors(self, sensor_pos :np.ndarray, sensor_values :np.ndarray):
-        measured_values = self.__set_sensor_values(sensor_values)
+    def fit_sensor_model(self, sensor_pos :np.ndarray, measured_values :np.ndarray):
         for transformation in self.__symmetry:
             sensor_pos = transformation(sensor_pos)
             measured_values = np.concatenate((measured_values, measured_values), axis=0)
-        self.filter(sensor_pos, measured_values)
-        self.__field.fit_model(sensor_pos, measured_values)
-        return measured_values
+        new_pos, new_values = self.filter(sensor_pos, measured_values)
+        self.__field.fit_model(new_pos, new_values)
 
 
     def get_num_sensors(self):
         return self.__num_sensors
 
     
-    def __set_sensor_values(self, sensor_values :np.ndarray):
+    def set_sensor_values(self, sensor_values :np.ndarray):
         measured_values = np.zeros(self.__num_sensors).reshape(-1, 1)
         index = 0
         for i, sensor in enumerate(self.__sensors):
@@ -107,7 +105,12 @@ class SensorSuite():
 
     
     def filter(self, pos_array, measured_values):
-        joint_array = np.concatenate((pos_array, measured_values), axis=1)
-        joint_array = np.argwhere(pos_array[:,0:self.__num_dim] > self.__bounds[0])
-        joint_array = np.argwhere(pos_array[:,0:self.__num_dim] < self.__bounds[1])
-        return joint_array[:,0:self.__num_dim], joint_array[:,-1].reshape(-1, 1)
+        out_pos = []
+        out_value = []
+        condition_1 = pos_array > self.__bounds[0]
+        condition_2 = pos_array < self.__bounds[1]
+        for i, pos in enumerate(pos_array):
+            if condition_1[i] == True and condition_2[i] == True:
+                out_pos.append(pos_array[i])
+                out_value.append(measured_values[i])
+        return np.array(out_pos), np.array(out_value)
