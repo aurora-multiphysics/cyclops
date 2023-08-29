@@ -1,3 +1,4 @@
+from itertools import combinations
 from sensors import Sensor
 from fields import Field
 import numpy as np
@@ -67,13 +68,14 @@ class SensorSuite():
         self.__num_dim = field.get_dim()
         
 
-    def get_predict_pos(self, sensor_pos :np.array):
+    def get_predict_pos(self, sensor_pos :np.ndarray, active_sensors :np.ndarray):
         record_pos = []
         for i, sensor in enumerate(self.__sensors):
-            area = sensor.get_area(self.__num_dim)
-            positions = sensor_pos[i]*np.ones(area.shape) + area
-            for pos in positions:
-                record_pos.append(pos)
+            if active_sensors[i] == True:
+                area = sensor.get_area(self.__num_dim)
+                positions = sensor_pos[i]*np.ones(area.shape) + area
+                for pos in positions:
+                    record_pos.append(pos)
         return np.array(record_pos)
 
 
@@ -89,14 +91,15 @@ class SensorSuite():
         return self.__num_sensors
 
     
-    def set_sensor_values(self, sensor_values :np.ndarray):
+    def set_sensor_values(self, sensor_values :np.ndarray, active_sensors :np.ndarray):
         measured_values = np.zeros(self.__num_sensors).reshape(-1, 1)
         index = 0
         for i, sensor in enumerate(self.__sensors):
-            relevant_values = sensor_values[index:index+sensor.get_num_values(), 0]
-            index += sensor.get_num_values()
-            sensor.set_value(relevant_values)
-            measured_values[i, 0] = sensor.get_value()
+            if active_sensors[i] == True:
+                relevant_values = sensor_values[index:index+sensor.get_num_values(), 0]
+                index += sensor.get_num_values()
+                sensor.set_value(relevant_values)
+                measured_values[i, 0] = sensor.get_value()
         return measured_values
 
 
@@ -110,7 +113,33 @@ class SensorSuite():
         condition_1 = pos_array > self.__bounds[0]
         condition_2 = pos_array < self.__bounds[1]
         for i, pos in enumerate(pos_array):
-            if condition_1[i] == True and condition_2[i] == True:
+            if condition_1[i].all() == True and condition_2[i].all() == True:
                 out_pos.append(pos_array[i])
                 out_value.append(measured_values[i])
         return np.array(out_pos), np.array(out_value)
+
+
+    def calc_keys(self, depth):
+        template = np.array(range(0, self.__num_sensors))
+        failed_keys = []
+        for i in range(depth+1):
+            failed_indices = combinations(template, i)
+            for setup in failed_indices:
+                key=[True]*self.__num_sensors
+                for i in setup:
+                    key[i] = False
+                failed_keys.append(np.array(key))
+        return np.array(failed_keys)
+
+
+    def calc_chances(self, keys):
+        chances = []
+        for key in keys:
+            chance = 1
+            for i, not_failed in enumerate(key):
+                if not_failed:
+                    chance *= (1 - self.__sensors[i].get_failure_chance())
+                else:
+                    chance *= self.__sensors[i].get_failure_chance()
+            chances.append(chance)
+        return np.array(chances)

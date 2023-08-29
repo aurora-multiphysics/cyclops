@@ -15,16 +15,15 @@ if __name__ == '__main__':
     # Load any objects necessary
     pickle_manager = PickleManager()
     graph_manager = GraphManager()
-    true_temp_field = pickle_manager.read_file('simulation', 'field_temp_line.obj')
-    grid = pickle_manager.read_file('simulation', 'line_temp.obj')
+    true_temp_field = pickle_manager.read_file('simulation', 'field_temp.obj')
+    grid = pickle_manager.read_file('simulation', 'grid_temp.obj')
 
     bounds = true_temp_field.get_bounds()
-    sensor_bounds = bounds + np.array([[1], [-1]])*0.002
+    sensor_bounds = bounds+np.array([[1, 1], [-1, -1]])*0.002
 
     # Setup the sensor suite
-    temps = pickle_manager.read_file('sensors', 'k-type-T.obj')
-    voltages = pickle_manager.read_file('sensors', 'k-type-V.obj')
-    sensor = Thermocouple(temps, voltages)
+    def f(x): return 0
+    sensor = PointSensor(0, f, 0, [-5000, 5000])
     sensors = np.array([sensor]*5)
     sensor_suite = SensorSuite(
         ScalarField(RBFModel, bounds, true_temp_field.get_dim()), 
@@ -51,10 +50,14 @@ if __name__ == '__main__':
     graph_manager.draw(graph_manager.build_optimisation(
         res.history
     ))
-    graph_manager.draw(graph_manager.build_1D_compare(
+    graph_manager.draw(graph_manager.build_2D_compare(
         grid,
         proposed_layout,
-        sensor_values,
         true_temps,
-        model_temps,
+        model_temps
+    ))
+    graph_manager.draw(graph_manager.build_3D_compare(
+        grid,
+        true_temps,
+        model_temps
     ))
