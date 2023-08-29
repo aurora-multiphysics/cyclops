@@ -65,6 +65,16 @@ class SensorSuite():
         self.__symmetry = symmetry
         self.__bounds = field.get_bounds()
         self.__num_dim = field.get_dim()
+        
+
+    def get_predict_pos(self, sensor_pos :np.array):
+        record_pos = []
+        for i, sensor in enumerate(self.__sensors):
+            area = sensor.get_area(self.__num_dim)
+            positions = sensor_pos[i]*np.ones(area.shape) + area
+            for pos in positions:
+                record_pos.append(pos)
+        return np.array(record_pos)
 
 
     def set_sensors(self, sensor_pos :np.ndarray, sensor_values :np.ndarray):
@@ -74,6 +84,7 @@ class SensorSuite():
             measured_values = np.concatenate((measured_values, measured_values), axis=0)
         self.filter(sensor_pos, measured_values)
         self.__field.fit_model(sensor_pos, measured_values)
+        return measured_values
 
 
     def get_num_sensors(self):
@@ -81,9 +92,12 @@ class SensorSuite():
 
     
     def __set_sensor_values(self, sensor_values :np.ndarray):
-        measured_values = np.zeros(sensor_values.shape)
+        measured_values = np.zeros(self.__num_sensors).reshape(-1, 1)
+        index = 0
         for i, sensor in enumerate(self.__sensors):
-            sensor.set_value(sensor_values[i, 0])
+            relevant_values = sensor_values[index:index+sensor.get_num_values(), 0]
+            index += sensor.get_num_values()
+            sensor.set_value(relevant_values)
             measured_values[i, 0] = sensor.get_value()
         return measured_values
 
