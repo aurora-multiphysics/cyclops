@@ -1,5 +1,5 @@
+from sensors import Thermocouple, PointSensor
 from file_reader import PickleManager
-from sensors import Thermocouple
 import numpy as np
 import os
 
@@ -31,7 +31,7 @@ class ThermocoupleReader():
                                 voltages.append(float(volt))
                                 add_on += 1
                     next_temp += 10
-        return np.array(temperatures), np.array(voltages)
+        return np.array(temperatures).reshape(-1, 1), np.array(voltages).reshape(-1, 1)
 
 
 
@@ -42,5 +42,5 @@ if __name__ == '__main__':
     pickle_manager = PickleManager()
 
     temperatures, voltages = reader.generate_thermo_data()
-    k_type = Thermocouple(temperatures, voltages)
-    pickle_manager.write_file('sensors', 'k-type.obj', k_type)
+    pickle_manager.save_file('sensors', 'k-type-T.obj', temperatures)
+    pickle_manager.save_file('sensors', 'k-type-V.obj', voltages)

@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     # Setup the sensor suite
     def f(x): return 0
-    sensor = Sensor(0, f)
+    sensor = PointSensor(0, f)
     sensors = np.array([sensor]*5)
     sensor_suite = SensorSuite(
         ScalarField(GPModel, bounds, true_temp_field.get_dim()), 
