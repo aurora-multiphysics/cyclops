@@ -18,8 +18,9 @@ class Unfolder():
 
     def compress_1D(self, points):
         # Tales (x, y) and returns y
-        diff = points - points[0]*np.ones(points.shape)
-        return np.sqrt((diff*diff).sum(axis=1))
+        diff = points - points[0]*np.ones(points[0].shape)
+        out_arr = np.sqrt((diff*diff).sum(axis=1))
+        return out_arr.reshape(-1, 1)
 
 
     def generate_grid(self, bounds, num_x, num_y):
@@ -54,7 +55,8 @@ class Unfolder():
 class ExodusReader():
     def __init__(self, file_name) -> None:
         # Load the exodus file and read it to get a mesh
-        print('\nReading file...')
+        
+        ('\nReading file...')
         self.__mesh = self.__generate_mesh(file_name)
         print(self.__mesh)
 

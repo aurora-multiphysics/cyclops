@@ -156,8 +156,8 @@ class CSModel(RegressionModel):
         pos_val_matrix = pos_val_matrix[pos_val_matrix[:, 0].argsort()]
 
         self._regressor = CubicSpline(
-            pos_val_matrix[:,0].reshape(-1), 
-            pos_val_matrix[:,1].reshape(-1)
+            pos_val_matrix[:,0], 
+            pos_val_matrix[:,1]
         )
 
 

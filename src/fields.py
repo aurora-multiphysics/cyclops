@@ -60,7 +60,8 @@ class VectorField(Field):
 
 
     def predict_values(self, pos :np.ndarray):
-        vector_out = []
-        for regressor in self._regressors:
-            vector_out.append(regressor.predict(pos))
-        return np.array(vector_out).T
+        vector_out = self._regressors[0].predict(pos).reshape(-1, 1)
+        for regressor in self._regressors[1:]:
+            new_column = regressor.predict(pos)
+            vector_out = np.concatenate((vector_out, new_column), axis=1)
+        return vector_out
