@@ -156,3 +156,11 @@ class GraphManager():
         ax.set_xlabel('Reconstruction loss')
         ax.set_ylabel('Reconstruction reliability')
         ax.set_title('Pareto front')
+        for i in range(len(F)):
+            ax.annotate(
+                'Setup '+str(i),
+                xy=(F[i, 0], F[i, 1]), xycoords='data',
+                xytext=(-60, 30), textcoords='offset points',
+                bbox=dict(facecolor='none', edgecolor='black'),
+                arrowprops=dict(arrowstyle="->", connectionstyle="angle,angleA=0,angleB=90,rad=10")
+            )

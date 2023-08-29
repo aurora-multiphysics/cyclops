@@ -21,21 +21,26 @@ class Experiment():
         self.__keys = None
         self.__chances = None
         self.__active_sensors = None
-    
+        self.__repetitions = None
+        self.__loss_limit = None
 
-    def plan_soo(self, sensor_suite :SensorSuite, sensor_bounds :np.ndarray) -> None:
+
+    def plan_soo(self, sensor_suite :SensorSuite, sensor_bounds :np.ndarray, repetitions=10) -> None:
         self.__sensor_suite = sensor_suite
         num_sensors = sensor_suite.get_num_sensors()
         self.__problem = self.__build_problem(sensor_bounds, num_sensors, 1, self.calc_SOO_loss)
         self.__active_sensors = np.array([True]*num_sensors)
+        self.__repetitions = repetitions
 
 
-    def plan_moo(self, sensor_suite :SensorSuite, sensor_bounds :np.ndarray, depth=3) -> None:
+    def plan_moo(self, sensor_suite :SensorSuite, sensor_bounds :np.ndarray, depth=3, repetitions=10, loss_limit=1e2) -> None:
         self.__sensor_suite = sensor_suite
         num_sensors = sensor_suite.get_num_sensors()
         self.__problem = self.__build_problem(sensor_bounds, num_sensors, 2, self.calc_MOO_loss)
         self.__keys = self.__sensor_suite.calc_keys(depth)
         self.__chances = self.__sensor_suite.calc_chances(self.__keys)
+        self.__repetitions = repetitions
+        self.__loss_limit = loss_limit
 
 
     def __build_problem(self, sensor_bounds :np.ndarray, num_sensors :int, num_obj :int, loss_function) -> Problem:
@@ -53,18 +58,21 @@ class Experiment():
         return self.__optimiser.optimise(self.__problem)
 
 
-    def calc_MOO_loss(self, sensor_array :np.ndarray[float], repetitions=10, loss_limit=5e1) -> list[float]:
+    def calc_MOO_loss(self, sensor_array :np.ndarray[float]) -> list[float]:
         # Setup the sensor suite to reflect the input array
         sensor_pos = sensor_array.reshape(-1, self.__num_dim)
 
         losses = np.zeros(len(self.__keys))
         for i, key in enumerate(self.__keys):
+            loss = []
             self.__active_sensors = key
-            losses[i] = self.get_MSE(np.array(sensor_pos))
+            for i in range(self.__repetitions):
+                loss.append(self.get_MSE(sensor_pos))
+            losses[i] = sum(loss)/len(loss)
         
         success_chance = 0
         for i, sensor_chance in enumerate(self.__chances):
-            if losses[i] < loss_limit:
+            if losses[i] < self.__loss_limit:
                 success_chance += sensor_chance
 
         return [np.mean(losses * self.__chances), 1-success_chance]
