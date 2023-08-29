@@ -33,7 +33,7 @@ if __name__ == '__main__':
     )
 
     # Setup the experiment
-    optimiser = NSGA2Optimiser('00:10:00')
+    optimiser = NSGA2Optimiser('00:05:00')
     experiment = Experiment(
         true_temp_field,
         grid,
@@ -60,11 +60,12 @@ if __name__ == '__main__':
     display_str = input('Enter setup to display [Q to quit]: ')
     while display_str.isnumeric():
         proposed_layout, true_temps, model_temps, sensor_values = experiment.get_plotting_arrays(res.X[i])
-        graph_manager.draw(graph_manager.build_2D_compare(
+        graph_manager.draw(graph_manager.build_1D_compare(
             grid,
             proposed_layout,
+            sensor_values,
             true_temps,
-            model_temps
+            model_temps,
         ))
         display_str = input('Enter setup to display [Q to quit]: ')
 
