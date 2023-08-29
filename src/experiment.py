@@ -27,7 +27,9 @@ class Experiment():
 
 
     def plan_moo(self, sensor_suite :SensorSuite, sensor_bounds :np.ndarray) -> None:
-        pass
+        self.__sensor_suite = sensor_suite
+        num_sensors = sensor_suite.get_num_sensors()
+        self.__problem = self.__build_problem(sensor_bounds, num_sensors, 2)
 
 
     def __build_problem(self, sensor_bounds :np.ndarray, num_sensors :int, num_obj :int) -> Problem:
