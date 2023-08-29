@@ -8,15 +8,14 @@ import os
 
 
 class Unfolder():
-    def compress_2D(self, pos_3D):
-        # Takes in (x, y, z) and returns (x, y)
+    def compress_2D(self, pos_3D :np.ndarray[float]):
         pos_2D = []
         for pos in pos_3D:
             pos_2D.append(np.array([pos[2], pos[1]]))
         return np.array(pos_2D)
 
 
-    def compress_1D(self, points):
+    def compress_1D(self, points :np.ndarray[float]):
         # Tales (x, y) and returns y
         diff = points - points[0]*np.ones(points[0].shape)
         out_arr = np.sqrt((diff*diff).sum(axis=1))

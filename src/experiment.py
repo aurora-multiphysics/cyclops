@@ -101,6 +101,12 @@ class Experiment():
         return np.sum(differences)/self.__num_pos
 
 
+    def set_all_sensors_active(self):
+        for i, e in enumerate(self.__active_sensors):
+            if e == False:
+                self.__active_sensors[i] = True
+
+
     def get_plotting_arrays(self, sensor_array :np.ndarray[float]) -> tuple:
         # Setup the sensor suite to reflect the input array
         sensor_pos = sensor_array.reshape(-1, self.__num_dim)
