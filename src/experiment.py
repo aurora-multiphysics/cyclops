@@ -104,13 +104,14 @@ class Experiment():
 
     def calc_MOO_loss(self, sensor_array :np.ndarray[float]) -> list[float]:
         sensor_pos = sensor_array.reshape(-1, self.__num_dim)
-
         losses = np.zeros(self.__repetitions)
         for i, key in enumerate(self.__keys):
+            print(key, self.__active_sensors)
             self.__active_sensors = key
             losses[i] = self.get_MSE(sensor_pos)
+
         expected_loss = np.mean(losses)
-        failure_chance = (losses>self.__loss_limit).sum()
+        failure_chance = (losses>self.__loss_limit).sum()/self.__repetitions
         return [expected_loss, failure_chance]
 
 
@@ -178,3 +179,7 @@ class Experiment():
         differences = np.square(predicted_values - self.__comparison_values)
         print('Loss shown:', np.sum(differences)/self.__num_pos)
         return sensor_pos, self.__comparison_values, predicted_values, measured_values
+
+
+    def get_MOO_plotting_arrays(self, sensor_array :np.ndarray[float]) -> tuple:
+        pass
