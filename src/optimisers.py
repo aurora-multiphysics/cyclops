@@ -1,8 +1,3 @@
-"""
-Defines the Problem class used by the optimisers.
-Defines a variety of MOO (multi-objective-optimisation) optimisers.
-Defines a variety of SOO (single-objective-optimisation) optimisers.
-"""
 from pymoo.operators.sampling.rnd import FloatRandomSampling
 from pymoo.algorithms.soo.nonconvex.pso import PSO
 from pymoo.core.problem import ElementwiseProblem
@@ -101,6 +96,10 @@ class NSGA2Optimiser(Optimiser):
     Simulates evolution.
     """
     def __init__(self, time_limit) -> None:
+        """
+        Args:
+            time_limit (_type_): time the optimisation should run for.
+        """
         algorithm = NSGA2(
             pop_size=40,
             n_offsprings=10,
@@ -121,6 +120,10 @@ class PSOOptimiser(Optimiser):
     Simulates birds searching for food.
     """
     def __init__(self, time_limit) -> None:
+        """
+        Args:
+            time_limit (_type_): time the optimisation should run for.
+        """
         algorithm = PSO(
             pop_size=30,
             adaptive=True
@@ -136,6 +139,10 @@ class GAOptimiser(Optimiser):
     Simulates evolution.
     """
     def __init__(self, time_limit) -> None:
+        """
+        Args:
+            time_limit (_type_): time the optimisation should run for.
+        """
         algorithm = GA(
             pop_size=50,
             eliminate_duplicates=True

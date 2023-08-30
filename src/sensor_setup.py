@@ -6,12 +6,28 @@ import os
 
 
 class ThermocoupleReader():
-    def __init__(self, file_name) -> None:
+    """
+    Class to read the tabular thermocouple data in the 'sensors' folder.
+    This was downloaded from https://srdata.nist.gov/its90/download/download.html.
+    """
+    def __init__(self, file_name :str) -> None:
+        """
+        Calculates the path to the file.
+
+        Args:
+            file_name (str): the name of the file in the sensors folder.
+        """
         parent_path = os.path.dirname(os.path.dirname(__file__))
         self.__file_path = os.path.join(os.path.sep,parent_path, 'sensors', file_name)
 
 
-    def generate_thermo_data(self):
+    def generate_thermo_data(self) -> tuple[np.ndarray]:
+        """
+        Reads the file.
+
+        Returns:
+            tuple[np.ndarray]: The temperatures and corresponding voltage arrays
+        """
         temperatures = []
         voltages = []
 
@@ -38,6 +54,9 @@ class ThermocoupleReader():
 
 
 if __name__ == '__main__':
+    """
+    This is run to save the thermocouple data to the sensors folder where it can quickly be read.
+    """
     reader = ThermocoupleReader('k-type.txt')
     pickle_manager = PickleManager()
 

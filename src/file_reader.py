@@ -1,6 +1,3 @@
-"""
-Defines the PickleManager to read and write to pickle files.
-"""
 import pickle
 import os
 
@@ -41,7 +38,7 @@ class PickleManager():
 
     def read_file(self, folder :str, file_name :str) -> object:
         """
-        Reads an object file and returns the object
+        Reads an object file and returns the object.
 
         Args:
             folder (str): folder where the object is.

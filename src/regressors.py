@@ -1,6 +1,3 @@
-"""
-This modules contains the various regression models. 
-"""
 from scipy.interpolate import RBFInterpolator, CloughTocher2DInterpolator, CubicSpline, LinearNDInterpolator
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
@@ -19,9 +16,9 @@ class RegressionModel():
     """
     This is an abstract class to describe regression models.
     They have 3 core methods.
-    1. initialisation with correct hyperparameters
-    2. fitting with training data
-    3. predicting values
+    1. Initialisation with correct hyperparameters.
+    2. Fitting with training data.
+    3. Predicting values.
     They all predict 1D outputs only so many are required to predict a vector.
     """
     def __init__(self, num_input_dim :int) -> None:
@@ -49,12 +46,15 @@ class RegressionModel():
         pass
 
 
-    def predict(self, predict_x :np.ndarray[float]) -> None:
+    def predict(self, predict_x :np.ndarray[float]) -> np.ndarray[float]:
         """
         Returns n predicted outputs of dimension 1 given inputs
 
         Args:
-            predict_x (np.ndarray[float]): n by d array of n input samples of d dimension
+            predict_x (np.ndarray[float]): n by d array of n input samples of d dimensions
+
+        Returns:
+            np.ndarray[float]: n by 1 array of n predicted 1D values
         """
         pass
 
@@ -92,12 +92,28 @@ class RBFModel(RegressionModel):
 
 
     def fit(self, train_x :np.ndarray[float], train_y :np.ndarray[float]) -> None:
+        """
+        Fits the model to some training data.
+
+        Args:
+            train_x (np.ndarray[float]): n by d array of n training inputs with d dimensions
+            train_y (np.ndarray[float]): n by 1 array of n training outputs
+        """
         self._scaler.fit(train_x)
         scaled_x = self._scaler.transform(train_x)
         self._regressor = RBFInterpolator(scaled_x, train_y)
 
 
     def predict(self, predict_x :np.ndarray[float]) -> np.ndarray[float]:
+        """
+        Returns n predicted outputs of dimension 1 given inputs
+
+        Args:
+            predict_x (np.ndarray[float]): n by d array of n input samples of d dimensions
+
+        Returns:
+            np.ndarray[float]: n by 1 array of n predicted 1D values
+        """
         scaled_x = self._scaler.transform(predict_x)
         return self._regressor(scaled_x).reshape(-1, 1)
 
@@ -116,6 +132,15 @@ class LModel(RegressionModel):
 
 
     def check_dim(self, acceptable_dim :set) -> None:
+        """
+        We had to override this function as an infinite number of dimensions are possible.
+
+        Args:
+            acceptable_dim (set): leave empty for continuity.
+
+        Raises:
+            Exception: an error if the model cannot cope.
+        """
         if self._x_dim <= 1:
             raise Exception('''
                 Invalid dimension of input data!
@@ -125,6 +150,13 @@ class LModel(RegressionModel):
 
 
     def fit(self, train_x :np.ndarray[float], train_y :np.ndarray[float]) -> None:
+        """
+        Fits the model to some training data.
+
+        Args:
+            train_x (np.ndarray[float]): n by d array of n training inputs with d dimensions
+            train_y (np.ndarray[float]): n by 1 array of n training outputs
+        """
         self._scaler.fit(train_x)
         scaled_x = self._scaler.transform(train_x)
         self._regressor = LinearNDInterpolator(
@@ -135,6 +167,15 @@ class LModel(RegressionModel):
 
 
     def predict(self, predict_x :np.ndarray[float]) -> np.ndarray[float]:
+        """
+        Returns n predicted outputs of dimension 1 given inputs
+
+        Args:
+            predict_x (np.ndarray[float]): n by d array of n input samples of d dimensions
+
+        Returns:
+            np.ndarray[float]: n by 1 array of n predicted 1D values
+        """
         scaled_x = self._scaler.transform(predict_x)
         value = self._regressor(scaled_x).reshape(-1, 1)
         return value
@@ -155,6 +196,13 @@ class GPModel(RegressionModel):
 
 
     def fit(self, train_x :np.ndarray[float], train_y :np.ndarray[float]) -> None:
+        """
+        Fits the model to some training data.
+
+        Args:
+            train_x (np.ndarray[float]): n by d array of n training inputs with d dimensions
+            train_y (np.ndarray[float]): n by 1 array of n training outputs
+        """
         self._scaler.fit(train_x)
         scaled_x = self._scaler.transform(train_x)
         self._regressor = GaussianProcessRegressor(
@@ -166,6 +214,15 @@ class GPModel(RegressionModel):
 
 
     def predict(self, predict_x :np.ndarray[float]) -> np.ndarray[float]:
+        """
+        Returns n predicted outputs of dimension 1 given inputs
+
+        Args:
+            predict_x (np.ndarray[float]): n by d array of n input samples of d dimensions
+
+        Returns:
+            np.ndarray[float]: n by 1 array of n predicted 1D values
+        """
         scaled_x = self._scaler.transform(predict_x)
         return self._regressor.predict(scaled_x).reshape(-1, 1)
 
@@ -185,6 +242,13 @@ class PModel(RegressionModel):
 
     
     def fit(self, train_x :np.ndarray[float], train_y :np.ndarray[float]) -> None:
+        """
+        Fits the model to some training data.
+
+        Args:
+            train_x (np.ndarray[float]): n by d array of n training inputs with d dimensions
+            train_y (np.ndarray[float]): n by 1 array of n training outputs
+        """
         self._scaler.fit(train_x)
         scaled_x = self._scaler.transform(train_x)
 
@@ -199,6 +263,15 @@ class PModel(RegressionModel):
 
 
     def predict(self, predict_x :np.ndarray[float]) -> np.ndarray[float]:
+        """
+        Returns n predicted outputs of dimension 1 given inputs
+
+        Args:
+            predict_x (np.ndarray[float]): n by d array of n input samples of d dimensions
+
+        Returns:
+            np.ndarray[float]: n by 1 array of n predicted 1D values
+        """
         scaled_x = self._scaler.transform(predict_x)
         return self._regressor(scaled_x).reshape(-1, 1)
 
@@ -218,6 +291,13 @@ class CSModel(RegressionModel):
 
 
     def fit(self, train_x :np.ndarray[float], train_y :np.ndarray[float]) -> None:
+        """
+        Fits the model to some training data.
+
+        Args:
+            train_x (np.ndarray[float]): n by d array of n training inputs with d dimensions
+            train_y (np.ndarray[float]): n by 1 array of n training outputs
+        """
         self._scaler.fit(train_x)
         scaled_x = self._scaler.transform(train_x)
         
@@ -231,6 +311,15 @@ class CSModel(RegressionModel):
 
 
     def predict(self, predict_x :np.ndarray[float]) -> np.ndarray[float]:
+        """
+        Returns n predicted outputs of dimension 1 given inputs
+
+        Args:
+            predict_x (np.ndarray[float]): n by d array of n input samples of d dimensions
+
+        Returns:
+            np.ndarray[float]: n by 1 array of n predicted 1D values
+        """
         scaled_x = self._scaler.transform(predict_x)
         return self._regressor(scaled_x).reshape(-1, 1)
 
@@ -251,6 +340,13 @@ class CTModel(RegressionModel):
 
 
     def fit(self, train_x :np.ndarray[float], train_y :np.ndarray[float]) -> None:
+        """
+        Fits the model to some training data.
+
+        Args:
+            train_x (np.ndarray[float]): n by d array of n training inputs with d dimensions
+            train_y (np.ndarray[float]): n by 1 array of n training outputs
+        """
         self._scaler.fit(train_x)
         scaled_x = self._scaler.transform(train_x)
         self._regressor = CloughTocher2DInterpolator(
@@ -261,6 +357,15 @@ class CTModel(RegressionModel):
 
 
     def predict(self, predict_x :np.ndarray[float]) -> None:
+        """
+        Returns n predicted outputs of dimension 1 given inputs
+
+        Args:
+            predict_x (np.ndarray[float]): n by d array of n input samples of d dimensions
+
+        Returns:
+            np.ndarray[float]: n by 1 array of n predicted 1D values
+        """
         scaled_x = self._scaler.transform(predict_x)
         value = self._regressor(scaled_x).reshape(-1, 1)
         return value

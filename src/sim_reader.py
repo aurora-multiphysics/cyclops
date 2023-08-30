@@ -1,7 +1,3 @@
-"""
-Defines Unfolder and MeshReader classes.
-These allow the simulation data to be read and processed.
-"""
 import numpy as np
 import meshio
 import os
