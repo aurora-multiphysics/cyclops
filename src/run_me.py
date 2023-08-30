@@ -33,7 +33,7 @@ if __name__ == '__main__':
     )
 
     # Setup the experiment
-    optimiser = NSGA2Optimiser('00:05:00')
+    optimiser = NSGA2Optimiser('00:00:10')
     experiment = Experiment(
         true_temp_field,
         grid,
@@ -53,19 +53,22 @@ if __name__ == '__main__':
     for i, setup in enumerate(res.X):
         pickle_manager.save_file('results', 'Layout'+str(i)+'.obj', setup.reshape(-1, true_temp_field.get_dim()))
 
-    graph_manager.draw(graph_manager.build_pareto(
+    graph_manager.build_pareto(
         res.F
-    ))
+    )
+    graph_manager.draw()
 
     display_str = input('Enter setup to display [Q to quit]: ')
     while display_str.isnumeric():
+        experiment.set_all_sensors_active()
         proposed_layout, true_temps, model_temps, sensor_values = experiment.get_plotting_arrays(res.X[i])
-        graph_manager.draw(graph_manager.build_1D_compare(
+        graph_manager.build_1D_compare(
             grid,
             proposed_layout,
             sensor_values,
             true_temps,
-            model_temps,
-        ))
+            model_temps
+        )
+        graph_manager.draw()
         display_str = input('Enter setup to display [Q to quit]: ')
 

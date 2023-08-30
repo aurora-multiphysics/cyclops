@@ -10,8 +10,13 @@ class GraphManager():
         plt.style.use('science')
     
 
-    def draw(self, figure):
+    def draw(self):
         plt.show()
+        plt.close()
+
+    
+    def save_png(self, name):
+        plt.savefig(name)
         plt.close()
 
     
