@@ -15,7 +15,7 @@ import numpy as np
 
 
 class Problem(ElementwiseProblem):
-    def __init__(self, num_dim, num_obj, loss_function, borders):
+    def __init__(self, num_dim :int, num_obj :int, loss_function :callable, borders :np.ndarray) -> None:
         # Note that loss_function must return a list of the MOO things
         super().__init__(
             n_var = num_dim, 
@@ -25,20 +25,19 @@ class Problem(ElementwiseProblem):
         )
         self.__loss_function = loss_function
 
-
-    def _evaluate(self, optim_array, out, *args, **kwargs):
+    def _evaluate(self, optim_array :np.ndarray[float], out :dict, *args :any, **kwargs :any) -> None:
         out['F'] = self.__loss_function(optim_array)
 
 
 
 
 class Optimiser():
-    def __init__(self, time_limit, algorithm) -> None:
+    def __init__(self, time_limit :str, algorithm :any) -> None:
         self.__limit = get_termination("time", time_limit)
         self.__algorithm = algorithm
 
 
-    def optimise(self, problem):
+    def optimise(self, problem :Problem) -> any:
         res = minimize(
             problem,
             self.__algorithm,

@@ -13,43 +13,43 @@ class SymmetryManager():
         self.__grad = 0
 
     
-    def set_1D_x(self, value):
+    def set_1D_x(self, value :float) -> None:
         self.__x_point = value
 
     
-    def set_2D_x(self, value):
+    def set_2D_x(self, value :float) -> None:
         self.__x_line = value
 
     
-    def set_2D_y(self, value):
+    def set_2D_y(self, value :float) -> None:
         self.__y_line = value
 
 
-    def set_2D_grad(self, value):
+    def set_2D_grad(self, value :float) -> None:
         self.__grad = value
 
 
-    def reflect_1D(self, x_pos):
+    def reflect_1D(self, x_pos :np.ndarray[float]) -> None:
         axis = np.ones(x_pos.shape)*self.__x_point
         reflected_arr = 2*axis - x_pos
         return np.concatenate((x_pos, reflected_arr), axis=0)
 
 
-    def reflect_2D_horiz(self, pos):
+    def reflect_2D_horiz(self, pos :np.ndarray[float]) -> None:
         axis = np.ones(len(pos))*self.__x_line
         reflected_arr = np.copy(pos)
         reflected_arr[:, 0] = 2*axis - pos[:, 0]
         return np.concatenate((pos, reflected_arr), axis=0)
 
 
-    def reflect_2D_vert(self, pos):
+    def reflect_2D_vert(self, pos :np.ndarray[float]) -> None:
         axis = np.ones(len(pos))*self.__y_line
         reflected_arr = np.copy(pos)
         reflected_arr[:, 1] = 2*axis - pos[:, 1]
         return np.concatenate((pos, reflected_arr), axis=0)
 
 
-    def reflect_2D_line(self, pos):
+    def reflect_2D_line(self, pos :np.ndarray[float]) -> None:
         m = self.__grad
         reflect_matrix = 1/(1+m**2)*np.array([[1 - m**2, 2*m], [2*m, m**2 - 1]])
         reflected_arr = np.apply_along_axis(reflect_matrix.dot, 0, pos.T)
@@ -68,7 +68,7 @@ class SensorSuite():
         self.__num_dim = field.get_dim()
         
 
-    def get_predict_pos(self, sensor_pos :np.ndarray, active_sensors :np.ndarray):
+    def get_predict_pos(self, sensor_pos :np.ndarray, active_sensors :np.ndarray) -> np.ndarray[float]:
         record_pos = []
         for i, sensor in enumerate(self.__sensors):
             if active_sensors[i] == True:
@@ -79,7 +79,7 @@ class SensorSuite():
         return np.array(record_pos)
 
 
-    def fit_sensor_model(self, sensor_pos :np.ndarray, measured_values :np.ndarray):
+    def fit_sensor_model(self, sensor_pos :np.ndarray, measured_values :np.ndarray) -> None:
         for transformation in self.__symmetry:
             sensor_pos = transformation(sensor_pos)
             measured_values = np.concatenate((measured_values, measured_values), axis=0)
@@ -87,11 +87,11 @@ class SensorSuite():
         self.__field.fit_model(new_pos, new_values)
 
 
-    def get_num_sensors(self):
+    def get_num_sensors(self) -> int:
         return self.__num_sensors
 
     
-    def set_sensor_values(self, sensor_values :np.ndarray, active_sensors :np.ndarray):
+    def set_sensor_values(self, sensor_values :np.ndarray, active_sensors :np.ndarray) -> np.ndarray[float]:
         measured_values = np.zeros(self.__num_sensors).reshape(-1, 1)
         index = 0
         for i, sensor in enumerate(self.__sensors):
@@ -103,11 +103,11 @@ class SensorSuite():
         return measured_values
 
 
-    def predict_data(self, pos):
+    def predict_data(self, pos :np.ndarray[float]) -> np.ndarray[float]:
         return self.__field.predict_values(pos)
 
     
-    def filter(self, pos_array, measured_values):
+    def filter(self, pos_array :np.ndarray[float], measured_values :np.ndarray[float]) -> tuple[np.ndarray[float]]:
         out_pos = []
         out_value = []
         condition_1 = pos_array > self.__bounds[0]
@@ -119,7 +119,7 @@ class SensorSuite():
         return np.array(out_pos), np.array(out_value)
 
 
-    def calc_keys(self, depth):
+    def calc_keys(self, depth :int) -> np.ndarray[bool]:
         template = np.array(range(0, self.__num_sensors))
         failed_keys = []
         for i in range(depth+1):
@@ -132,7 +132,7 @@ class SensorSuite():
         return np.array(failed_keys)
 
 
-    def calc_chances(self, keys):
+    def calc_chances(self, keys :np.ndarray[bool]) -> np.ndarray[float]:
         chances = []
         for key in keys:
             chance = 1

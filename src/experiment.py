@@ -7,7 +7,7 @@ import numpy as np
 
 
 class Experiment():
-    def __init__(self, true_field :Field, comparison_pos :np.ndarray, optimiser :Optimiser) -> None:
+    def __init__(self, true_field :Field, comparison_pos :np.ndarray[float], optimiser :Optimiser) -> None:
         self.__true_field = true_field
         self.__num_dim = true_field.get_dim()
 
@@ -25,7 +25,7 @@ class Experiment():
         self.__loss_limit = None
 
 
-    def plan_soo(self, sensor_suite :SensorSuite, sensor_bounds :np.ndarray, repetitions=10) -> None:
+    def plan_soo(self, sensor_suite :SensorSuite, sensor_bounds :np.ndarray[float], repetitions=10) -> None:
         self.__sensor_suite = sensor_suite
         num_sensors = sensor_suite.get_num_sensors()
         self.__problem = self.__build_problem(sensor_bounds, num_sensors, 1, self.calc_SOO_loss)
@@ -33,7 +33,7 @@ class Experiment():
         self.__repetitions = repetitions
 
 
-    def plan_moo(self, sensor_suite :SensorSuite, sensor_bounds :np.ndarray, depth=3, repetitions=10, loss_limit=1e2) -> None:
+    def plan_moo(self, sensor_suite :SensorSuite, sensor_bounds :np.ndarray[float], depth=3, repetitions=10, loss_limit=1e2) -> None:
         self.__sensor_suite = sensor_suite
         num_sensors = sensor_suite.get_num_sensors()
         self.__problem = self.__build_problem(sensor_bounds, num_sensors, 2, self.calc_MOO_loss)
@@ -43,7 +43,7 @@ class Experiment():
         self.__loss_limit = loss_limit
 
 
-    def __build_problem(self, sensor_bounds :np.ndarray, num_sensors :int, num_obj :int, loss_function) -> Problem:
+    def __build_problem(self, sensor_bounds :np.ndarray[float], num_sensors :int, num_obj :int, loss_function :callable) -> Problem:
         low_border = list(sensor_bounds[0]) * num_sensors
         high_border = list(sensor_bounds[1]) * num_sensors
         return Problem(
