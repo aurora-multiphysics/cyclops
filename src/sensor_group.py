@@ -242,45 +242,11 @@ class SensorSuite():
         return np.array(out_pos), np.array(out_value)
 
 
-    def calc_keys(self, depth :int) -> np.ndarray[bool]:
-        """
-        Calculate an array of active sensors describing all the combinations of active sensors specified where less than or equal to 'depth' sensors have failed.
-
-        Args:
-            depth (int): the maximum number of sensors we consider to have failed.
-
-        Returns:
-            np.ndarray[bool]: an array of all the potential active sensors arrays.
-        """
-        template = np.array(range(0, self.__num_sensors))
-        failed_keys = []
-        for i in range(depth+1):
-            failed_indices = combinations(template, i)
-            for setup in failed_indices:
-                key=[True]*self.__num_sensors
-                for i in setup:
-                    key[i] = False
-                failed_keys.append(np.array(key))
-        return np.array(failed_keys)
-
-
-    def calc_chances(self, keys :np.ndarray[bool]) -> np.ndarray[float]:
-        """
-        Calculates the chance of the layouts where some sensors have failed.
-
-        Args:
-            keys (np.ndarray[bool]): array of arrays describing which sensors have failed.
-
-        Returns:
-            np.ndarray[float]: array of the chance of each setup occurring.
-        """
-        chances = []
-        for key in keys:
-            chance = 1
-            for i, not_failed in enumerate(key):
-                if not_failed:
-                    chance *= (1 - self.__sensors[i].get_failure_chance())
-                else:
-                    chance *= self.__sensors[i].get_failure_chance()
-            chances.append(chance)
-        return np.array(chances)
+    def calc_keys(self, num_keys :int) -> np.ndarray[bool]:
+        keys = np.full((num_keys, self.__num_sensors), True)
+        for i, key in enumerate(keys):
+            for j, is_active in enumerate(key):
+                num = np.random.rand()
+                if num < self.__sensors[j].get_failure_chance():
+                    keys[i, j] = False
+        return keys

@@ -42,9 +42,8 @@ if __name__ == '__main__':
     experiment.plan_moo(
         sensor_suite,
         sensor_bounds,
-        depth=2,
-        repetitions=10,
-        loss_limit=100
+        repetitions=1000,
+        loss_limit=80
     )
     res = experiment.design()
 

@@ -32,7 +32,6 @@ class Experiment():
         self.__sensor_suite = None
         self.__problem = None
         self.__keys = None
-        self.__chances = None
         self.__active_sensors = None
         self.__repetitions = None
         self.__loss_limit = None
@@ -49,12 +48,12 @@ class Experiment():
         """
         self.__sensor_suite = sensor_suite
         num_sensors = sensor_suite.get_num_sensors()
+        self.__active_sensors = np.array([True] * num_sensors)
         self.__problem = self.__build_problem(sensor_bounds, num_sensors, 1, self.calc_SOO_loss)
-        self.__active_sensors = np.array([True]*num_sensors)
         self.__repetitions = repetitions
 
 
-    def plan_moo(self, sensor_suite :SensorSuite, sensor_bounds :np.ndarray[float], depth=3, repetitions=10, loss_limit=80) -> None:
+    def plan_moo(self, sensor_suite :SensorSuite, sensor_bounds :np.ndarray[float], repetitions=1000, loss_limit=80) -> None:
         """
         Prepare for multi-objective optimisation.
 
@@ -67,9 +66,9 @@ class Experiment():
         """
         self.__sensor_suite = sensor_suite
         num_sensors = sensor_suite.get_num_sensors()
+        self.__active_sensors = np.array([True] * num_sensors)
         self.__problem = self.__build_problem(sensor_bounds, num_sensors, 2, self.calc_MOO_loss)
-        self.__keys = self.__sensor_suite.calc_keys(depth)
-        self.__chances = self.__sensor_suite.calc_chances(self.__keys)
+        self.__keys = self.__sensor_suite.calc_keys(repetitions)
         self.__repetitions = repetitions
         self.__loss_limit = loss_limit
 
@@ -104,33 +103,16 @@ class Experiment():
 
 
     def calc_MOO_loss(self, sensor_array :np.ndarray[float]) -> list[float]:
-        """
-        Calculates loss for MOO.
-        Involves getting MSE for all the sensor failures within a specified depth.
-        And hence calculating expected loss, and the chance of a successful experiment.
-
-        Args:
-            sensor_array (np.ndarray[float]): unshaped sensor layout from optimiser.
-
-        Returns:
-            list[float]: expected loss and chance of failure.
-        """
         sensor_pos = sensor_array.reshape(-1, self.__num_dim)
 
-        losses = np.zeros(len(self.__keys))
+        losses = np.zeros(self.__repetitions)
         for i, key in enumerate(self.__keys):
-            loss = []
             self.__active_sensors = key
-            for i in range(self.__repetitions):
-                loss.append(self.get_MSE(sensor_pos))
-            losses[i] = sum(loss)/len(loss)
-        
-        success_chance = 0
-        for i, sensor_chance in enumerate(self.__chances):
-            if losses[i] < self.__loss_limit:
-                success_chance += sensor_chance
+            losses[i] = self.get_MSE(sensor_pos)
+        expected_loss = np.mean(losses)
+        failure_chance = (losses>self.__loss_limit).sum()
+        return [expected_loss, failure_chance]
 
-        return [np.mean(losses * self.__chances), 1-success_chance]
 
     
     def calc_SOO_loss(self, sensor_array :np.ndarray[float]) -> list[float]:
@@ -174,15 +156,6 @@ class Experiment():
         return np.sum(differences)/self.__num_pos
 
 
-    def set_all_sensors_active(self):
-        """
-        Sets every sensor in the SensorSuite to active.
-        """
-        for i, e in enumerate(self.__active_sensors):
-            if e == False:
-                self.__active_sensors[i] = True
-
-
     def get_SOO_plotting_arrays(self, sensor_array :np.ndarray[float]) -> tuple:
         """
         Finds the necessary data to plot graphs of the potential sensor setup.
@@ -193,6 +166,7 @@ class Experiment():
         Returns:
             tuple: Contains all plotting arrays needed.
         """
+        self.__active_sensors = np.array([True] * len(self.__active_sensors))
         sensor_pos = sensor_array.reshape(-1, self.__num_dim)
         predict_pos = self.__sensor_suite.get_predict_pos(sensor_pos, self.__active_sensors)
         sensor_values = self.__true_field.predict_values(predict_pos)
