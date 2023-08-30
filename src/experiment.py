@@ -183,7 +183,7 @@ class Experiment():
                 self.__active_sensors[i] = True
 
 
-    def get_plotting_arrays(self, sensor_array :np.ndarray[float]) -> tuple:
+    def get_SOO_plotting_arrays(self, sensor_array :np.ndarray[float]) -> tuple:
         """
         Finds the necessary data to plot graphs of the potential sensor setup.
 
