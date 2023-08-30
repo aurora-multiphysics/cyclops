@@ -1,3 +1,8 @@
+"""
+Defines the Problem class used by the optimisers.
+Defines a variety of MOO (multi-objective-optimisation) optimisers.
+Defines a variety of SOO (single-objective-optimisation) optimisers.
+"""
 from pymoo.operators.sampling.rnd import FloatRandomSampling
 from pymoo.algorithms.soo.nonconvex.pso import PSO
 from pymoo.core.problem import ElementwiseProblem
@@ -15,8 +20,19 @@ import numpy as np
 
 
 class Problem(ElementwiseProblem):
+    """
+    Probem class allows a function to be minimised.
+    """
     def __init__(self, num_dim :int, num_obj :int, loss_function :callable, borders :np.ndarray) -> None:
-        # Note that loss_function must return a list of the MOO things
+        """
+        Setup the problem.
+
+        Args:
+            num_dim (int): number of dimensions of the function input.
+            num_obj (int): number of objectives (return values) of the function.
+            loss_function (callable): function to minimise.
+            borders (np.ndarray): the upper and lower values of the function domain.
+        """
         super().__init__(
             n_var = num_dim, 
             n_obj = num_obj, 
@@ -25,23 +41,50 @@ class Problem(ElementwiseProblem):
         )
         self.__loss_function = loss_function
 
+
     def _evaluate(self, optim_array :np.ndarray[float], out :dict, *args :any, **kwargs :any) -> None:
+        """
+        Evaluates the loss function.
+
+        Args:
+            optim_array (np.ndarray[float]): the proposed input to the loss function.
+            out (dict): a pymoo dictionary to store constrains and results.
+        """
         out['F'] = self.__loss_function(optim_array)
 
 
 
 
 class Optimiser():
+    """
+    This is an abstract class to define various kinds of optimsiers from.
+    """
     def __init__(self, time_limit :str, algorithm :any) -> None:
-        self.__limit = get_termination("time", time_limit)
-        self.__algorithm = algorithm
+        """
+        Sets up the optimisers.
+
+        Args:
+            time_limit (str): the maximum time the optimsier should run for.
+            algorithm (any): the kind of optimiser.
+        """
+        self._limit = get_termination("time", time_limit)
+        self._algorithm = algorithm
 
 
     def optimise(self, problem :Problem) -> any:
+        """
+        Minimises the problem.
+
+        Args:
+            problem (Problem): the problem describing the function to minimse.
+
+        Returns:
+            any: a result object containing the results and optimisation history.
+        """
         res = minimize(
             problem,
-            self.__algorithm,
-            self.__limit,
+            self._algorithm,
+            self._limit,
             seed = 1,
             save_history = True,
             verbose = True
@@ -53,6 +96,10 @@ class Optimiser():
 
 
 class NSGA2Optimiser(Optimiser):
+    """
+    MOO optimiser.
+    Simulates evolution.
+    """
     def __init__(self, time_limit) -> None:
         algorithm = NSGA2(
             pop_size=40,
@@ -69,6 +116,10 @@ class NSGA2Optimiser(Optimiser):
 
 
 class PSOOptimiser(Optimiser):
+    """
+    SOO optimiser.
+    Simulates birds searching for food.
+    """
     def __init__(self, time_limit) -> None:
         algorithm = PSO(
             pop_size=30,
@@ -80,6 +131,10 @@ class PSOOptimiser(Optimiser):
 
 
 class GAOptimiser(Optimiser):
+    """
+    SOO optimsier.
+    Simulates evolution.
+    """
     def __init__(self, time_limit) -> None:
         algorithm = GA(
             pop_size=50,
