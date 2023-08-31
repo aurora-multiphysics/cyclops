@@ -43,7 +43,8 @@ if __name__ == '__main__':
         sensor_suite,
         sensor_bounds,
         repetitions=500,
-        loss_limit=80
+        loss_limit=80,
+        min_active=3
     )
     res = experiment.design()
 
@@ -55,19 +56,21 @@ if __name__ == '__main__':
     graph_manager.build_pareto(
         res.F
     )
-    graph_manager.save_png('Pareto.png')
+    graph_manager.save_png('results', 'Pareto.png')
+    graph_manager.build_pareto(
+        res.F
+    )
     graph_manager.draw()
-    
 
     display_str = input('Enter setup to display [Q to quit]: ')
     while display_str.isnumeric():
-        proposed_layout, true_temps, model_temps, sensor_values = experiment.get_SOO_plotting_arrays(res.X[i])
-        graph_manager.build_1D_compare(
+        proposed_layout, true_temps, model_temps, sensor_values, num_failures, num_successes = experiment.get_MOO_plotting_arrays(res.X[i])
+        graph_manager.build_1D_multiple_compare(
             grid,
             proposed_layout,
             sensor_values,
             true_temps,
-            model_temps
+            
         )
         graph_manager.draw()
         display_str = input('Enter setup to display [Q to quit]: ')
