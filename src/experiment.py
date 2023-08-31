@@ -198,9 +198,10 @@ class Experiment():
                 self.__active_sensors = key
                 sensor_pos, comp, predicted_values, measured_values = self.get_SOO_plotting_arrays(sensor_array)
                 all_predicted_values.append(predicted_values)
+                losses[i] = self.get_MSE(sensor_array.reshape(-1, self.__num_dim))
 
-        num_successes = (losses<self.__loss_limit).sum()
-        num_failures = self.__repetitions - num_successes
+        num_failures = (losses>self.__loss_limit).sum()
+        num_successes = self.__repetitions - num_failures
         num_sensors = self.__sensor_suite.get_num_sensors()
         self.__active_sensors = np.array([True] * num_sensors)
         a, b, c, sensor_values = self.get_SOO_plotting_arrays(sensor_array)

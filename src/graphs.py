@@ -34,7 +34,7 @@ class GraphManager():
         self.scatter_sensors(ax_1, sensor_positions, sensor_values)
         ax_1.set_xlabel('x (m)')
         ax_1.set_ylabel('T (C)')
-        ax_1.legend()
+
 
         ax_2.set_title('Errors in temperature field reconstruction')
         differences = np.abs(model_field - true_field)
@@ -48,23 +48,9 @@ class GraphManager():
 
         ax_1.set_title('Temperature fields')
         # Plot lines of all temperature fields
-        all_model_fields = np.array(all_model_fields)
-        mean = []
-        std_dev = []
-        for i in range(len(all_model_fields[0])):
-            mean.append(np.mean(all_model_fields[:, i]))
-            std_dev.append(np.std(all_model_fields[:, i]))
-        
-        mean = np.array(mean)
-        std_dev = np.array(std_dev)
-        ax_1.plot(all_positions, mean, label='Mean predicted field')
-        ax_1.fill_between(
-            all_positions.reshape(-1), 
-            mean - 1.96 * std_dev, 
-            mean + 1.96 * std_dev, 
-            alpha=0.5
-        )
-        ax_1.plot(all_positions, true_field, label='True field')
+        for i, field in enumerate(all_model_fields):
+            ax_1.plot(all_positions, field, alpha=0.01, color='blue')
+        ax_1.plot(all_positions, true_field, color='red', label='True field')
         self.scatter_sensors(ax_1, sensor_positions, sensor_values)
         ax_1.set_xlabel('x (m)')
         ax_1.set_ylabel('T (C)')
