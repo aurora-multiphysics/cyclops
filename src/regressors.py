@@ -48,9 +48,9 @@ class RegressionModel():
         Returns:
             np.ndarray[float]: scaled n by d array of n input data values of dimension d.
         """
-        self.check_dim(train_x.shape[1], self._x_dim, 'Input')
-        self.check_dim(train_y.shape[1], 1, 'Output')
-        self.check_length(train_x.shape[0])
+        self.check_dim(len(train_x[0]), self._x_dim, 'Input')
+        self.check_dim(len(train_y[0]), 1, 'Output')
+        self.check_length(len(train_x))
         self._scaler.fit(train_x)
         return self._scaler.transform(train_x)
 
@@ -65,7 +65,7 @@ class RegressionModel():
         Returns:
             np.ndarray[float]: scaled n by d array of n input data values of dimension d.
         """
-        self.check_dim(predict_x.shape[1], self._x_dim, 'Input')
+        self.check_dim(len(predict_x[0]), self._x_dim, 'Input')
         return self._scaler.transform(predict_x)
 
 
@@ -82,7 +82,7 @@ class RegressionModel():
             Exception: error to explain user's mistake.
         """
         if dim != correct_dim:
-            raise Exception(data_name+' data should be a numpy array of shape (-1, '+str(self._x_dim)+').')
+            raise Exception(data_name+' data should be a numpy array of shape (-1, '+str(correct_dim)+').')
 
     
     def check_length(self, length :int) -> None:
@@ -96,7 +96,7 @@ class RegressionModel():
             Exception: error to explain user's mistake.
         """
         if length < self._min_length:
-            raise Exception('Input data should have a length of more than '+str(self._min_length)+'.')
+            raise Exception('Input data should have a length of >= '+str(self._min_length)+'.')
 
 
 
@@ -106,11 +106,11 @@ class RBFModel(RegressionModel):
     Uses RBF interpolation.
     Interpolates and extrapolates.
     Acts in any dimension d >= 1.
-    Learns from any number of training data points n >= 1.
+    Learns from any number of training data points n >= 2.
     Time complexity of around O(n^3).
     """
     def __init__(self, num_input_dim :int) -> None:
-        super().__init__(num_input_dim, 1)
+        super().__init__(num_input_dim, 2)
         if num_input_dim <= 0:
             raise Exception('Input data should have d >= 1 dimensions.')
 
@@ -153,7 +153,7 @@ class LModel(RegressionModel):
     def __init__(self, num_input_dim) -> None:
         super().__init__(num_input_dim, 3)
         if num_input_dim <= 1:
-            raise Exception('Input data should have d > 1 dimensions.')
+            raise Exception('Input data should have d >= 2 dimensions.')
 
 
     def fit(self, train_x :np.ndarray[float], train_y :np.ndarray[float]) -> None:
@@ -343,8 +343,8 @@ class CTModel(RegressionModel):
     """
     def __init__(self, num_input_dim :int) -> None:
         super().__init__(num_input_dim, 3)
-        if num_input_dim <= 0:
-            raise Exception('Input data should have d = 1 dimensions.')
+        if num_input_dim != 2:
+            raise Exception('Input data should have d = 2 dimensions.')
         self._output_mean = 0
 
 
