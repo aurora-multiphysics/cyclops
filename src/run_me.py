@@ -70,7 +70,9 @@ if __name__ == '__main__':
             proposed_layout,
             sensor_values,
             true_temps,
-            
+            model_temps,
+            num_failures,
+            num_successes
         )
         graph_manager.draw()
         display_str = input('Enter setup to display [Q to quit]: ')

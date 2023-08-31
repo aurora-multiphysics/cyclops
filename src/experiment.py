@@ -191,7 +191,6 @@ class Experiment():
         num_successes = 0
         losses = np.zeros(self.__repetitions)
         all_predicted_values = []
-        all_measured_values = []
 
         for i, key in enumerate(self.__keys):
             num_active = np.count_nonzero(key == True)
@@ -199,8 +198,11 @@ class Experiment():
                 self.__active_sensors = key
                 sensor_pos, comp, predicted_values, measured_values = self.get_SOO_plotting_arrays(sensor_array)
                 all_predicted_values.append(predicted_values)
-                all_measured_values.append(measured_values)
 
-        num_failures = (losses>self.__loss_limit).sum()
-        num_successes = self.__repetitions - num_failures
-        return sensor_pos, self.__comparison_values, all_predicted_values, all_measured_values, num_failures, num_successes
+        num_successes = (losses<self.__loss_limit).sum()
+        num_failures = self.__repetitions - num_successes
+        num_sensors = self.__sensor_suite.get_num_sensors()
+        self.__active_sensors = np.array([True] * num_sensors)
+        a, b, c, sensor_values = self.get_SOO_plotting_arrays(sensor_array)
+        print(num_failures, num_successes)
+        return sensor_pos, self.__comparison_values, all_predicted_values, sensor_values, num_failures, num_successes
