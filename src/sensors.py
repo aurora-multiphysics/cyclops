@@ -7,7 +7,15 @@ class Sensor():
     """
     Abstract class to describe the behaviour of sensors.
     """
-    def __init__(self, noise_dev :float, offset_function :callable, area_1D :np.ndarray[float], area_2D :np.ndarray[float], failure_chance :float, value_range :np.ndarray[float]) -> None:
+    def __init__(
+            self, 
+            noise_dev :float, 
+            offset_function :callable, 
+            area_1D :np.ndarray[float], 
+            area_2D :np.ndarray[float], 
+            failure_chance :float, 
+            value_range :np.ndarray[float]
+        ) -> None:
         """
         Args:
             noise_dev (float): standard deviation of normally distributed noise.
@@ -29,7 +37,7 @@ class Sensor():
     def set_value(self, ground_truth_array :np.ndarray[float]) -> None:
         """
         Args:
-            ground_truth_array (np.ndarray[float]): Ground truth value of the sensor.
+            ground_truth_array (np.ndarray[float]): ground truth value of the sensor.
         """
         self._ground_truth = np.mean(ground_truth_array)
 
@@ -89,7 +97,13 @@ class PointSensor(Sensor):
     """
     Point sensor samples 1 point only.
     """
-    def __init__(self, noise_dev :float, offset_function :callable, failure_chance :float, value_range :np.ndarray[float]) -> None:
+    def __init__(
+            self, 
+            noise_dev :float, 
+            offset_function :callable, 
+            failure_chance :float, 
+            value_range :np.ndarray[float]
+        ) -> None:
         """
         Defines the sample regions to sample from 1 point only.
 
@@ -112,11 +126,52 @@ class PointSensor(Sensor):
 
 
 
+class MultiValueSensor(Sensor):
+    """
+    This sensor returns many values, so can be used to simulate a DIC or an IR camera.
+    """
+    def __init__(
+            self, 
+            noise_dev :float, 
+            offset_function :callable, 
+            failure_chance :float, 
+            value_range :np.ndarray[float],
+            sites_1D :np.ndarray[float],
+            sites_2D :np.ndarray[float]
+        ) -> None:
+        """
+        Args:
+            noise_dev (float): standard deviation of normally distributed noise.
+            offset_function (callable): function that describes how much systematic error to add for different ground truth values.
+            failure_chance (float): chance of sensor failing.
+            value_range (np.ndarray[float]): array of 2 values giving the range of sensor ground truth values.
+            sites_1D (np.ndarray[float]): sites relative to the position that the multi-value-sensor samples from in 1D.
+            sites_2D (np.ndarray[float]): sites relative to the position that the multi-value-sensor samples from in 2D.
+        """
+        super().__init__(
+            noise_dev, 
+            offset_function,
+            sites_1D,
+            sites_2D,
+            failure_chance,
+            value_range
+        )
+
+
+
+
 class RoundSensor(Sensor):
     """
     Round sensor considers 5 points in a cross shape and averages them.
     """
-    def __init__(self, noise_dev :float, offset_function :callable, failure_chance :float, value_range :np.ndarray[float], radius :float) -> None:
+    def __init__(
+            self, 
+            noise_dev :float, 
+            offset_function :callable, 
+            failure_chance :float, 
+            value_range :np.ndarray[float], 
+            radius :float
+        ) -> None:
         """
         Defines the sample regions to sample from 5 points in a cross shape.
 
@@ -140,11 +195,20 @@ class RoundSensor(Sensor):
 
 
 
+
+
 class Thermocouple(RoundSensor):
     """
-    Round sensor with a linearisation error
+    Round sensor with a linearisation error.
     """
-    def __init__(self, temps :np.ndarray[float], voltages :np.ndarray[float], noise_dev=0.6, failure_chance=0.4, radius=0.00075) -> None:
+    def __init__(
+            self, 
+            temps :np.ndarray[float], 
+            voltages :np.ndarray[float], 
+            noise_dev=0.6, 
+            failure_chance=0.4, 
+            radius=0.00075
+        ) -> None:
         """
         Args:
             temps (np.ndarray[float]): array of n temperatures to interpolate through.
