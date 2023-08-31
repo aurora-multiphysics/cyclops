@@ -49,8 +49,11 @@ class RegressionModel():
             np.ndarray[float]: scaled n by d array of n input data values of dimension d.
         """
         self.check_dim(len(train_x[0]), self._x_dim, 'Input')
-        self.check_dim(len(train_y[0]), 1, 'Output')
         self.check_length(len(train_x))
+        if type(train_y[0]) != np.ndarray:
+            raise Exception('Output data should be a numpy array of shape (-1, 1).')
+        self.check_dim(len(train_y[0]), 1, 'Output')
+
         self._scaler.fit(train_x)
         return self._scaler.transform(train_x)
 
@@ -142,6 +145,7 @@ class RBFModel(RegressionModel):
 
 
 
+
 class LModel(RegressionModel):
     """
     Uses linear splines.
@@ -185,6 +189,7 @@ class LModel(RegressionModel):
         scaled_x = self.prepare_predict(predict_x)
         value = self._regressor(scaled_x).reshape(-1, 1)
         return value
+
 
 
 
@@ -232,6 +237,7 @@ class GPModel(RegressionModel):
         """
         scaled_x = self.prepare_predict(predict_x)
         return self._regressor.predict(scaled_x).reshape(-1, 1)
+
 
 
 

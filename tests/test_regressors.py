@@ -9,17 +9,16 @@ sys.path.append(src_path)
 from regressors import RBFModel, LModel, GPModel, PModel, CSModel, CTModel
 import numpy as np
 import unittest
-import meshio
 
 
+# Key
+# i means interpolation test
+# r means extrapolation test
+# e means exception handling test
 
 
 class Test(unittest.TestCase):
-    def setUp(self):
-        pass
-    
-
-    def test_rbf_model(self):
+    def test_rbf_model_i1(self):
         # Test interpolation 1
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = x
@@ -32,6 +31,8 @@ class Test(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
         
+    
+    def test_rbf_model_i2(self):
         # Test interpolation 2
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.square(x)
@@ -44,7 +45,8 @@ class Test(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
         
-        
+    
+    def test_rbf_model_i3(self):
         # Test interpolation 3
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sqrt(x)
@@ -57,7 +59,8 @@ class Test(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-        
+    
+    def test_rbf_model_i4(self):
         # Test interpolation 4
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sin(x)
@@ -70,7 +73,8 @@ class Test(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-        
+    
+    def test_rbf_model_r1(self):
         # Test extrapolation 1
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = x
@@ -84,6 +88,7 @@ class Test(unittest.TestCase):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
 
+    def test_rbf_model_r2(self):
         # Test extrapolation 2
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.square(x)
@@ -96,7 +101,8 @@ class Test(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], -2)
 
-        
+    
+    def test_rbf_model_r3(self):
         # Test extrapolation 3
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sin(x)
@@ -110,6 +116,7 @@ class Test(unittest.TestCase):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], -2)
 
 
+    def test_rbf_model_e1(self):
         # Test error catching 1
         error_1 = 'Input data should have d >= 1 dimensions.'
         with self.assertRaises(Exception) as context:
@@ -128,7 +135,8 @@ class Test(unittest.TestCase):
         rbf_model = RBFModel(5)
         rbf_model = RBFModel(10)
 
-        
+    
+    def test_rbf_model_e2(self):
         # Test error catching 2
         error_2 = 'Input data should be a numpy array of shape (-1, 1).'
         with self.assertRaises(Exception) as context:
@@ -149,6 +157,7 @@ class Test(unittest.TestCase):
         self.assertTrue(error_2 in str(context.exception))
         
 
+    def test_rbf_model_e3(self):
         # Test error catching 3
         error_3 = 'Output data should be a numpy array of shape (-1, 1).'
         with self.assertRaises(Exception) as context:
@@ -161,6 +170,7 @@ class Test(unittest.TestCase):
         self.assertTrue(error_3 in str(context.exception))
 
 
+    def test_rbf_model_e4(self):
         # Test error catching 4
         error_4 = 'Input data should have a length of >= 2.'
         with self.assertRaises(Exception) as context:
@@ -171,6 +181,7 @@ class Test(unittest.TestCase):
         self.assertTrue(error_4 in str(context.exception)) 
 
 
+    def test_rbf_model_e5(self):
         # Test error catching 5
         error_5 = 'Input data should be a numpy array of shape (-1, 1)'
         with self.assertRaises(Exception) as context:
@@ -183,7 +194,9 @@ class Test(unittest.TestCase):
 
 
 
-    def test_l_model(self):
+
+
+    def test_l_model_i1(self):
         # Test interpolation 1
         x = np.linspace(0, 10, 20)
         y = np.linspace(0, 10, 20)
@@ -207,7 +220,8 @@ class Test(unittest.TestCase):
         for i, z_val in enumerate(test_z):
             self.assertAlmostEqual(z_val[0], new_z[i, 0], 3)
 
-        
+    
+    def test_l_model_i2(self):
         # Test interpolation 2
         x = np.linspace(0, 10, 20)
         y = np.linspace(0, 10, 20)
@@ -233,7 +247,8 @@ class Test(unittest.TestCase):
             self.assertAlmostEqual(z_val[0], new_z[i, 0], 0)
 
 
-        # Test interpolation 2
+    def test_l_model_i3(self):
+        # Test interpolation 3
         x = np.linspace(0, 10, 20)
         y = np.linspace(0, 10, 20)
         all_xy = []
@@ -258,7 +273,8 @@ class Test(unittest.TestCase):
             self.assertAlmostEqual(z_val[0], new_z[i, 0], 0)
 
 
-        # Test interpolation 3
+    def test_l_model_i4(self):
+        # Test interpolation 4
         x = np.linspace(0, 10, 20)
         y = np.linspace(0, 10, 20)
         all_xy = []
@@ -283,6 +299,7 @@ class Test(unittest.TestCase):
             self.assertAlmostEqual(z_val[0], new_z[i, 0], 0)
         
 
+    def test_l_model_r1(self):
         # Test extrapolation 1
         x = np.linspace(0, 1, 20)
         y = np.linspace(0, 1, 20)
@@ -308,6 +325,7 @@ class Test(unittest.TestCase):
             self.assertEqual(z_val[0], np.mean(z))
 
 
+    def test_l_model_e1(self):
         # Test error catching 1
         error_1 = 'Input data should have d >= 2 dimensions.'
         with self.assertRaises(Exception) as context:
@@ -326,7 +344,8 @@ class Test(unittest.TestCase):
         l_model = LModel(5)
         l_model = LModel(10)
 
-        
+    
+    def test_l_model_e2(self):
         # Test error catching 2
         error_2 = 'Input data should be a numpy array of shape (-1, 2).'
         with self.assertRaises(Exception) as context:
@@ -336,6 +355,7 @@ class Test(unittest.TestCase):
         self.assertTrue(error_2 in str(context.exception))
         
 
+    def test_l_model_e3(self):
         # Test error catching 3
         error_3 = 'Output data should be a numpy array of shape (-1, 1).'
         with self.assertRaises(Exception) as context:
@@ -348,6 +368,7 @@ class Test(unittest.TestCase):
         self.assertTrue(error_3 in str(context.exception))
 
 
+    def test_l_model_e4(self):
         # Test error catching 4
         error_4 = 'Input data should have a length of >= 3.'
         with self.assertRaises(Exception) as context:
@@ -358,6 +379,7 @@ class Test(unittest.TestCase):
         self.assertTrue(error_4 in str(context.exception)) 
 
 
+    def test_l_model_e5(self):
         # Test error catching 5
         error_5 = 'Input data should be a numpy array of shape (-1, 2)'
         with self.assertRaises(Exception) as context:
@@ -369,7 +391,10 @@ class Test(unittest.TestCase):
         self.assertTrue(error_5 in str(context.exception)) 
 
 
-    def test_ct_model(self):
+
+
+
+    def test_ct_model_i1(self):
         # Test interpolation 1
         x = np.linspace(0, 10, 20)
         y = np.linspace(0, 10, 20)
@@ -393,7 +418,8 @@ class Test(unittest.TestCase):
         for i, z_val in enumerate(test_z):
             self.assertAlmostEqual(z_val[0], new_z[i, 0], 3)
 
-        
+    
+    def test_ct_model_i2(self):
         # Test interpolation 2
         x = np.linspace(0, 10, 20)
         y = np.linspace(0, 10, 20)
@@ -419,7 +445,8 @@ class Test(unittest.TestCase):
             self.assertAlmostEqual(z_val[0], new_z[i, 0], 0)
 
 
-        # Test interpolation 2
+    def test_ct_model_i3(self):
+        # Test interpolation 3
         x = np.linspace(0, 10, 20)
         y = np.linspace(0, 10, 20)
         all_xy = []
@@ -444,7 +471,8 @@ class Test(unittest.TestCase):
             self.assertAlmostEqual(z_val[0], new_z[i, 0], 0)
 
 
-        # Test interpolation 3
+    def test_ct_model_i4(self):
+        # Test interpolation 4
         x = np.linspace(0, 10, 20)
         y = np.linspace(0, 10, 20)
         all_xy = []
@@ -469,6 +497,7 @@ class Test(unittest.TestCase):
             self.assertAlmostEqual(z_val[0], new_z[i, 0], 0)
         
 
+    def test_ct_model_r1(self):
         # Test extrapolation 1
         x = np.linspace(0, 1, 20)
         y = np.linspace(0, 1, 20)
@@ -494,6 +523,7 @@ class Test(unittest.TestCase):
             self.assertEqual(z_val[0], np.mean(z))
 
 
+    def test_ct_model_e1(self):
         # Test error catching 1
         error_1 = 'Input data should have d = 2 dimensions.'
         with self.assertRaises(Exception) as context:
@@ -511,6 +541,7 @@ class Test(unittest.TestCase):
         ct_model = CTModel(2)
 
     
+    def test_ct_model_e2(self):
         # Test error catching 2
         error_2 = 'Input data should be a numpy array of shape (-1, 2).'
         with self.assertRaises(Exception) as context:
@@ -520,6 +551,7 @@ class Test(unittest.TestCase):
         self.assertTrue(error_2 in str(context.exception))
         
 
+    def test_ct_model_e3(self):
         # Test error catching 3
         error_3 = 'Output data should be a numpy array of shape (-1, 1).'
         with self.assertRaises(Exception) as context:
@@ -532,6 +564,7 @@ class Test(unittest.TestCase):
         self.assertTrue(error_3 in str(context.exception))
 
 
+    def test_ct_model_e4(self):
         # Test error catching 4
         error_4 = 'Input data should have a length of >= 3.'
         with self.assertRaises(Exception) as context:
@@ -542,6 +575,7 @@ class Test(unittest.TestCase):
         self.assertTrue(error_4 in str(context.exception)) 
 
 
+    def test_ct_model_e5(self):
         # Test error catching 5
         error_5 = 'Input data should be a numpy array of shape (-1, 2)'
         with self.assertRaises(Exception) as context:
@@ -554,7 +588,9 @@ class Test(unittest.TestCase):
 
 
 
-    def test_cs_model(self):
+
+
+    def test_cs_model_i1(self):
         # Test interpolation 1
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = x
@@ -567,6 +603,7 @@ class Test(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
         
+    def test_cs_model_i2(self):
         # Test interpolation 2
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.square(x)
@@ -580,6 +617,7 @@ class Test(unittest.TestCase):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
         
         
+    def test_cs_model_i3(self):
         # Test interpolation 3
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sqrt(x)
@@ -592,7 +630,8 @@ class Test(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-        
+    
+    def test_cs_model_i4(self):
         # Test interpolation 4
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sin(x)
@@ -605,7 +644,8 @@ class Test(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-        
+    
+    def test_cs_model_r1(self):
         # Test extrapolation 1
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = x
@@ -619,6 +659,7 @@ class Test(unittest.TestCase):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
 
+    def test_cs_model_r2(self):
         # Test extrapolation 2
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.square(x)
@@ -631,7 +672,8 @@ class Test(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], -2)
 
-        
+
+    def test_cs_model_r3(self):
         # Test extrapolation 3
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sin(x)
@@ -645,6 +687,7 @@ class Test(unittest.TestCase):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], -2)
 
 
+    def test_cs_model_e1(self):
         # Test error catching 1
         error_1 = 'Input data should have d = 1 dimensions.'
         with self.assertRaises(Exception) as context:
@@ -662,6 +705,7 @@ class Test(unittest.TestCase):
         cs_model = CSModel(1)
         
 
+    def test_cs_model_e2(self):
         # Test error catching 2
         error_2 = 'Input data should be a numpy array of shape (-1, 1).'
         with self.assertRaises(Exception) as context:
@@ -674,6 +718,7 @@ class Test(unittest.TestCase):
         self.assertTrue(error_2 in str(context.exception))
         
 
+    def test_cs_model_e3(self):
         # Test error catching 3
         error_3 = 'Output data should be a numpy array of shape (-1, 1).'
         with self.assertRaises(Exception) as context:
@@ -686,6 +731,7 @@ class Test(unittest.TestCase):
         self.assertTrue(error_3 in str(context.exception))
 
 
+    def test_cs_model_e4(self):
         # Test error catching 4
         error_4 = 'Input data should have a length of >= 2.'
         with self.assertRaises(Exception) as context:
@@ -696,6 +742,7 @@ class Test(unittest.TestCase):
         self.assertTrue(error_4 in str(context.exception)) 
 
 
+    def test_cs_model_e5(self):
         # Test error catching 5
         error_5 = 'Input data should be a numpy array of shape (-1, 1)'
         with self.assertRaises(Exception) as context:
@@ -707,7 +754,10 @@ class Test(unittest.TestCase):
         self.assertTrue(error_5 in str(context.exception)) 
 
 
-    def test_p_model(self):
+
+
+
+    def test_p_model_i1(self):
         # Test interpolation 1
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = x
@@ -720,6 +770,8 @@ class Test(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
         
+
+    def test_p_model_i2(self):
         # Test interpolation 2
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.square(x)
@@ -732,7 +784,8 @@ class Test(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
         
-        
+
+    def test_p_model_i3(self):
         # Test interpolation 3
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sqrt(x)
@@ -745,7 +798,8 @@ class Test(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 0)
 
-        
+    
+    def test_p_model_i4(self):
         # Test interpolation 4
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sin(x)
@@ -758,7 +812,8 @@ class Test(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], -1)
 
-        
+    
+    def test_p_model_r1(self):
         # Test extrapolation 1
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = x
@@ -772,6 +827,7 @@ class Test(unittest.TestCase):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
 
+    def test_p_model_r2(self):
         # Test extrapolation 2
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.square(x)
@@ -784,7 +840,8 @@ class Test(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], -2)
 
-        
+    
+    def test_p_model_r3(self):
         # Test extrapolation 3
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sin(x)
@@ -798,6 +855,7 @@ class Test(unittest.TestCase):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], -2)
 
 
+    def test_p_model_e1(self):
         # Test error catching 1
         error_1 = 'Input data should have d = 1 dimensions.'
         with self.assertRaises(Exception) as context:
@@ -815,6 +873,7 @@ class Test(unittest.TestCase):
         p_model = PModel(1)
         
 
+    def test_p_model_e2(self):
         # Test error catching 2
         error_2 = 'Input data should be a numpy array of shape (-1, 1).'
         with self.assertRaises(Exception) as context:
@@ -827,6 +886,7 @@ class Test(unittest.TestCase):
         self.assertTrue(error_2 in str(context.exception))
         
 
+    def test_p_model_e3(self):
         # Test error catching 3
         error_3 = 'Output data should be a numpy array of shape (-1, 1).'
         with self.assertRaises(Exception) as context:
@@ -839,6 +899,7 @@ class Test(unittest.TestCase):
         self.assertTrue(error_3 in str(context.exception))
 
 
+    def test_p_model_e4(self):
         # Test error catching 4
         error_4 = 'Input data should have a length of >= 3.'
         with self.assertRaises(Exception) as context:
@@ -849,6 +910,7 @@ class Test(unittest.TestCase):
         self.assertTrue(error_4 in str(context.exception)) 
 
 
+    def test_p_model_e5(self):
         # Test error catching 5
         error_5 = 'Input data should be a numpy array of shape (-1, 1)'
         with self.assertRaises(Exception) as context:
@@ -861,7 +923,8 @@ class Test(unittest.TestCase):
 
 
 
-    def test_gp_model(self):
+
+    def test_gp_model_i1(self):
         # Test interpolation 1
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = x
@@ -874,6 +937,8 @@ class Test(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
         
+
+    def test_gp_model_i2(self):
         # Test interpolation 2
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.square(x)
@@ -885,34 +950,9 @@ class Test(unittest.TestCase):
         test_y = gp_model.predict(new_x)
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
-        
-        
-        # Test interpolation 3
-        x = np.linspace(0, 10, 20).reshape(-1, 1)
-        y = np.sqrt(x)
-        gp_model = GPModel(1)
-        gp_model.fit(x, y)
 
-        new_x = np.linspace(1, 9, 40).reshape(-1, 1)
-        new_y = np.sqrt(new_x)
-        test_y = gp_model.predict(new_x)
-        for i, y_val in enumerate(new_y):
-            self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
-
-        
-        # Test interpolation 4
-        x = np.linspace(0, 10, 20).reshape(-1, 1)
-        y = np.sin(x)
-        gp_model = GPModel(1)
-        gp_model.fit(x, y)
-
-        new_x = np.linspace(1, 9, 40).reshape(-1, 1)
-        new_y = np.sin(new_x)
-        test_y = gp_model.predict(new_x)
-        for i, y_val in enumerate(new_y):
-            self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
-
-        
+    
+    def test_gp_model_r1(self):
         # Test extrapolation 1
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = x
@@ -926,6 +966,7 @@ class Test(unittest.TestCase):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
 
+    def test_gp_model_r2(self):
         # Test extrapolation 2
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.square(x)
@@ -938,7 +979,8 @@ class Test(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], -2)
 
-        
+    
+    def test_gp_model_r3(self):
         # Test extrapolation 3
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sin(x)
@@ -952,6 +994,7 @@ class Test(unittest.TestCase):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], -2)
 
 
+    def test_gp_model_e1(self):
         # Test error catching 1
         error_1 = 'Input data should have d >= 1 dimensions.'
         with self.assertRaises(Exception) as context:
@@ -970,7 +1013,8 @@ class Test(unittest.TestCase):
         gp_model = GPModel(5)
         gp_model = GPModel(10)
 
-        
+    
+    def test_gp_model_e2(self):
         # Test error catching 2
         error_2 = 'Input data should be a numpy array of shape (-1, 1).'
         with self.assertRaises(Exception) as context:
@@ -991,6 +1035,7 @@ class Test(unittest.TestCase):
         self.assertTrue(error_2 in str(context.exception))
         
 
+    def test_gp_model_e3(self):
         # Test error catching 3
         error_3 = 'Output data should be a numpy array of shape (-1, 1).'
         with self.assertRaises(Exception) as context:
@@ -1003,6 +1048,7 @@ class Test(unittest.TestCase):
         self.assertTrue(error_3 in str(context.exception))
 
 
+    def test_gp_model_e4(self):
         # Test error catching 4
         error_4 = 'Input data should have a length of >= 3.'
         with self.assertRaises(Exception) as context:
@@ -1013,6 +1059,7 @@ class Test(unittest.TestCase):
         self.assertTrue(error_4 in str(context.exception)) 
 
 
+    def test_gp_model_e5(self):
         # Test error catching 5
         error_5 = 'Input data should be a numpy array of shape (-1, 1)'
         with self.assertRaises(Exception) as context:
