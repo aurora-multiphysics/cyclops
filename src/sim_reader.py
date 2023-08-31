@@ -161,7 +161,7 @@ class MeshReader():
             scalar_name (str): name of the scalar value we are finding
 
         Returns:
-            np.ndarray[float]: n by 1 array of n scalar values
+            np.ndarray[float]: n long array of n scalar values
         """
         set_values = []
         all_values = self.__mesh.point_data[scalar_name]

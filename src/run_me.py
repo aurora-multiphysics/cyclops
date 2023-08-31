@@ -3,7 +3,7 @@ from sensors import Sensor, PointSensor, RoundSensor, Thermocouple
 from optimisers import NSGA2Optimiser, PSOOptimiser, GAOptimiser
 from sensor_group import SensorSuite, SymmetryManager
 from fields import ScalarField, VectorField
-from file_reader import PickleManager
+from object_reader import PickleManager
 from experiment import Experiment
 from graphs import GraphManager
 import numpy as np
