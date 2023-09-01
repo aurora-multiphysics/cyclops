@@ -1,134 +1,11 @@
-from regressors import CSModel, PModel
+from regressors import PModel, CSModel
 import numpy as np
 
 
 
 class Sensor():
     """
-    Abstract class to describe the behaviour of sensors.
-    """
-    def __init__(
-            self, 
-            noise_dev :float, 
-            offset_function :callable, 
-            area_1D :np.ndarray[float], 
-            area_2D :np.ndarray[float], 
-            failure_chance :float, 
-            value_range :np.ndarray[float]
-        ) -> None:
-        """
-        Args:
-            noise_dev (float): standard deviation of normally distributed noise.
-            offset_function (callable): function that describes how much systematic error to add for different ground truth values.
-            area_1D (np.ndarray[float]): n by 1 array of n relative 1D position(s) to sample from in 1D.
-            area_2D (np.ndarray[float]): n by 2 array of n relative 2D position(s) to sample from in 2D.
-            failure_chance (float): chance of sensor failing.
-            value_range (np.ndarray[float]): array of 2 values giving the range of sensor ground truth values.
-        """
-        self._noise_dev = noise_dev
-        self._offset_function = offset_function
-        self._ground_truth = None
-        self._failure_chance = failure_chance
-        self._area_1D = area_1D
-        self._area_2D = area_2D
-        self._range = value_range
-
-    
-    def set_value(self, ground_truth_array :np.ndarray[float]) -> None:
-        """
-        Args:
-            ground_truth_array (np.ndarray[float]): ground truth value of the sensor.
-        """
-        self._ground_truth = np.mean(ground_truth_array)
-
-    
-    def get_failure_chance(self) -> float:
-        """
-        Returns:
-            float: chance sensor fails.
-        """
-        return self._failure_chance
-    
-
-    def get_value(self) -> float:
-        """
-        Calculates measured value of sensor.
-        Only returns a meaningful value if in correct range.
-        Considers effect of noise and systematic error.
-
-        Returns:
-            _type_: value measured by the sensor.
-        """
-        if self._ground_truth < self._range[0]:
-            return self._range[0]
-        elif self._ground_truth > self._range[1]:
-            return self._range[1]
-        else:
-            return self._ground_truth + np.random.normal()*self._noise_dev + self._offset_function(self._ground_truth)
-
-
-    def get_area(self, dim :int) -> np.ndarray[float]:
-        """
-        Returns the relative positions the sensor samples from.
-
-        Args:
-            dim (int): dimensions of the field we are sampling from (1 or 2).
-
-        Returns:
-            np.ndarray[float]: n by d array of n relative postions with d dimensions.
-        """
-        if dim == 1: 
-            return self._area_1D
-        else: 
-            return self._area_2D
-
-    
-    def get_num_values(self) -> int:
-        """
-        Returns:
-            int: the number of relative positions the sensor samples from.
-        """
-        return len(self._area_1D)
-
-
-
-
-class PointSensor(Sensor):
-    """
-    Point sensor samples 1 point only.
-    """
-    def __init__(
-            self, 
-            noise_dev :float, 
-            offset_function :callable, 
-            failure_chance :float, 
-            value_range :np.ndarray[float]
-        ) -> None:
-        """
-        Defines the sample regions to sample from 1 point only.
-
-        Args:
-            noise_dev (float): standard deviation of normally distributed noise.
-            offset_function (callable): function that describes how much systematic error to add for different ground truth values.
-            failure_chance (float): chance of sensor failing.
-            value_range (np.ndarray[float]): array of 2 values giving the range of sensor ground truth values.
-        """
-        area_1D = np.array([[0]])
-        area_2D = np.array([[0, 0]])
-        super().__init__(
-            noise_dev, 
-            offset_function,
-            area_1D,
-            area_2D,
-            failure_chance,
-            value_range
-        )
-
-
-
-class MultiValueSensor(Sensor):
-    """
-    This sensor returns many values, so can be used to simulate a DIC or an IR camera.
+    Abstract base class for sensors.
     """
     def __init__(
             self, 
@@ -136,63 +13,194 @@ class MultiValueSensor(Sensor):
             offset_function :callable, 
             failure_chance :float, 
             value_range :np.ndarray[float],
-            sites_1D :np.ndarray[float],
-            sites_2D :np.ndarray[float]
+            relative_sites :np.ndarray[float]
         ) -> None:
         """
         Args:
             noise_dev (float): standard deviation of normally distributed noise.
-            offset_function (callable): function that describes how much systematic error to add for different ground truth values.
+            offset_function (callable): systematic error addition function.
             failure_chance (float): chance of sensor failing.
-            value_range (np.ndarray[float]): array of 2 values giving the range of sensor ground truth values.
-            sites_1D (np.ndarray[float]): sites relative to the position that the multi-value-sensor samples from in 1D.
-            sites_2D (np.ndarray[float]): sites relative to the position that the multi-value-sensor samples from in 2D.
+            value_range (np.ndarray[float]): 2 by m array of lower and upper bounds of values of dimension m.
+            relative_sites (np.ndarray[float]): n by d array of n relative positions of dimension d=1 or d=2 to measure sensor values at.
         """
-        super().__init__(
-            noise_dev, 
-            offset_function,
-            sites_1D,
-            sites_2D,
-            failure_chance,
-            value_range
-        )
+        self._noise_dev = noise_dev
+        self._offset_function = offset_function
+        self._failure_chance = failure_chance
+        self._range = value_range
+
+        self._relative_sites = relative_sites
+        self._value_dim = len(value_range[0])
+
+    
+    def get_failure_chance(self) -> float:
+        """
+        Returns:
+            float: chance of the sensor failing.
+        """
+        return self._failure_chance
+
+
+    def get_input_sites(self, actual_pos :np.ndarray[float]) -> np.ndarray[float]:
+        """
+        Args:
+            actual_pos (np.ndarray[float]): 1 by d array of the actual 1 or 2D sensor position.
+
+        Returns:
+            np.ndarray[float]: n by d array of the sensor sampling positions.
+        """
+        return self._relative_sites + actual_pos*np.ones(self._relative_sites.shape)
+
+    
+    def get_output_values(self, site_values :np.ndarray[float], actual_pos :np.ndarray[float]) -> tuple[np.ndarray]:
+        """
+        Args:
+            site_values (np.ndarray[float]): n by m array of the true field values at the sampling sites.
+            actual_pos (np.ndarray[float]): 1 by d array of the actual sensor position.
+
+        Returns:
+            tuple[np.ndarray]: first element is the sensor output, second element is the sensor position(s) from which this output is taken.
+        """
+        mean_value = np.mean(site_values, axis=0).reshape(-1, self._value_dim)
+        mean_value = self._squash_to_range(mean_value)
+        noise_array = np.random.normal(0, self._noise_dev, size=mean_value.size)
+
+        out_pos = np.expand_dims(actual_pos, axis=0)
+        out_value = mean_value + noise_array + self._offset_function(mean_value)
+        return (out_value, out_pos)
+
+
+    def _squash_to_range(self, array) -> np.ndarray[float]:
+        """
+        Given an array, clip all the values outside the range into the range.
+
+        Args:
+            array (_type_): n by m array of n true sensor values of dimension m.
+
+        Returns:
+            np.ndarray[float]: clipped array.
+        """
+        for i, value in enumerate(array):
+            if np.any(value < self._range[0]):
+                array[i] = self._range[0]
+            elif np.any(array > self._range[1]):
+                array[i] = self._range[1]
+        return array
 
 
 
-
-class RoundSensor(Sensor):
+class PointSensor(Sensor):
     """
-    Round sensor considers 5 points in a cross shape and averages them.
+    Point sensor samples 1 point only.
+    Used for 2D fields.
     """
     def __init__(
             self, 
             noise_dev :float, 
             offset_function :callable, 
             failure_chance :float, 
-            value_range :np.ndarray[float], 
-            radius :float
+            value_range :np.ndarray[float],
+            field_dim :int
         ) -> None:
         """
-        Defines the sample regions to sample from 5 points in a cross shape.
-
         Args:
             noise_dev (float): standard deviation of normally distributed noise.
-            offset_function (callable): function that describes how much systematic error to add for different ground truth values.
+            offset_function (callable): systematic error addition function.
             failure_chance (float): chance of sensor failing.
-            value_range (np.ndarray[float]): array of 2 values giving the range of sensor ground truth values.
-            radius (float): radius of sampling region.
+            value_range (np.ndarray[float]): 2 by m array of lower and upper bounds of values of dimension m.
         """
-        area_1D = np.array([[0], [0], [0], [-radius], [radius]])
-        area_2D = np.array([[0, 0], [0, radius], [0, -radius], [radius, 0], [-radius, 0]])
-        super().__init__(
-            noise_dev, 
-            offset_function, 
-            area_1D,
-            area_2D,
-            failure_chance,
-            value_range
-        )
+        if field_dim == 2:
+            measurement_sites = np.array([[0, 0]])
+        elif field_dim == 1:
+            measurement_sites = np.array([[0]])
+        else:
+            raise Exception('Can only have 1D or 2D field dimensions.')
+        super().__init__(noise_dev, offset_function, failure_chance, value_range, measurement_sites)
 
+
+
+class RoundSensor(Sensor):
+    """
+    Round sensor samples 5 points in a cross shape.
+    Used for 2D fields.
+    """
+    def __init__(
+            self, 
+            noise_dev :float, 
+            offset_function :callable, 
+            failure_chance :float, 
+            value_range :np.ndarray[float],
+            radius :float,
+            field_dim :int
+        ) -> None:
+        """
+        Args:
+            noise_dev (float): standard deviation of normally distributed noise.
+            offset_function (callable): systematic error addition function.
+            failure_chance (float): chance of sensor failing.
+            value_range (np.ndarray[float]): 2 by m array of lower and upper bounds of values of dimension m.
+            radius (float): radius of cross (radius of sensor in real life).
+        """
+        if field_dim == 2:
+            measurement_sites = np.array([[0, 0], [0, radius], [0, -radius], [-radius, 0], [radius, 0]])
+        elif field_dim == 1:
+            measurement_sites = np.array([[0], [0], [0], [-radius], [radius]])
+        else:
+            raise Exception('Can only have 1D or 2D field dimensions.')
+        super().__init__(noise_dev, offset_function, failure_chance, value_range, measurement_sites)
+
+
+
+class MultiSensor(Sensor):
+    """
+    Multi-sensor samples many regions in a grid described.
+    It then returns many values - 1 for each point in the grid.
+    Designed to act as a parent class for things like a DIC or an IR camera.
+    It doesn't have a meaningful position - the input sites are the same regardless of the actual_pos.
+    Used for 1D or 2D fields.
+    """
+    def __init__(
+            self, 
+            noise_dev :float, 
+            offset_function :callable, 
+            failure_chance :float, 
+            value_range :np.ndarray[float],
+            grid :np.ndarray[float]
+        ) -> None:
+        """
+        Args:
+            noise_dev (float): standard deviation of normally distributed noise.
+            offset_function (callable): systematic error addition function.
+            failure_chance (float): chance of sensor failing.
+            value_range (np.ndarray[float]): 2 by m array of lower and upper bounds of values of dimension m.
+        """
+        super().__init__(noise_dev, offset_function, failure_chance, value_range, grid)
+
+    
+    def get_input_sites(self, actual_pos :np.ndarray[float]) -> np.ndarray[float]:
+        """
+        Args:
+            actual_pos (np.ndarray[float]): 1 by d array of the actual 1 or 2D sensor position.
+
+        Returns:
+            np.ndarray[float]: n by d array of the sensor sampling positions.
+        """
+        return self._relative_sites
+
+    
+    def get_output_values(self, site_values :np.ndarray[float], actual_pos :np.ndarray[float]) -> tuple[np.ndarray]:
+        """
+        Args:
+            site_values (np.ndarray[float]): n by m array of the true field values at the sampling sites.
+            actual_pos (np.ndarray[float]): 1 by d array of the actual sensor position.
+
+        Returns:
+            tuple[np.ndarray]: first element is the sensor output, second element is the sensor position(s) from which this output is taken.
+        """
+        squashed_values = self._squash_to_range(site_values)
+        noise_array = np.random.normal(0, self._noise_dev, size=squashed_values.size)
+
+        out_value = squashed_values + noise_array + self._offset_function(squashed_values)
+        return (out_value, self._relative_sites)
 
 
 
@@ -200,11 +208,13 @@ class RoundSensor(Sensor):
 class Thermocouple(RoundSensor):
     """
     Round sensor with a linearisation error.
+    Used for 2D fields.
     """
     def __init__(
             self, 
             temps :np.ndarray[float], 
             voltages :np.ndarray[float], 
+            field_dim :int,
             noise_dev=0.6, 
             failure_chance=0.4, 
             radius=0.00075
@@ -222,22 +232,11 @@ class Thermocouple(RoundSensor):
         self._interpolator = CSModel(1)
         self._interpolator.fit(temps, voltages)
 
-        value_range = np.array([min(temps), max(temps)])
-        super().__init__(noise_dev, self.non_linear_error, failure_chance, value_range, radius)
+        value_range = np.array([[min(temps)], [max(temps)]])
+        super().__init__(noise_dev, self.non_linear_error, failure_chance, value_range, radius, field_dim)
 
     
-    def non_linear_error(self, temp :float) -> float:
-        """
-        Calculates the voltage produced by the thermocouple.
-        Then the linearised temperature measurement from the voltage.
-        Then the systematic error.
-
-        Args:
-            temp (float): temperature value.
-
-        Returns:
-            float: systematic error at that temperature.
-        """
-        voltage = self._interpolator.predict(np.array([[temp]]))
+    def non_linear_error(self, temp :np.ndarray[float]) -> np.ndarray[float]:
+        voltage = self._interpolator.predict(temp)
         new_temp = self._regressor.predict(voltage)
         return new_temp - temp

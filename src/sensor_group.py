@@ -1,4 +1,3 @@
-from itertools import combinations
 from sensors import Sensor
 from fields import Field
 import numpy as np
