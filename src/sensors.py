@@ -85,6 +85,10 @@ class Sensor():
             elif np.any(array > self._range[1]):
                 array[i] = self._range[1]
         return array
+    
+
+    def get_num_output_sites(self):
+        return 1
 
 
 
@@ -202,6 +206,9 @@ class MultiSensor(Sensor):
         out_value = squashed_values + noise_array + self._offset_function(squashed_values)
         return (out_value, self._relative_sites)
 
+
+    def get_num_output_sites(self):
+        return self._relative_sites.size
 
 
 
