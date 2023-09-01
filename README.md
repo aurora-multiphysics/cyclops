@@ -1,5 +1,7 @@
 # cyclops
 
+![Overview diagram](logo.jpg "Title")
+
 Cyclops is a sensor placement optimisation program. Originally designed for monoblocks at the bottom of nuclear fusion reactors it searches for the optimal layout of sensors to maximise both the accuracy and reliability of the field reconstruction.
 
 Features:

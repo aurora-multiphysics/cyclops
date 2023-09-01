@@ -33,7 +33,6 @@ class Experiment():
         self.__repetitions = None
         self.__problem = None
 
-        self.__active_sensors = None
         self.__loss_limit = None
         self.__min_active = None
         self.__keys = None
@@ -50,7 +49,6 @@ class Experiment():
         """
         self.__sensor_suite = sensor_suite
         num_sensors = sensor_suite.get_num_sensors()
-        self.__active_sensors = np.array([True] * num_sensors)
         self.__problem = self.__build_problem(sensor_bounds, num_sensors, 1, self.calc_SOO_loss)
         self.__repetitions = repetitions
 
@@ -68,7 +66,6 @@ class Experiment():
         """
         self.__sensor_suite = sensor_suite
         num_sensors = sensor_suite.get_num_sensors()
-        self.__active_sensors = np.array([True] * num_sensors)
         self.__problem = self.__build_problem(sensor_bounds, num_sensors, 2, self.calc_MOO_loss)
 
         self.__keys = self.__sensor_suite.calc_keys(repetitions)
@@ -112,7 +109,7 @@ class Experiment():
         for i, key in enumerate(self.__keys):
             num_active = np.count_nonzero(key == True)
             if num_active >= self.__min_active:
-                self.__active_sensors = key
+                self.__sensor_suite.set_active_sensors(key)
                 losses[i] = self.get_MSE(sensor_pos)
             else:
                 losses[i] = np.argmax(losses)
@@ -171,6 +168,8 @@ class Experiment():
         Returns:
             tuple: Contains all plotting arrays needed.
         """
+        num_sensors = self.__sensor_suite.get_num_sensors()
+        self.__sensor_suite.set_active_sensors(np.array([True] * num_sensors))
         sensor_pos = sensor_array.reshape(-1, self.__num_dim)
         self.__sensor_suite.set_sensor_pos(sensor_pos)
         sensor_sites = self.__sensor_suite.get_sensor_sites()
@@ -182,36 +181,44 @@ class Experiment():
         return sensor_pos, self.__comparison_values, predicted_values, estimated_sensor_values
 
 
+    # def get_MOO_plotting_arrays(self, sensor_array :np.ndarray[float]) -> tuple:
+    #     sensor_pos = sensor_array.reshape(-1, self.__num_dim)
+        
+    #     sensor_values = self.get_SOO_plotting_arrays(sensor_array)
+    #     losses = np.zeros(self.__repetitions)
+    #     all_predicted_values = []
+
+    #     for i, key in enumerate(self.__keys):
+    #         num_active = np.count_nonzero(key == True)
+    #         if num_active >= self.__min_active:
+    #             self.__sensor_suite.set_active_sensors(key)
+    #             losses[i] = self.get_MSE(sensor_pos)
+    #         else:
+    #             losses[i] = np.argmax(losses)
+
+    #     expected_loss = np.mean(losses)
+    #     failure_chance = (losses>self.__loss_limit).sum()/self.__repetitions
+    #     return sensor_pos, self.__comparison_values, 
 
 
+    # def get_MOO_plotting_arrays(self, sensor_array :np.ndarray[float]) -> tuple:
+    #     num_failures = 0
+    #     num_successes = 0
+    #     losses = np.zeros(self.__repetitions)
+    #     all_predicted_values = []
 
+    #     for i, key in enumerate(self.__keys):
+    #         num_active = np.count_nonzero(key == True)
+    #         if num_active >= self.__min_active:
+    #             self.__active_sensors = key
+    #             sensor_pos, comp, predicted_values, measured_values = self.get_SOO_plotting_arrays(sensor_array)
+    #             all_predicted_values.append(predicted_values)
+    #             losses[i] = self.get_MSE(sensor_array.reshape(-1, self.__num_dim))
 
-
-
-
-
-
-
-
-
-    def get_MOO_plotting_arrays(self, sensor_array :np.ndarray[float]) -> tuple:
-        num_failures = 0
-        num_successes = 0
-        losses = np.zeros(self.__repetitions)
-        all_predicted_values = []
-
-        for i, key in enumerate(self.__keys):
-            num_active = np.count_nonzero(key == True)
-            if num_active >= self.__min_active:
-                self.__active_sensors = key
-                sensor_pos, comp, predicted_values, measured_values = self.get_SOO_plotting_arrays(sensor_array)
-                all_predicted_values.append(predicted_values)
-                losses[i] = self.get_MSE(sensor_array.reshape(-1, self.__num_dim))
-
-        num_failures = (losses>self.__loss_limit).sum()
-        num_successes = self.__repetitions - num_failures
-        num_sensors = self.__sensor_suite.get_num_sensors()
-        self.__active_sensors = np.array([True] * num_sensors)
-        a, b, c, sensor_values = self.get_SOO_plotting_arrays(sensor_array)
-        print(num_failures, num_successes)
-        return sensor_pos, self.__comparison_values, all_predicted_values, sensor_values, num_failures, num_successes
+    #     num_failures = (losses>self.__loss_limit).sum()
+    #     num_successes = self.__repetitions - num_failures
+    #     num_sensors = self.__sensor_suite.get_num_sensors()
+    #     self.__active_sensors = np.array([True] * num_sensors)
+    #     a, b, c, sensor_values = self.get_SOO_plotting_arrays(sensor_array)
+    #     print(num_failures, num_successes)
+    #     return sensor_pos, self.__comparison_values, all_predicted_values, sensor_values, num_failures, num_successes
