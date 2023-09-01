@@ -87,8 +87,8 @@ class Sensor():
         return array
     
 
-    def get_num_output_sites(self):
-        return 1
+    def get_num_input_sites(self):
+        return self._relative_sites.size
 
 
 
@@ -200,14 +200,9 @@ class MultiSensor(Sensor):
             tuple[np.ndarray]: first element is the sensor output, second element is the sensor position(s) from which this output is taken.
         """
         squashed_values = self._squash_to_range(site_values)
-        noise_array = np.random.normal(0, self._noise_dev, size=squashed_values.size)
-
+        noise_array = np.random.normal(0, self._noise_dev, size=squashed_values.shape)
         out_value = squashed_values + noise_array + self._offset_function(squashed_values)
         return (out_value, self._relative_sites)
-
-
-    def get_num_output_sites(self):
-        return self._relative_sites.size
 
 
 

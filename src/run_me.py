@@ -1,5 +1,5 @@
+from sensors import Sensor, PointSensor, RoundSensor, Thermocouple, MultiSensor
 from regressors import RBFModel, LModel, GPModel, CSModel, CTModel, PModel
-from sensors import Sensor, PointSensor, RoundSensor, Thermocouple
 from optimisers import NSGA2Optimiser, PSOOptimiser, GAOptimiser
 from sensor_group import SensorSuite, SymmetryManager
 from fields import ScalarField, VectorField
@@ -15,65 +15,55 @@ if __name__ == '__main__':
     # Load any objects necessary
     pickle_manager = PickleManager()
     graph_manager = GraphManager()
-    true_temp_field = pickle_manager.read_file('simulation', 'field_temp_line.obj')
-    grid = pickle_manager.read_file('simulation', 'line_temp.obj')
+    true_temp_field = pickle_manager.read_file('simulation', 'temp_line_field.obj')
+    grid = pickle_manager.read_file('simulation', 'temp_line_points.obj')
 
-    bounds = true_temp_field.get_bounds()
-    sensor_bounds = bounds + np.array([[1], [-1]])*0.002
+    field_bounds = true_temp_field.get_bounds()
+    sensor_bounds = field_bounds+np.array([[1], [-1]])*0.002
+
+
+    # Setup the symmetry
+    symmetry_manager = SymmetryManager()
+    symmetry_manager.set_1D_x(0.01)
 
     # Setup the sensor suite
-    temps = pickle_manager.read_file('sensors', 'k-type-T.obj')
-    voltages = pickle_manager.read_file('sensors', 'k-type-V.obj')
-    sensor = Thermocouple(temps, voltages)
-    sensors = np.array([sensor]*5)
+    # temps = pickle_manager.read_file('sensors', 'k-type-T.obj')
+    # voltages = pickle_manager.read_file('sensors', 'k-type-V.obj')
+    # sensor = Thermocouple(temps, voltages, 1)
+
+    def f(x): return np.zeros(x.shape)
+    sensor = MultiSensor(0, f, 0.1, np.array([[-5000], [5000]]), np.linspace(sensor_bounds[0, 0], sensor_bounds[1, 0], 10).reshape(-1, 1))
+    sensors = np.array([sensor])
+
     sensor_suite = SensorSuite(
-        ScalarField(CSModel, bounds, true_temp_field.get_dim()), 
-        sensors,
-        symmetry=[]
+        ScalarField(CSModel, field_bounds), 
+        sensors
     )
 
     # Setup the experiment
-    optimiser = NSGA2Optimiser('00:00:10')
+    optimiser = PSOOptimiser('00:00:10')
     experiment = Experiment(
         true_temp_field,
         grid,
         optimiser
     )
-    experiment.plan_moo(
+    experiment.plan_soo(
         sensor_suite,
-        sensor_bounds,
-        repetitions=500,
-        loss_limit=80,
-        min_active=3
+        sensor_bounds
     )
     res = experiment.design()
+    proposed_layout, true_temps, model_temps, sensor_values = experiment.get_SOO_plotting_arrays(res.X)
 
-
-    # Display and save the results
-    for i, setup in enumerate(res.X):
-        pickle_manager.save_file('results', 'Layout'+str(i)+'.obj', setup.reshape(-1, true_temp_field.get_dim()))
-
-    graph_manager.build_pareto(
-        res.F
-    )
-    graph_manager.save_png('results', 'Pareto.png')
-    graph_manager.build_pareto(
-        res.F
+    # Display the results
+    graph_manager.build_optimisation(
+        res.history
     )
     graph_manager.draw()
-
-    display_str = input('Enter setup to display [Q to quit]: ')
-    while display_str.isnumeric():
-        proposed_layout, true_temps, model_temps, sensor_values, num_failures, num_successes = experiment.get_MOO_plotting_arrays(res.X[i])
-        graph_manager.build_1D_multiple_compare(
-            grid,
-            proposed_layout,
-            sensor_values,
-            true_temps,
-            model_temps,
-            num_failures,
-            num_successes
-        )
-        graph_manager.draw()
-        display_str = input('Enter setup to display [Q to quit]: ')
-
+    graph_manager.build_1D_compare(
+        grid,
+        proposed_layout,
+        sensor_values,
+        true_temps,
+        model_temps
+    )
+    graph_manager.draw()

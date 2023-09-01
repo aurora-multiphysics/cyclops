@@ -151,13 +151,13 @@ class SensorSuite():
         field_pos = []
         value_index = 0
         for i, sensor in enumerate(self.__sensors):
-            num_output_sites = sensor.get_num_output_sites()
+            num_input_sites = sensor.get_num_input_sites()
             if self.__active_sensors[i] == True:
-                known_values, known_pos = sensor.get_output_values(site_values[value_index:value_index+num_output_sites], self.__sensor_pos[i])
+                known_values, known_pos = sensor.get_output_values(site_values[value_index:value_index+num_input_sites], self.__sensor_pos[i])
                 for i, value in enumerate(known_values):
                     field_values.append(value)
                     field_pos.append(known_pos[i])
-            value_index += num_output_sites
+            value_index += num_input_sites
         return np.array(field_values), np.array(field_pos)
 
 
