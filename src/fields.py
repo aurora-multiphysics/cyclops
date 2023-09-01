@@ -122,6 +122,7 @@ class VectorField(Field):
             known_vectors (np.ndarray): n by m array of n vector values of m dimensions.
         """
         vector_dim = len(known_vectors[0])
+        self._regressors = []
         for i in range(vector_dim):
             regressor = self._regression_type(self._num_dim)
             regressor.fit(known_pos, known_vectors[:, i].reshape(-1, 1))

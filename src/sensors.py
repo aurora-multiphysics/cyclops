@@ -62,7 +62,7 @@ class Sensor():
         """
         mean_value = np.mean(site_values, axis=0).reshape(-1, self._value_dim)
         mean_value = self._squash_to_range(mean_value)
-        noise_array = np.random.normal(0, self._noise_dev, size=mean_value.size)
+        noise_array = np.random.normal(0, self._noise_dev, size=mean_value.shape)
 
         out_pos = np.expand_dims(actual_pos, axis=0)
         out_value = mean_value + noise_array + self._offset_function(mean_value)
@@ -88,7 +88,7 @@ class Sensor():
     
 
     def get_num_input_sites(self):
-        return self._relative_sites.size
+        return len(self._relative_sites)
 
 
 

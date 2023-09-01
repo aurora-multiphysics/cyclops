@@ -15,29 +15,24 @@ if __name__ == '__main__':
     # Load any objects necessary
     pickle_manager = PickleManager()
     graph_manager = GraphManager()
-    true_temp_field = pickle_manager.read_file('simulation', 'temp_line_field.obj')
-    grid = pickle_manager.read_file('simulation', 'temp_line_points.obj')
+    true_temp_field = pickle_manager.read_file('simulation', 'disp_plane_field.obj')
+    grid = pickle_manager.read_file('simulation', 'disp_plane_points.obj')
 
     field_bounds = true_temp_field.get_bounds()
-    sensor_bounds = field_bounds+np.array([[1], [-1]])*0.002
-
+    sensor_bounds = field_bounds+np.array([[1, 1], [-1, -1]])*0.002
 
     # Setup the symmetry
     symmetry_manager = SymmetryManager()
-    symmetry_manager.set_1D_x(0.01)
+    symmetry_manager.set_2D_x(np.mean(field_bounds[:, 0]))
 
     # Setup the sensor suite
-    # temps = pickle_manager.read_file('sensors', 'k-type-T.obj')
-    # voltages = pickle_manager.read_file('sensors', 'k-type-V.obj')
-    # sensor = Thermocouple(temps, voltages, 1)
-
-    def f(x): return np.zeros(x.shape)
-    sensor = MultiSensor(0, f, 0.1, np.array([[-5000], [5000]]), np.linspace(sensor_bounds[0, 0], sensor_bounds[1, 0], 10).reshape(-1, 1))
-    sensors = np.array([sensor])
-
+    def f(x): return 0
+    sensor = PointSensor(0, f, 0, np.array([[-5e10, -5e10, -5e10], [5e10, 5e10, 5e10]]), 2)
+    sensors = np.array([sensor]*5)
     sensor_suite = SensorSuite(
-        ScalarField(CSModel, field_bounds), 
-        sensors
+        VectorField(RBFModel, field_bounds), 
+        sensors,
+        symmetry=[symmetry_manager.reflect_2D_horiz]
     )
 
     # Setup the experiment
@@ -52,18 +47,27 @@ if __name__ == '__main__':
         sensor_bounds
     )
     res = experiment.design()
-    proposed_layout, true_temps, model_temps, sensor_values = experiment.get_SOO_plotting_arrays(res.X)
+    proposed_layout, true_disps, model_disps, sensor_vals = experiment.get_SOO_plotting_arrays(res.X)
+
+    mag_true_disps = np.linalg.norm(true_disps, axis=1).reshape(-1, 1)
+    mag_model_disps = np.linalg.norm(model_disps, axis=1).reshape(-1, 1)
+    mag_sensor_vals = np.linalg.norm(sensor_vals, axis=1).reshape(-1, 1)
 
     # Display the results
     graph_manager.build_optimisation(
         res.history
     )
     graph_manager.draw()
-    graph_manager.build_1D_compare(
+    graph_manager.build_2D_compare(
         grid,
         proposed_layout,
-        sensor_values,
-        true_temps,
-        model_temps
+        mag_true_disps,
+        mag_model_disps
+    )
+    graph_manager.draw()
+    graph_manager.build_3D_compare(
+        grid,
+        mag_true_disps,
+        mag_model_disps
     )
     graph_manager.draw()
