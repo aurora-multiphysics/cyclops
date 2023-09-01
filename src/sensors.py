@@ -95,7 +95,6 @@ class Sensor():
 class PointSensor(Sensor):
     """
     Point sensor samples 1 point only.
-    Used for 2D fields.
     """
     def __init__(
             self, 

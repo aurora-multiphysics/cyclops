@@ -30,12 +30,13 @@ class Experiment():
 
         self.__optimiser = optimiser
         self.__sensor_suite = None
-        self.__problem = None
-        self.__keys = None
-        self.__active_sensors = None
         self.__repetitions = None
+        self.__problem = None
+
+        self.__active_sensors = None
         self.__loss_limit = None
         self.__min_active = None
+        self.__keys = None
 
 
     def plan_soo(self, sensor_suite :SensorSuite, sensor_bounds :np.ndarray[float], repetitions=10) -> None:
@@ -120,7 +121,6 @@ class Experiment():
         failure_chance = (losses>self.__loss_limit).sum()/self.__repetitions
         return [expected_loss, failure_chance]
 
-
     
     def calc_SOO_loss(self, sensor_array :np.ndarray[float]) -> list[float]:
         """
@@ -133,10 +133,10 @@ class Experiment():
             list[float]: _description_
         """
         sensor_pos = sensor_array.reshape(-1, self.__num_dim)
-        loss = []
+        losses = np.zeros(self.__repetitions)
         for i in range(self.__repetitions):
-            loss.append(self.get_MSE(sensor_pos))
-        return [sum(loss)/len(loss)]
+            losses[i] = self.get_MSE(sensor_pos)
+        return [np.mean(losses)]
 
 
     def get_MSE(self, sensor_pos :np.ndarray[float]) -> float:
@@ -152,15 +152,13 @@ class Experiment():
         Returns:
             float: the MSE.
         """
-        predict_pos = self.__sensor_suite.get_predict_pos(sensor_pos, self.__active_sensors)
-        sensor_values = self.__true_field.predict_values(predict_pos)
+        self.__sensor_suite.set_sensor_pos(sensor_pos)
+        sensor_sites = self.__sensor_suite.get_sensor_sites()
+        site_values = self.__true_field.predict_values(sensor_sites)
+        self.__sensor_suite.fit_sensor_model(site_values)
 
-        measured_values = self.__sensor_suite.set_sensor_values(sensor_values, self.__active_sensors)
-        self.__sensor_suite.fit_sensor_model(sensor_pos, measured_values)
         predicted_values = self.__sensor_suite.predict_data(self.__comparison_pos)
-
-        differences = np.square(predicted_values - self.__comparison_values)
-        return np.sum(differences)/self.__num_pos
+        return np.mean(np.square(predicted_values - self.__comparison_values))
 
 
     def get_SOO_plotting_arrays(self, sensor_array :np.ndarray[float]) -> tuple:
@@ -174,16 +172,25 @@ class Experiment():
             tuple: Contains all plotting arrays needed.
         """
         sensor_pos = sensor_array.reshape(-1, self.__num_dim)
-        predict_pos = self.__sensor_suite.get_predict_pos(sensor_pos, self.__active_sensors)
-        sensor_values = self.__true_field.predict_values(predict_pos)
+        self.__sensor_suite.set_sensor_pos(sensor_pos)
+        sensor_sites = self.__sensor_suite.get_sensor_sites()
+        site_values = self.__true_field.predict_values(sensor_sites)
+        self.__sensor_suite.fit_sensor_model(site_values)
 
-        measured_values = self.__sensor_suite.set_sensor_values(sensor_values, self.__active_sensors)
-        self.__sensor_suite.fit_sensor_model(sensor_pos, measured_values)
         predicted_values = self.__sensor_suite.predict_data(self.__comparison_pos)
+        return sensor_pos, self.__comparison_values, predicted_values
 
-        differences = np.square(predicted_values - self.__comparison_values)
-        print('Loss shown:', np.sum(differences)/self.__num_pos)
-        return sensor_pos, self.__comparison_values, predicted_values, measured_values
+
+
+
+
+
+
+
+
+
+
+
 
 
     def get_MOO_plotting_arrays(self, sensor_array :np.ndarray[float]) -> tuple:

@@ -163,7 +163,6 @@ class SensorSuite():
 
     def fit_sensor_model(self, site_values :np.ndarray[float]):
         known_values, known_pos = self.__measure_sensor_values(site_values)
-        print(known_values, known_pos)
         for transformation in self.__symmetry:
             known_pos = transformation(known_pos)
             known_values = np.concatenate((known_values, known_values), axis=0)
@@ -172,3 +171,17 @@ class SensorSuite():
 
     def predict_data(self, field_pos :np.ndarray[float]) -> np.ndarray[float]:
         return self.__field.predict_values(field_pos)
+    
+
+    def calc_keys(self, num_repetitions :int) -> np.ndarray[bool]:
+        keys = np.full((num_repetitions, self.__num_sensors), True)
+        for i, key in enumerate(keys):
+            for j in range(len(key)):
+                num = np.random.rand()
+                if num < self.__sensors[j].get_failure_chance():
+                    keys[i, j] = False
+        return keys
+    
+
+    def get_num_sensors(self):
+        return self.__sensors.size
