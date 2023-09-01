@@ -178,7 +178,8 @@ class Experiment():
         self.__sensor_suite.fit_sensor_model(site_values)
 
         predicted_values = self.__sensor_suite.predict_data(self.__comparison_pos)
-        return sensor_pos, self.__comparison_values, predicted_values
+        estimated_sensor_values = self.__sensor_suite.predict_data(sensor_pos)
+        return sensor_pos, self.__comparison_values, predicted_values, estimated_sensor_values
 
 
 
