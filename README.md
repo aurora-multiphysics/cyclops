@@ -11,13 +11,13 @@ Requirements: Python 3.x, Latex (Latex is very strongly recommended but not 100%
 
 Please follow the two steps below very carefully. 
 
-1. Install the requirements as below
+1. Install the requirements as below (note that this is for linux not windows or mac - the venv activation in setp two will be different on windows - `venv\scripts\activate`).
 
 `python3 -m venv venv`
 
 `source venv/bin/activate`
 
-`pip install -r requirements/app.txt`
+`pip install -r requirements.txt`
 
 2. Install Latex on your device to let latex style graphs be plotted. 
 

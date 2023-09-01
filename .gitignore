@@ -162,3 +162,7 @@ cython_debug/
 # Ignore all pdfs
 *.pdf
 *.png
+
+# Ignore all results and vs code setup
+results/
+.vscode/
