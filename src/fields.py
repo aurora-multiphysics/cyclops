@@ -12,6 +12,11 @@ class Field():
     3. Predicting values at various positions in the field.
     """
     def __init__(self, regression_type :type, bounds :np.ndarray[float]) -> None:
+        """
+        Args:
+            regression_type (type): type of regression model.
+            bounds (np.ndarray[float]): 2D array of the form [[min pos], [max pos]].
+        """
         self._regression_type = regression_type
         self._bounds = bounds
         self._num_dim = bounds.shape[1]
@@ -31,30 +36,7 @@ class Field():
             int: the dimensions of the field positions.
         """
         return self._num_dim
-    
 
-    def fit_model(self, known_pos :np.ndarray, known_values :np.ndarray) -> None:
-        """
-        Fits a regression model to the positions and values given.
-
-        Args:
-            known_pos (np.ndarray): n by d array of n positions of dimension d where d is _num_dim.
-            known_values (np.ndarray): n by m array of n output data values each of dimension m (where m=1 indicates a scalar).
-        """
-        pass
-
-
-    def predict_values(self, pos : np.ndarray) -> np.ndarray[float]:
-        """
-        Predicts the values of the field at the positions specified.
-
-        Args:
-            pos (np.ndarray): n by d array of n positions of dimension d where d is _num_dim.
-
-        Returns:
-            np.ndarray[float]: n by m array of n values of dimension m.
-        """
-        pass
 
 
 

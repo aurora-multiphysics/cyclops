@@ -10,7 +10,7 @@ class SymmetryManager():
     """
     def __init__(self) -> None:
         """
-        Initialises the symmetry parameters
+        Initialises the symmetry parameters.
         """
         self.__x_point = 0
         self.__x_line = 0
@@ -56,10 +56,10 @@ class SymmetryManager():
         Returns both reflected and original positions.
 
         Args:
-            x_pos (np.ndarray[float]): array of n 1D points.
+            x_pos (np.ndarray[float]): n by 1 array of n 1D points.
 
         Returns:
-            np.ndarray[float]: array of 2n 1D points.
+            np.ndarray[float]: 2n by 1 array of 2n 1D points.
         """
         axis = np.ones(x_pos.shape)*self.__x_point
         reflected_arr = 2*axis - x_pos
@@ -72,10 +72,10 @@ class SymmetryManager():
         Returns both reflected and original positions.
 
         Args:
-            pos (np.ndarray[float]): array of n 2D original points.
+            pos (np.ndarray[float]): n by 2 array of n 2D original points.
 
         Returns:
-            np.ndarray[float]: array of 2n 2D points.
+            np.ndarray[float]: 2n by 2 array of 2n 2D points.
         """
         axis = np.ones(len(pos))*self.__x_line
         reflected_arr = np.copy(pos)
@@ -89,10 +89,10 @@ class SymmetryManager():
         Returns both reflected and original positions.
 
         Args:
-            pos (np.ndarray[float]): array of n 2D original points.
+            pos (np.ndarray[float]): n by 2 array of n 2D original points.
 
         Returns:
-            np.ndarray[float]: array of 2n 2D points.
+            np.ndarray[float]: 2n by 2 array of 2n 2D points.
         """
         axis = np.ones(len(pos))*self.__y_line
         reflected_arr = np.copy(pos)
@@ -106,10 +106,10 @@ class SymmetryManager():
         Returns both reflected and original positions.
 
         Args:
-            pos (np.ndarray[float]): array of n 2D original points.
+            pos (np.ndarray[float]): n by 2 array of n 2D original points.
 
         Returns:
-            np.ndarray[float]: array of 2n 2D points.
+            np.ndarray[float]: 2n by 2 array of 2n 2D points.
         """
         m = self.__grad
         reflect_matrix = 1/(1+m**2)*np.array([[1 - m**2, 2*m], [2*m, m**2 - 1]])
@@ -119,7 +119,16 @@ class SymmetryManager():
 
 
 class SensorSuite():
+    """
+    Holds the sensors and allows a field to be predicted from the sensor data.
+    """
     def __init__(self, field :Field, sensors :np.ndarray[Sensor], symmetry=[]) -> None:
+        """
+        Args:
+            field (Field): field to use as sensor field.
+            sensors (np.ndarray[Sensor]): array of sensors to measure the field.
+            symmetry (list, optional): list of symmetry assumptions. Defaults to [].
+        """
         self.__field = field
         self.__sensors = sensors
         self.__num_sensors = len(self.__sensors)
@@ -130,14 +139,32 @@ class SensorSuite():
 
     
     def set_active_sensors(self, active_sensors :np.ndarray[bool]):
+        """
+        Set which sensors are active.
+
+        Args:
+            active_sensors (np.ndarray[bool]): array of booleans to show which sensors are off or on.
+        """
         self.__active_sensors = active_sensors
 
     
     def set_sensor_pos(self, sensor_pos :np.ndarray[float]):
+        """
+        Set the positions of the sensors.
+
+        Args:
+            sensor_pos (np.ndarray[float]): n by d array of n positions of d dimensions.
+        """
         self.__sensor_pos = sensor_pos
 
 
-    def get_sensor_sites(self) -> list[np.ndarray]:
+    def get_sensor_sites(self) -> np.ndarray[float]:
+        """
+        Returns the positions from which the sensors sample from.
+
+        Returns:
+            np.ndarray[float]: n by d array of n positions of d dimensions to sample from.
+        """
         absolute_sites = []
         for i, sensor in enumerate(self.__sensors):
             sites = sensor.get_input_sites(self.__sensor_pos[i])
@@ -147,6 +174,15 @@ class SensorSuite():
     
 
     def __measure_sensor_values(self, site_values :np.ndarray[float]) -> tuple[np.ndarray]:
+        """
+        Calculates the values measured by the sensors, and the positions those values are thought to be at.
+
+        Args:
+            site_values (np.ndarray[float]): n by m array of n values of dimension m at the n sensor sites.
+
+        Returns:
+            tuple[np.ndarray]: contains the n by m array of field values and the n by d array of the positions of those values.
+        """
         field_values = []
         field_pos = []
         value_index = 0
@@ -162,6 +198,12 @@ class SensorSuite():
 
 
     def fit_sensor_model(self, site_values :np.ndarray[float]):
+        """
+        Fit the model based off the sensor data.
+
+        Args:
+            site_values (np.ndarray[float]): n by m array of the n values of dimension m at the sites specified.
+        """
         known_values, known_pos = self.__measure_sensor_values(site_values)
         for transformation in self.__symmetry:
             known_pos = transformation(known_pos)
@@ -170,10 +212,28 @@ class SensorSuite():
 
 
     def predict_data(self, field_pos :np.ndarray[float]) -> np.ndarray[float]:
+        """
+        Predict values of the field at the points specified.
+
+        Args:
+            field_pos (np.ndarray[float]): n by d array of n positions of dimension d.
+
+        Returns:
+            np.ndarray[float]: n by m array of n values of dimension m.
+        """
         return self.__field.predict_values(field_pos)
     
 
     def calc_keys(self, num_repetitions :int) -> np.ndarray[bool]:
+        """
+        Calculate a number of potential arrays for the active sensors based off the chances that the sensors fail.
+
+        Args:
+            num_repetitions (int): number of keys needed.
+
+        Returns:
+            np.ndarray[bool]: n by s array of n keys of dimension s where s is the number of sensors.
+        """
         keys = np.full((num_repetitions, self.__num_sensors), True)
         for i, key in enumerate(keys):
             for j in range(len(key)):
@@ -184,4 +244,8 @@ class SensorSuite():
     
 
     def get_num_sensors(self):
+        """
+        Returns:
+            _type_: number of sensors.
+        """
         return self.__sensors.size

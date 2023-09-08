@@ -1,7 +1,6 @@
 from pymoo.operators.sampling.rnd import FloatRandomSampling
 from pymoo.algorithms.soo.nonconvex.pso import PSO
 from pymoo.core.problem import ElementwiseProblem
-from pymoo.algorithms.moo.moead import MOEAD
 from pymoo.algorithms.soo.nonconvex.ga import GA
 from pymoo.termination import get_termination
 from pymoo.operators.crossover.sbx import SBX

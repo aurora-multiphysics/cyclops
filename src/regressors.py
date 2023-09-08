@@ -20,10 +20,11 @@ class RegressionModel():
     2. Fitting with training data.
     3. Predicting values.
     They all predict 1D outputs only.
+    Some models can take in a variety of different input dimensions.
     """
     def __init__(self, num_input_dim :int, min_length :int) -> None:
         """
-        All Regression models require a scaler to rescale the input data.
+        All Regression models use a scaler to rescale the input data.
         And have a regressor.
         The number of dimensions is specified to mitigate errors.
 
@@ -113,6 +114,13 @@ class RBFModel(RegressionModel):
     Time complexity of around O(n^3).
     """
     def __init__(self, num_input_dim :int) -> None:
+        """
+        Args:
+            num_input_dim (int): number of features (dimensions) for the training data.
+
+        Raises:
+            Exception: error to explain user's mistake.
+        """
         super().__init__(num_input_dim, 2)
         if num_input_dim <= 0:
             raise Exception('Input data should have d >= 1 dimensions.')
@@ -155,6 +163,13 @@ class LModel(RegressionModel):
     Time complexity of around O(n).
     """
     def __init__(self, num_input_dim) -> None:
+        """
+        Args:
+            num_input_dim (int): number of features (dimensions) for the training data.
+
+        Raises:
+            Exception: error to explain user's mistake.
+        """
         super().__init__(num_input_dim, 3)
         if num_input_dim <= 1:
             raise Exception('Input data should have d >= 2 dimensions.')
@@ -203,6 +218,13 @@ class GPModel(RegressionModel):
     (also requires hyperparameter optimisation).
     """
     def __init__(self, num_input_dim :int) -> None:
+        """
+        Args:
+            num_input_dim (int): number of features (dimensions) for the training data.
+
+        Raises:
+            Exception: error to explain user's mistake.
+        """
         super().__init__(num_input_dim, 3)
         if num_input_dim <= 0:
             raise Exception('Input data should have d >= 1 dimensions.')
@@ -250,6 +272,13 @@ class PModel(RegressionModel):
     Time complexity of around O(n^2).
     """
     def __init__(self, num_input_dim :int, degree=3) -> None:
+        """
+        Args:
+            num_input_dim (int): number of features (dimensions) for the training data.
+
+        Raises:
+            Exception: error to explain user's mistake.
+        """
         super().__init__(num_input_dim, degree)
         if num_input_dim != 1:
             raise Exception('Input data should have d = 1 dimensions.')
@@ -300,6 +329,13 @@ class CSModel(RegressionModel):
     Time complexity of around O(n).
     """
     def __init__(self, num_input_dim :int) -> None:
+        """
+        Args:
+            num_input_dim (int): number of features (dimensions) for the training data.
+
+        Raises:
+            Exception: error to explain user's mistake.
+        """
         super().__init__(num_input_dim, 2)
         if num_input_dim != 1:
             raise Exception('Input data should have d = 1 dimensions.')
@@ -348,6 +384,13 @@ class CTModel(RegressionModel):
     Time complexity of around O(n log(n)) due to the triangulation involved.
     """
     def __init__(self, num_input_dim :int) -> None:
+        """
+        Args:
+            num_input_dim (int): number of features (dimensions) for the training data.
+
+        Raises:
+            Exception: error to explain user's mistake.
+        """
         super().__init__(num_input_dim, 3)
         if num_input_dim != 2:
             raise Exception('Input data should have d = 2 dimensions.')

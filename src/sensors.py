@@ -87,7 +87,11 @@ class Sensor():
         return array
     
 
-    def get_num_input_sites(self):
+    def get_num_input_sites(self) -> int:
+        """
+        Returns:
+            int: number of sites needed to be considered for the sensor.
+        """
         return len(self._relative_sites)
 
 
@@ -142,6 +146,7 @@ class RoundSensor(Sensor):
             failure_chance (float): chance of sensor failing.
             value_range (np.ndarray[float]): 2 by m array of lower and upper bounds of values of dimension m.
             radius (float): radius of cross (radius of sensor in real life).
+            field_dim (int): number of dimensions of the field (1 or 2).
         """
         if field_dim == 2:
             measurement_sites = np.array([[0, 0], [0, radius], [0, -radius], [-radius, 0], [radius, 0]])
@@ -238,6 +243,15 @@ class Thermocouple(RoundSensor):
 
     
     def non_linear_error(self, temp :np.ndarray[float]) -> np.ndarray[float]:
+        """
+        Calculates the linearisation error produced.
+
+        Args:
+            temp (np.ndarray[float]): tempertaure to find the error at.
+
+        Returns:
+            np.ndarray[float]: error.
+        """
         voltage = self._interpolator.predict(temp)
         new_temp = self._regressor.predict(voltage)
         return new_temp - temp

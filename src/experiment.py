@@ -23,10 +23,8 @@ class Experiment():
         """
         self.__true_field = true_field
         self.__num_dim = true_field.get_dim()
-
         self.__comparison_pos = comparison_pos
         self.__comparison_values = true_field.predict_values(self.__comparison_pos)
-        self.__num_pos = len(comparison_pos)
 
         self.__optimiser = optimiser
         self.__sensor_suite = None
@@ -104,6 +102,15 @@ class Experiment():
 
 
     def calc_MOO_loss(self, sensor_array :np.ndarray[float]) -> list[float]:
+        """
+        Calculates the MOO loss of a specific sensor layout.
+
+        Args:
+            sensor_array (np.ndarray[float]): unshaped sensor layout from optimiser.
+
+        Returns:
+            list[float]: loss list.
+        """
         sensor_pos = sensor_array.reshape(-1, self.__num_dim)
         losses = np.zeros(self.__repetitions)
         for i, key in enumerate(self.__keys):
@@ -124,10 +131,10 @@ class Experiment():
         Calculates loss for SOO.
 
         Args:
-            sensor_array (np.ndarray[float]): unshaped sensor layout from optimiser
+            sensor_array (np.ndarray[float]): unshaped sensor layout from optimiser.
 
         Returns:
-            list[float]: _description_
+            list[float]: loss list.
         """
         sensor_pos = sensor_array.reshape(-1, self.__num_dim)
         losses = np.zeros(self.__repetitions)
@@ -179,46 +186,3 @@ class Experiment():
         predicted_values = self.__sensor_suite.predict_data(self.__comparison_pos)
         estimated_sensor_values = self.__sensor_suite.predict_data(sensor_pos)
         return sensor_pos, self.__comparison_values, predicted_values, estimated_sensor_values
-
-
-    # def get_MOO_plotting_arrays(self, sensor_array :np.ndarray[float]) -> tuple:
-    #     sensor_pos = sensor_array.reshape(-1, self.__num_dim)
-        
-    #     sensor_values = self.get_SOO_plotting_arrays(sensor_array)
-    #     losses = np.zeros(self.__repetitions)
-    #     all_predicted_values = []
-
-    #     for i, key in enumerate(self.__keys):
-    #         num_active = np.count_nonzero(key == True)
-    #         if num_active >= self.__min_active:
-    #             self.__sensor_suite.set_active_sensors(key)
-    #             losses[i] = self.get_MSE(sensor_pos)
-    #         else:
-    #             losses[i] = np.argmax(losses)
-
-    #     expected_loss = np.mean(losses)
-    #     failure_chance = (losses>self.__loss_limit).sum()/self.__repetitions
-    #     return sensor_pos, self.__comparison_values, 
-
-
-    # def get_MOO_plotting_arrays(self, sensor_array :np.ndarray[float]) -> tuple:
-    #     num_failures = 0
-    #     num_successes = 0
-    #     losses = np.zeros(self.__repetitions)
-    #     all_predicted_values = []
-
-    #     for i, key in enumerate(self.__keys):
-    #         num_active = np.count_nonzero(key == True)
-    #         if num_active >= self.__min_active:
-    #             self.__active_sensors = key
-    #             sensor_pos, comp, predicted_values, measured_values = self.get_SOO_plotting_arrays(sensor_array)
-    #             all_predicted_values.append(predicted_values)
-    #             losses[i] = self.get_MSE(sensor_array.reshape(-1, self.__num_dim))
-
-    #     num_failures = (losses>self.__loss_limit).sum()
-    #     num_successes = self.__repetitions - num_failures
-    #     num_sensors = self.__sensor_suite.get_num_sensors()
-    #     self.__active_sensors = np.array([True] * num_sensors)
-    #     a, b, c, sensor_values = self.get_SOO_plotting_arrays(sensor_array)
-    #     print(num_failures, num_successes)
-    #     return sensor_pos, self.__comparison_values, all_predicted_values, sensor_values, num_failures, num_successes
