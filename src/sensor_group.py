@@ -178,7 +178,7 @@ class SensorSuite():
         Calculates the values measured by the sensors, and the positions those values are thought to be at.
 
         Args:
-            site_values (np.ndarray[float]): n by m array of n values of dimension m at the n sensor sites.
+            site_values (np.ndarray[float]): s by t by m array of s*t values of dimension m where s is number of sensors.
 
         Returns:
             tuple[np.ndarray]: contains the n by m array of field values and the n by d array of the positions of those values.
@@ -205,9 +205,11 @@ class SensorSuite():
             site_values (np.ndarray[float]): n by m array of the n values of dimension m at the sites specified.
         """
         known_values, known_pos = self.__measure_sensor_values(site_values)
+        print(known_pos, known_values)
         for transformation in self.__symmetry:
             known_pos = transformation(known_pos)
             known_values = np.concatenate((known_values, known_values), axis=0)
+
         self.__field.fit_model(known_pos, known_values)
 
 

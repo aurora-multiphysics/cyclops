@@ -43,6 +43,15 @@ class GraphManager():
         ax_2.set_ylabel('field difference (?)')
 
     
+    def build_1D_show(self, all_positions, model_field):
+        fig_1, (ax_1) = plt.subplots(1,1, figsize=(5, 5))
+
+        ax_1.set_title('Field comparison')
+        ax_1.plot(all_positions, model_field, label = 'Predicted field')
+        ax_1.set_xlabel('x (m)')
+        ax_1.set_ylabel('field value (?)')
+
+    
     def build_1D_multiple_compare(self, all_positions, sensor_positions, sensor_values, true_field, all_model_fields, num_failures, num_successes):
         fig_1, (ax_1, ax_2) = plt.subplots(1, 2, figsize=(18, 5))
 
