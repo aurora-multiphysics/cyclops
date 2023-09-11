@@ -209,14 +209,14 @@ class GraphManager():
     def build_pareto(self, F):
         fig, ax = plt.subplots(figsize=(8, 6))
         ax.scatter(F[:, 0], F[:, 1], s=30, facecolors='none', edgecolors='blue')
-        ax.set_xlabel('Reconstruction loss')
-        ax.set_ylabel('Reconstruction reliability')
+        ax.set_xlabel('Expected loss')
+        ax.set_ylabel('Failed experiment chance')
         ax.set_title('Pareto front')
         for i in range(len(F)):
             ax.annotate(
                 'Setup '+str(i),
                 xy=(F[i, 0], F[i, 1]), xycoords='data',
-                xytext=(-60, 30), textcoords='offset points',
+                xytext=(60, 30), textcoords='offset points',
                 bbox=dict(facecolor='none', edgecolor='black'),
                 arrowprops=dict(arrowstyle="->", connectionstyle="angle,angleA=0,angleB=90,rad=10")
             )

@@ -205,7 +205,6 @@ class SensorSuite():
             site_values (np.ndarray[float]): n by m array of the n values of dimension m at the sites specified.
         """
         known_values, known_pos = self.__measure_sensor_values(site_values)
-        print(known_pos, known_values)
         for transformation in self.__symmetry:
             known_pos = transformation(known_pos)
             known_values = np.concatenate((known_values, known_values), axis=0)
