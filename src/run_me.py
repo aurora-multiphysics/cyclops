@@ -15,8 +15,8 @@ if __name__ == '__main__':
     # Load any objects necessary
     pickle_manager = PickleManager()
     graph_manager = GraphManager()
-    true_temp_field = pickle_manager.read_file('simulation', 'disp_plane_field.obj')
-    grid = pickle_manager.read_file('simulation', 'disp_plane_points.obj')
+    true_temp_field = pickle_manager.read_file('simulation', 'temp_plane_field.obj')
+    grid = pickle_manager.read_file('simulation', 'temp_plane_points.obj')
 
     field_bounds = true_temp_field.get_bounds()
     sensor_bounds = field_bounds+np.array([[1, 1], [-1, -1]])*0.002
@@ -26,11 +26,16 @@ if __name__ == '__main__':
     symmetry_manager.set_2D_x(np.mean(field_bounds[:, 0]))
 
     # Setup the sensor suite
-    def f(x): return 0
-    sensor = PointSensor(0, f, 0, np.array([[-5e10, -5e10, -5e10], [5e10, 5e10, 5e10]]), 2)
+    def f(x): return np.zeros(x.shape)
+    sensor = RoundSensor(0, f, 0, np.array([[-5000], [5000]]), 0, 2)
     sensors = np.array([sensor]*5)
+
+    # def f(x): return np.zeros(x.shape)
+    # sensor = MultiSensor(0, f, 0.1, np.array([[-5000], [5000]]), np.linspace(sensor_bounds[0, 0], sensor_bounds[1, 0], 10).reshape(-1, 2))
+    # sensors = np.array([sensor])
+
     sensor_suite = SensorSuite(
-        VectorField(RBFModel, field_bounds), 
+        ScalarField(RBFModel, field_bounds), 
         sensors,
         symmetry=[symmetry_manager.reflect_2D_horiz]
     )
@@ -47,11 +52,7 @@ if __name__ == '__main__':
         sensor_bounds
     )
     res = experiment.design()
-    proposed_layout, true_disps, model_disps, sensor_vals = experiment.get_SOO_plotting_arrays(res.X)
-
-    mag_true_disps = np.linalg.norm(true_disps, axis=1).reshape(-1, 1)
-    mag_model_disps = np.linalg.norm(model_disps, axis=1).reshape(-1, 1)
-    mag_sensor_vals = np.linalg.norm(sensor_vals, axis=1).reshape(-1, 1)
+    proposed_layout, true_temps, model_temps, sensor_values = experiment.get_SOO_plotting_arrays(res.X)
 
     # Display the results
     graph_manager.build_optimisation(
@@ -61,13 +62,13 @@ if __name__ == '__main__':
     graph_manager.build_2D_compare(
         grid,
         proposed_layout,
-        mag_true_disps,
-        mag_model_disps
+        true_temps,
+        model_temps
     )
     graph_manager.draw()
     graph_manager.build_3D_compare(
         grid,
-        mag_true_disps,
-        mag_model_disps
+        true_temps,
+        model_temps
     )
     graph_manager.draw()

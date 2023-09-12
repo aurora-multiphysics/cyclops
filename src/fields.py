@@ -1,9 +1,7 @@
 import numpy as np
 
 
-
-
-class Field():
+class Field:
     """
     This is an abstract class to describe fields.
     They have 3 core methods.
@@ -11,7 +9,10 @@ class Field():
     2. Fitting with training data to describe known values at known positions in the field.
     3. Predicting values at various positions in the field.
     """
-    def __init__(self, regression_type :type, bounds :np.ndarray[float]) -> None:
+
+    def __init__(
+        self, regression_type: type, bounds: np.ndarray[float]
+    ) -> None:
         """
         Args:
             regression_type (type): type of regression model.
@@ -21,7 +22,6 @@ class Field():
         self._bounds = bounds
         self._num_dim = bounds.shape[1]
 
-
     def get_bounds(self) -> np.ndarray[float]:
         """
         Returns:
@@ -29,7 +29,6 @@ class Field():
         """
         return self._bounds
 
-    
     def get_dim(self) -> int:
         """
         Returns:
@@ -38,14 +37,12 @@ class Field():
         return self._num_dim
 
 
-
-
-
 class ScalarField(Field):
     """
     Field that contains scalar values.
     """
-    def __init__(self, regression_type :type, bounds :np.ndarray) -> None:
+
+    def __init__(self, regression_type: type, bounds: np.ndarray) -> None:
         """
         Args:
             regression_type (type): the type of regression algorithm to use to predict the scalar values.
@@ -55,8 +52,9 @@ class ScalarField(Field):
         super().__init__(regression_type, bounds)
         self._regressor = None
 
-
-    def fit_model(self, known_pos :np.ndarray, known_scalars :np.ndarray) -> None:
+    def fit_model(
+        self, known_pos: np.ndarray, known_scalars: np.ndarray
+    ) -> None:
         """
         Fit the regression model to the known field values.
 
@@ -67,8 +65,7 @@ class ScalarField(Field):
         self._regressor = self._regression_type(self._num_dim)
         self._regressor.fit(known_pos, known_scalars)
 
-    
-    def predict_values(self, pos :np.ndarray) -> np.ndarray[float]:
+    def predict_values(self, pos: np.ndarray) -> np.ndarray[float]:
         """
         Predict the values at various positions in the field.
 
@@ -81,10 +78,8 @@ class ScalarField(Field):
         return self._regressor.predict(pos)
 
 
-
-
 class VectorField(Field):
-    def __init__(self, regression_type :type, bounds :np.ndarray) -> None:
+    def __init__(self, regression_type: type, bounds: np.ndarray) -> None:
         """
         Args:
             regression_type (type): the type of regression algorithm to use to predict the vector values.
@@ -94,8 +89,9 @@ class VectorField(Field):
         super().__init__(regression_type, bounds)
         self._regressors = []
 
-
-    def fit_model(self, known_pos :np.ndarray, known_vectors :np.ndarray) -> None:
+    def fit_model(
+        self, known_pos: np.ndarray, known_vectors: np.ndarray
+    ) -> None:
         """
         Fit the regression model to the known field values.
 
@@ -110,8 +106,7 @@ class VectorField(Field):
             regressor.fit(known_pos, known_vectors[:, i].reshape(-1, 1))
             self._regressors.append(regressor)
 
-
-    def predict_values(self, pos :np.ndarray) -> np.ndarray[float]:
+    def predict_values(self, pos: np.ndarray) -> np.ndarray[float]:
         """
         Predict the values at various positions in the field.
 
