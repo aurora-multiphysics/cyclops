@@ -1,6 +1,8 @@
+from pymoo.core.problem import StarmapParallelization
 from optimisers import Problem, Optimiser
 from sensor_group import SensorSuite
 from fields import Field
+import multiprocessing
 import numpy as np
 
 
@@ -85,11 +87,18 @@ class Experiment():
         """
         low_border = list(sensor_bounds[0]) * num_sensors
         high_border = list(sensor_bounds[1]) * num_sensors
+
+        n_proccess = 8
+        pool = multiprocessing.Pool(n_proccess)
+        runner = StarmapParallelization(pool.starmap)
+
+
         return Problem(
             num_dim=num_sensors*self.__num_dim,
             num_obj=num_obj,
             loss_function=loss_function,
-            borders=[low_border, high_border]
+            borders=[low_border, high_border],
+            elementwise_runner=runner
         )
 
     

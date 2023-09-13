@@ -12,12 +12,11 @@ import numpy as np
 
 
 
-
 class Problem(ElementwiseProblem):
     """
     Probem class allows a function to be minimised.
     """
-    def __init__(self, num_dim :int, num_obj :int, loss_function :callable, borders :np.ndarray) -> None:
+    def __init__(self, num_dim :int, num_obj :int, loss_function :callable, borders :np.ndarray, **kwargs) -> None:
         """
         Setup the problem.
 
@@ -31,7 +30,8 @@ class Problem(ElementwiseProblem):
             n_var = num_dim, 
             n_obj = num_obj, 
             xl = borders[0], 
-            xu = borders[1]
+            xu = borders[1],
+            **kwargs
         )
         self.__loss_function = loss_function
 

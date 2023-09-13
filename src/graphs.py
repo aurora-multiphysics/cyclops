@@ -134,7 +134,7 @@ class GraphManager():
     def scatter_sensors(self, ax, sensor_positions, sensor_values, pen=('black', '*')):
         ax.scatter(
             sensor_positions, 
-            sensor_values, 
+            sensor_values,
             s=20,
             color=pen[0],
             marker=pen[1]
