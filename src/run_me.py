@@ -45,7 +45,8 @@ if __name__ == '__main__':
         sensor_suite,
         sensor_bounds,
         repetitions=1000,
-        loss_limit=1000
+        loss_limit=1000,
+        num_cores=8
     )
     res = experiment.design()
     pickle_manager.save_file('results', 'Temp_1D_res.obj', res)
