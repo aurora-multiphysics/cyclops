@@ -38,7 +38,7 @@ class Experiment():
         self.__keys = None
 
 
-    def plan_soo(self, sensor_suite :SensorSuite, sensor_bounds :np.ndarray[float], repetitions=10) -> None:
+    def plan_soo(self, sensor_suite :SensorSuite, sensor_bounds :np.ndarray[float], repetitions=10, num_cores=8) -> None:
         """
         Prepare for single-objective optimisation.
 
@@ -49,11 +49,11 @@ class Experiment():
         """
         self.__sensor_suite = sensor_suite
         num_sensors = sensor_suite.get_num_sensors()
-        self.__problem = self.__build_problem(sensor_bounds, num_sensors, 1, self.calc_SOO_loss)
+        self.__problem = self.__build_problem(sensor_bounds, num_sensors, 1, self.calc_SOO_loss, num_cores)
         self.__repetitions = repetitions
 
 
-    def plan_moo(self, sensor_suite :SensorSuite, sensor_bounds :np.ndarray[float], repetitions=1000, loss_limit=80, min_active=3) -> None:
+    def plan_moo(self, sensor_suite :SensorSuite, sensor_bounds :np.ndarray[float], repetitions=1000, loss_limit=80, min_active=3, num_cores=8) -> None:
         """
         Prepare for multi-objective optimisation.
 
@@ -66,7 +66,7 @@ class Experiment():
         """
         self.__sensor_suite = sensor_suite
         num_sensors = sensor_suite.get_num_sensors()
-        self.__problem = self.__build_problem(sensor_bounds, num_sensors, 2, self.calc_MOO_loss)
+        self.__problem = self.__build_problem(sensor_bounds, num_sensors, 2, self.calc_MOO_loss, num_cores)
 
         self.__keys = self.__sensor_suite.calc_keys(repetitions)
         self.__repetitions = repetitions
@@ -74,7 +74,7 @@ class Experiment():
         self.__min_active = min_active
 
 
-    def __build_problem(self, sensor_bounds :np.ndarray[float], num_sensors :int, num_obj :int, loss_function :callable) -> Problem:
+    def __build_problem(self, sensor_bounds :np.ndarray[float], num_sensors :int, num_obj :int, loss_function :callable, num_cores :int) -> Problem:
         """
         Args:
             sensor_bounds (np.ndarray[float]): bounds within which a sensor can be placed.
@@ -88,7 +88,7 @@ class Experiment():
         low_border = list(sensor_bounds[0]) * num_sensors
         high_border = list(sensor_bounds[1]) * num_sensors
 
-        n_proccess = 8
+        n_proccess = num_cores
         pool = multiprocessing.Pool(n_proccess)
         runner = StarmapParallelization(pool.starmap)
 
