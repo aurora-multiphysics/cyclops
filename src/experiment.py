@@ -123,12 +123,15 @@ class Experiment():
         sensor_pos = sensor_array.reshape(-1, self.__num_dim)
         losses = np.zeros(self.__repetitions)
         for i, key in enumerate(self.__keys):
-            num_active = np.count_nonzero(key == True)
+            num_active = np.sum(key)
             if num_active >= self.__min_active:
                 self.__sensor_suite.set_active_sensors(key)
                 losses[i] = self.get_MSE(sensor_pos)
             else:
-                losses[i] = np.argmax(losses)
+                losses[i] = -1
+        for i, loss in enumerate(losses):
+            if loss == -1:
+                losses[i] = np.max(losses)
 
         expected_loss = np.mean(losses)
         failure_chance = (losses>self.__loss_limit).sum()/self.__repetitions
