@@ -9,6 +9,7 @@ After reading this, go to '*tutorials/0 overview.ipynb*' to find tutorials on ho
 
 # Installation
 
+Clone the repository. Then add in a `results` folder at the `cyclops/results` level. This folder is where your results will be stored.
 
 ## Linux
 
