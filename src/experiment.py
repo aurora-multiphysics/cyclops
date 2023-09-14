@@ -123,7 +123,7 @@ class Experiment():
         sensor_pos = sensor_array.reshape(-1, self.__num_dim)
         losses = np.zeros(self.__repetitions)
         for i, key in enumerate(self.__keys):
-            num_active = np.count_nonzero(key is True)
+            num_active = np.count_nonzero(key == True)
             if num_active >= self.__min_active:
                 self.__sensor_suite.set_active_sensors(key)
                 losses[i] = self.get_MSE(sensor_pos)

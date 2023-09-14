@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
 
     # Setup the experiment
-    optimiser = NSGA2Optimiser('00:50:00')
+    optimiser = NSGA2Optimiser('00:00:10')
     experiment = Experiment(
         true_temp_field,
         grid,

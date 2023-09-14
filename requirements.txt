@@ -16,7 +16,6 @@ matplotlib==3.7.3
 mdurl==0.1.2
 meshio==5.3.4
 numpy==1.25.2
-netCDF4==1.6.4
 packaging==23.1
 Pillow==10.0.0
 Pygments==2.16.1
