@@ -45,9 +45,6 @@ class Test(unittest.TestCase):
         test_pos = np.array([[0, 0], [1, 10], [2, -2], [3, -3], [4, -4]])
         values = sensor_suite.predict_data(test_pos)
         print(values)
-        # for i, e in enumerate(values):
-        #     self.assertAlmostEqual(e[0], np.sum(test_pos, axis=1)[i])
-
 
 
 if __name__ == '__main__':

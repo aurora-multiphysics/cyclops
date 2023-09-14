@@ -9,6 +9,8 @@ import os
 
 class GraphManager():
     def __init__(self):
+        # I know it looks like scienceplots is unused
+        # It is in fact used only behind the scenes
         plt.style.use('science')
     
 

@@ -82,7 +82,9 @@ If you don't care about the latex style graphs or can't install latex then go to
 # Contributers
 
 Dom Harrington, UK Atomic Energy Authority
+
 Luke Humphrey, UK Atomic Energy Authority
+
 Lloyd Fletcher, UK Atomic Energy Authority
 
 
