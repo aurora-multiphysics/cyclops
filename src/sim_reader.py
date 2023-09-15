@@ -3,12 +3,15 @@ import meshio
 import os
 
 
-class Unfolder():
+class Unfolder:
     """
-    Performs a number of operations on the arrays of positions produced by reading the mesh.
-    Will later be generalised to unfold 3D meshes into 2D planes, and produce an array of boundaries describing their boundaries.
+    Performs a number of operations on the arrays of positions produced by
+        reading the mesh.
+    Will later be generalised to unfold 3D meshes into 2D planes, and produce
+        an array of boundaries describing their boundaries.
     """
-    def compress_2D(self, pos_3D :np.ndarray[float]) -> np.ndarray[float]:
+
+    def compress_2D(self, pos_3D: np.ndarray[float]) -> np.ndarray[float]:
         """
         Compresses an array of 3D points into 2D points.
         Currently it does this by going (x, y, z) -> (z, y).
@@ -24,31 +27,33 @@ class Unfolder():
             pos_2D.append(np.array([pos[2], pos[1]]))
         return np.array(pos_2D)
 
-
-    def compress_1D(self, points :np.ndarray[float]) -> np.ndarray[float]:
+    def compress_1D(self, points: np.ndarray[float]) -> np.ndarray[float]:
         """
         Compresses an array of 2D/3D points into 1D points.
         Does this by considering the distances between each point vector.
 
         Args:
-            points (np.ndarray[float]): n by 2 (or 3) array of n 2D (or 3D) position vectors.
+            points (np.ndarray[float]): n by 2 (or 3) array of n 2D (or 3D)
+                position vectors.
 
         Returns:
             np.ndarray[float]: n by 1 array of n 1D position vectors.
         """
         sub = np.zeros(points.shape)
         for i, pos in enumerate(points[:-1]):
-            sub[i+1] = pos
+            sub[i + 1] = pos
         diff = points - sub
         diff[0] = np.zeros(diff[0].shape)
-        out_arr = np.sqrt((diff*diff).sum(axis=1))
+        out_arr = np.sqrt((diff * diff).sum(axis=1))
         out_arr = np.cumsum(out_arr)
         return out_arr.reshape(-1, 1)
 
-
-    def generate_grid(self, bounds :np.ndarray[float], num_x :int, num_y :int) -> np.ndarray[float]:
+    def generate_grid(
+        self, bounds: np.ndarray[float], num_x: int, num_y: int
+    ) -> np.ndarray[float]:
         """
-        Generates a grid of values in the rectangular region described by the bounds.
+        Generates a grid of values in the rectangular region described by the
+            bounds.
 
         Args:
             bounds (np.ndarray[float]): of the form [[x1, y1], [x2, y2]].
@@ -68,8 +73,9 @@ class Unfolder():
                 grid_pos.append(np.array([x, y]))
         return np.array(grid_pos)
 
-    
-    def generate_line(self, pos1 :np.ndarray[float], pos2 :np.ndarray[float], num_points :int) -> np.ndarray[float]:
+    def generate_line(
+        self, pos1: np.ndarray[float], pos2: np.ndarray[float], num_points: int
+    ) -> np.ndarray[float]:
         """
         Generates a 2D line between 2 3D positions.
 
@@ -86,8 +92,7 @@ class Unfolder():
         line_pos = np.concatenate((x_values, y_values), axis=1)
         return line_pos
 
-
-    def find_bounds(self, pos_2D :np.ndarray) -> np.ndarray[float]:
+    def find_bounds(self, pos_2D: np.ndarray) -> np.ndarray[float]:
         """
         Returns the rectangular bounds enclosing an array of positions.
 
@@ -104,13 +109,13 @@ class Unfolder():
         return np.array([[min_x, min_y], [max_x, max_y]])
 
 
-
-
-class MeshReader():
-    def __init__(self, file_name :str) -> None:
+class MeshReader:
+    def __init__(self, file_name: str) -> None:
         """
-        Load a mesh file from the simulation folder and read it into a private attribute __mesh.
-        It will work for a variety of mesh formats, see the link below for the full list.
+        Load a mesh file from the simulation folder and read it into a private
+            attribute __mesh.
+        It will work for a variety of mesh formats, see the link below for the
+            full list.
         https://pypi.org/project/meshio/
 
         Args:
@@ -119,8 +124,7 @@ class MeshReader():
         self.__mesh = self.__generate_mesh(file_name)
         print(self.__mesh)
 
-
-    def __generate_mesh(self, file_name :str) -> meshio.Mesh:
+    def __generate_mesh(self, file_name: str) -> meshio.Mesh:
         """
         Reads in the file name, generates the absolute path to the file.
         Then returns the mesh.
@@ -132,13 +136,15 @@ class MeshReader():
             meshio.Mesh: mesh object.
         """
         dir_path = os.path.dirname(os.path.dirname(__file__))
-        full_path = os.path.join(os.path.sep, dir_path,'simulation', file_name)
+        full_path = os.path.join(
+            os.path.sep, dir_path, "simulation", file_name
+        )
         return meshio.read(full_path)
 
-
-    def read_pos(self, set_name :str) -> np.ndarray[float]:
+    def read_pos(self, set_name: str) -> np.ndarray[float]:
         """
-        Records the points described by the region specified into a numpy array.
+        Records the points described by the region specified into a numpy
+            array.
 
         Args:
             set_name (str): region name.
@@ -151,10 +157,12 @@ class MeshReader():
             points.append(self.__mesh.points[point_index])
         return np.array(points)
 
-    
-    def read_scalar(self, set_name :str, scalar_name :str) -> np.ndarray[float]:
+    def read_scalar(
+        self, set_name: str, scalar_name: str
+    ) -> np.ndarray[float]:
         """
-        Finds the values of the scalar named at the points specified by region name.
+        Finds the values of the scalar named at the points specified by region
+            name.
 
         Args:
             set_name (str): region name

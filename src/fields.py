@@ -6,7 +6,8 @@ class Field:
     This is an abstract class to describe fields.
     They have 3 core methods.
     1. Initialisation with correct parameters.
-    2. Fitting with training data to describe known values at known positions in the field.
+    2. Fitting with training data to describe known values at known positions
+        in the field.
     3. Predicting values at various positions in the field.
     """
 
@@ -16,7 +17,8 @@ class Field:
         """
         Args:
             regression_type (type): type of regression model.
-            bounds (np.ndarray[float]): 2D array of the form [[min pos], [max pos]].
+            bounds (np.ndarray[float]): 2D array of the form [[min pos],
+                [max pos]].
         """
         self._regression_type = regression_type
         self._bounds = bounds
@@ -45,8 +47,9 @@ class ScalarField(Field):
     def __init__(self, regression_type: type, bounds: np.ndarray) -> None:
         """
         Args:
-            regression_type (type): the type of regression algorithm to use to predict the scalar values.
-            bounds (np.ndarray): the bounds of the field postions.
+            regression_type (type): the type of regression algorithm to use to
+                predict the scalar values.
+            bounds (np.ndarray): the bounds of the field positions.
             num_dim (int): the number of dimensions of the field (1 or 2).
         """
         super().__init__(regression_type, bounds)
@@ -59,7 +62,8 @@ class ScalarField(Field):
         Fit the regression model to the known field values.
 
         Args:
-            known_pos (np.ndarray): n by d array of n positions of d dimensions.
+            known_pos (np.ndarray): n by d array of n positions of d
+                dimensions.
             known_scalars (np.ndarray): n by 1 array of n scalar values.
         """
         self._regressor = self._regression_type(self._num_dim)
@@ -82,8 +86,9 @@ class VectorField(Field):
     def __init__(self, regression_type: type, bounds: np.ndarray) -> None:
         """
         Args:
-            regression_type (type): the type of regression algorithm to use to predict the vector values.
-            bounds (np.ndarray): the bounds of the field postions.
+            regression_type (type): the type of regression algorithm to use to
+                predict the vector values.
+            bounds (np.ndarray): the bounds of the field positions.
             num_dim (int): the number of dimensions of the field (1 or 2).
         """
         super().__init__(regression_type, bounds)
@@ -96,8 +101,10 @@ class VectorField(Field):
         Fit the regression model to the known field values.
 
         Args:
-            known_pos (np.ndarray): n by d array of n positions of d dimensions.
-            known_vectors (np.ndarray): n by m array of n vector values of m dimensions.
+            known_pos (np.ndarray): n by d array of n positions of d
+            dimensions.
+            known_vectors (np.ndarray): n by m array of n vector values of m
+                dimensions.
         """
         vector_dim = len(known_vectors[0])
         self._regressors = []
