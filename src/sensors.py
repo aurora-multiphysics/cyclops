@@ -1,6 +1,7 @@
 """
-Sensor classes for cyclops. These handle sensor properties and can emulate
-exact or noisy sensor readings.
+Sensor classes for cyclops.
+
+Handle sensor properties and can emulate exact or noisy sensor readings.
 
 (c) Copyright UKAEA 2023.
 """
@@ -9,9 +10,7 @@ import numpy as np
 
 
 class Sensor:
-    """
-    Abstract base class for sensors.
-    """
+    """Abstract base class for sensors."""
 
     def __init__(
         self,
@@ -21,7 +20,8 @@ class Sensor:
         value_range: np.ndarray[float],
         relative_sites: np.ndarray[float],
     ) -> None:
-        """
+        """Initialise class instance.
+
         Args:
             noise_dev (float): standard deviation of normally distributed
                 noise.
@@ -41,16 +41,14 @@ class Sensor:
         self._value_dim = len(value_range[0])
 
     def get_failure_chance(self) -> float:
-        """
-        Returns:
-            float: chance of the sensor failing.
-        """
+        """Return the chance of the sensor failing."""
         return self._failure_chance
 
     def get_input_sites(
         self, actual_pos: np.ndarray[float]
     ) -> np.ndarray[float]:
-        """
+        """Get positions at which sensor takes readings.
+
         Args:
             actual_pos (np.ndarray[float]): 1 by d array of the actual 1 or 2D
                 sensor position.
@@ -65,7 +63,8 @@ class Sensor:
     def get_output_values(
         self, site_values: np.ndarray[float], actual_pos: np.ndarray[float]
     ) -> tuple[np.ndarray]:
-        """
+        """Get sensor reading value.
+
         Args:
             site_values (np.ndarray[float]): n by m array of the true field
                 values at the sampling sites.
@@ -90,8 +89,7 @@ class Sensor:
         return (out_value, out_pos)
 
     def _squash_to_range(self, array) -> np.ndarray[float]:
-        """
-        Given an array, clip all the values outside the range into the range.
+        """Clip all values outside the range into the range.
 
         Args:
             array (_type_): n by m array of n true sensor values of dimension
@@ -108,17 +106,12 @@ class Sensor:
         return array
 
     def get_num_input_sites(self) -> int:
-        """
-        Returns:
-            int: number of sites needed to be considered for the sensor.
-        """
+        """Return number of sites needed to be considered for the sensor."""
         return len(self._relative_sites)
 
 
 class PointSensor(Sensor):
-    """
-    Point sensor samples 1 point only.
-    """
+    """Point sensor; samples one point only."""
 
     def __init__(
         self,
@@ -128,7 +121,8 @@ class PointSensor(Sensor):
         value_range: np.ndarray[float],
         field_dim: int,
     ) -> None:
-        """
+        """Initialise class instance.
+
         Args:
             noise_dev (float): standard deviation of normally distributed
                 noise.
@@ -153,8 +147,8 @@ class PointSensor(Sensor):
 
 
 class RoundSensor(Sensor):
-    """
-    Round sensor samples 5 points in a cross shape.
+    """Round sensor; samples five points in a cross shape.
+
     Used for 2D fields.
     """
 
@@ -167,7 +161,8 @@ class RoundSensor(Sensor):
         radius: float,
         field_dim: int,
     ) -> None:
-        """
+        """Initialise class instance.
+
         Args:
             noise_dev (float): standard deviation of normally distributed
                 noise.
@@ -196,13 +191,12 @@ class RoundSensor(Sensor):
 
 
 class MultiSensor(Sensor):
-    """
-    Multi-sensor samples many regions in a grid described.
+    """Multi-sensor; samples many regions in a grid.
+
     It then returns many values - 1 for each point in the grid.
     Designed to act as a parent class for things like a DIC or an IR camera.
     It doesn't have a meaningful position - the input sites are the same
-        regardless of the actual_pos.
-    Used for 1D or 2D fields.
+    regardless of the actual_pos. Used for 1D or 2D fields.
     """
 
     def __init__(
@@ -213,7 +207,8 @@ class MultiSensor(Sensor):
         value_range: np.ndarray[float],
         grid: np.ndarray[float],
     ) -> None:
-        """
+        """Initialise class instance.
+
         Args:
             noise_dev (float): standard deviation of normally distributed
                 noise.
@@ -229,7 +224,8 @@ class MultiSensor(Sensor):
     def get_input_sites(
         self, actual_pos: np.ndarray[float]
     ) -> np.ndarray[float]:
-        """
+        """Get positions at which sensor takes readings.
+
         Args:
             actual_pos (np.ndarray[float]): 1 by d array of the actual 1 or 2D
                 sensor position.
@@ -242,7 +238,8 @@ class MultiSensor(Sensor):
     def get_output_values(
         self, site_values: np.ndarray[float], actual_pos: np.ndarray[float]
     ) -> tuple[np.ndarray]:
-        """
+        """Get sensor reading value.
+
         Args:
             site_values (np.ndarray[float]): n by m array of the true field
                 values at the sampling sites.
@@ -267,9 +264,9 @@ class MultiSensor(Sensor):
 
 
 class Thermocouple(RoundSensor):
-    """
-    Round sensor with a linearisation error.
-    Used for 2D fields.
+    """Thermocouple sensor class.
+
+    Round sensor with a linearisation error. Used for 2D fields.
     """
 
     def __init__(
@@ -281,7 +278,8 @@ class Thermocouple(RoundSensor):
         failure_chance=0.4,
         radius=0.00075,
     ) -> None:
-        """
+        """Initialise class instance.
+
         Args:
             temps (np.ndarray[float]): array of n temperatures to interpolate
                 through.
@@ -310,11 +308,10 @@ class Thermocouple(RoundSensor):
         )
 
     def non_linear_error(self, temp: np.ndarray[float]) -> np.ndarray[float]:
-        """
-        Calculates the linearisation error produced.
+        """Calculate the linearisation error produced.
 
         Args:
-            temp (np.ndarray[float]): tempertaure to find the error at.
+            temp (np.ndarray[float]): temperature to find the error at.
 
         Returns:
             np.ndarray[float]: error.

@@ -1,5 +1,7 @@
 """
-PickleManager class for cyclops. Handles serialisation of objects.
+PickleManager class for cyclops.
+
+Handles serialisation of objects.
 
 (c) Copyright UKAEA 2023.
 """
@@ -8,13 +10,10 @@ import os
 
 
 class PickleManager:
-    """
-    Reads and writes to pickle files.
-    """
+    """Read and write .pickle files."""
 
     def correct_path(self, folder: str, file_name: str) -> os.PathLike:
-        """
-        Finds the absolute path for a certain file.
+        """Find the absolute path for a certain file.
 
         Args:
             folder (str): path relative to the directory (folder name).
@@ -29,8 +28,7 @@ class PickleManager:
     def save_file(
         self, folder: str, file_name: str, save_object: object
     ) -> None:
-        """
-        Saves an object into a pickle file.
+        """Save an object into a pickle file.
 
         Args:
             folder (str): folder to save the object in.
@@ -43,8 +41,7 @@ class PickleManager:
         save_file.close()
 
     def read_file(self, folder: str, file_name: str) -> object:
-        """
-        Reads an object file and returns the object.
+        """Read a pickle file and return the object.
 
         Args:
             folder (str): folder where the object is.

@@ -21,11 +21,11 @@ Clone the repository. Then add in a `results` folder at the `cyclops/results` le
 
 `pip install -r requirements.txt`
 
-2. Install Latex on your device to let latex style graphs be plotted. 
+2. Install Latex on your device to let latex style plots be plotted. 
 
 `sudo apt-get install dvipng texlive-latex-extra texlive-fonts-recommended cm-super`
 
-If you don't care about the latex style graphs or can't install latex then go to src/graph_management.py and then change the line in `GraphManager.__init__()` about `plt.style.use('science')` to the line below.
+If you don't care about the latex style plots or can't install latex then go to src/graph_management.py and then change the line in `PlotManager.__init__()` about `plt.style.use('science')` to the line below.
 
 `plt.style.use(['science','no-latex'])`
 
@@ -40,11 +40,11 @@ If you don't care about the latex style graphs or can't install latex then go to
 
 `pip install -r requirements.txt`
 
-2. Install Latex on your device to let latex style graphs be plotted. 
+2. Install Latex on your device to let latex style plots be plotted. 
 
 On Windows I recommend MikTex https://miktex.org/.
 
-If you don't care about the latex style graphs or can't install latex then go to src/graph_management.py and then change the line in `GraphManager.__init__()` about `plt.style.use('science')` to the line below.
+If you don't care about the latex style plots or can't install latex then go to src/graph_management.py and then change the line in `PlotManager.__init__()` about `plt.style.use('science')` to the line below.
 
 `plt.style.use(['science','no-latex'])`
 
@@ -61,11 +61,11 @@ Note that the mac installation is untested.
 
 `pip install -r requirements.txt`
 
-2. Install Latex on your device to let latex style graphs be plotted. 
+2. Install Latex on your device to let latex style plots be plotted. 
 
 On MacOS I recommend MacTex https://www.tug.org/mactex/.
 
-If you don't care about the latex style graphs or can't install latex then go to src/graph_management.py and then change the line in `GraphManager.__init__()` about `plt.style.use('science')` to the line below.
+If you don't care about the latex style plots or can't install latex then go to src/graph_management.py and then change the line in `PlotManager.__init__()` about `plt.style.use('science')` to the line below.
 
 `plt.style.use(['science','no-latex'])`
 

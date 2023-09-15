@@ -12,7 +12,7 @@ src_path = os.path.join(os.path.sep, parent_path, "src")
 sys.path.append(src_path)
 
 from regressors import RBFModel, LModel, GPModel, CSModel, CTModel, PModel
-from sensor_group import SensorSuite, SymmetryManager
+from sensor_suite import SensorSuite, SymmetryManager
 from fields import ScalarField, VectorField
 from sensors import Sensor
 import numpy as np

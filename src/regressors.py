@@ -1,6 +1,7 @@
 """
-Regression classes for cyclops. These handle generation of predicted fields
-from sensor data.
+Regression classes for cyclops.
+
+Handles the generation of predicted fields from sensor data.
 
 (c) Copyright UKAEA 2023.
 """
@@ -21,21 +22,22 @@ warnings.filterwarnings("ignore")
 
 
 class RegressionModel:
-    """
-    This is an abstract class to describe regression models.
-    They have 3 core methods.
+    """Regression model base class.
+
+    Three core methods:
     1. Initialisation with correct hyperparameters.
     2. Fitting with training data.
     3. Predicting values.
+
     They all predict 1D outputs only.
     Some models can take in a variety of different input dimensions.
     """
 
     def __init__(self, num_input_dim: int, min_length: int) -> None:
-        """
-        All Regression models use a scaler to rescale the input data.
-        And have a regressor.
-        The number of dimensions is specified to mitigate errors.
+        """Initialise class instance.
+
+        All regression models use a scaler to rescale the input data and have
+        a regressor. The number of dimensions is specified to mitigate errors.
 
         Args:
             num_input_dim (int): number of dimensions/features of training (and
@@ -50,9 +52,7 @@ class RegressionModel:
     def prepare_fit(
         self, train_x: np.ndarray[float], train_y: np.ndarray[float]
     ) -> np.ndarray[float]:
-        """
-        Checks that the training data is correctly dimensioned and normalises
-            it.
+        """Check training data dimensions and normalise.
 
         Args:
             train_x (np.ndarray[float]): n by d array of n input data values of
@@ -77,9 +77,7 @@ class RegressionModel:
     def prepare_predict(
         self, predict_x: np.ndarray[float]
     ) -> np.ndarray[float]:
-        """
-        Checks that the prediction data is correctly dimensioned and normalises
-            it.
+        """Check prediction data dimensions and normalise.
 
         Args:
             predict_x (np.ndarray[float]): n by d array of n input data values
@@ -93,8 +91,7 @@ class RegressionModel:
         return self._scaler.transform(predict_x)
 
     def check_dim(self, dim: int, correct_dim: int, data_name: str) -> None:
-        """
-        Checks the dimensions/features are equal to a specified number.
+        """Check the dimensions/features are equal to a specified number.
 
         Args:
             dim (int): measured number of dimensions.
@@ -113,8 +110,7 @@ class RegressionModel:
             )
 
     def check_length(self, length: int) -> None:
-        """
-        Checks the number of training data points is above a minimum length.
+        """Check the number of training data is above a minimum length.
 
         Args:
             length (int): number of training data points.
@@ -131,16 +127,16 @@ class RegressionModel:
 
 
 class RBFModel(RegressionModel):
-    """
-    Uses RBF interpolation.
-    Interpolates and extrapolates.
-    Acts in any dimension d >= 1.
-    Learns from any number of training data points n >= 2.
+    """Radial basis function regressor.
+
+    Uses RBF interpolation. Interpolates and extrapolates. Acts in any
+    dimension d >= 1. Learns from any number of training data points n >= 2.
     Time complexity of around O(n^3).
     """
 
     def __init__(self, num_input_dim: int) -> None:
-        """
+        """Initialise class instance.
+
         Args:
             num_input_dim (int): number of features (dimensions) for the
                 training data.
@@ -155,8 +151,7 @@ class RBFModel(RegressionModel):
     def fit(
         self, train_x: np.ndarray[float], train_y: np.ndarray[float]
     ) -> None:
-        """
-        Fits the model to some training data.
+        """Fit the model to some training data.
 
         Args:
             train_x (np.ndarray[float]): n by d array of n training inputs with
@@ -167,8 +162,7 @@ class RBFModel(RegressionModel):
         self._regressor = RBFInterpolator(scaled_x, train_y)
 
     def predict(self, predict_x: np.ndarray[float]) -> np.ndarray[float]:
-        """
-        Returns n predicted outputs of dimension 1 given inputs.
+        """Return n predicted outputs of dimension 1 given inputs.
 
         Args:
             predict_x (np.ndarray[float]): n by d array of n input samples of
@@ -182,16 +176,16 @@ class RBFModel(RegressionModel):
 
 
 class LModel(RegressionModel):
-    """
-    Uses linear splines.
-    Only interpolates.
-    Acts in any dimension d > 1.
-    Learns from any number of training data points n >= 3.
-    Time complexity of around O(n).
+    """Linear regressor.
+
+    Uses linear splines. Only interpolates. Acts in any dimension d > 1. Learns
+    from any number of training data points n >= 3. Time complexity of around
+    O(n).
     """
 
     def __init__(self, num_input_dim) -> None:
-        """
+        """Initialise class instance.
+
         Args:
             num_input_dim (int): number of features (dimensions) for the
                 training data.
@@ -206,8 +200,7 @@ class LModel(RegressionModel):
     def fit(
         self, train_x: np.ndarray[float], train_y: np.ndarray[float]
     ) -> None:
-        """
-        Fits the model to some training data.
+        """Fit the model to some training data.
 
         Args:
             train_x (np.ndarray[float]): n by d array of n training inputs with
@@ -220,8 +213,7 @@ class LModel(RegressionModel):
         )
 
     def predict(self, predict_x: np.ndarray[float]) -> np.ndarray[float]:
-        """
-        Returns n predicted outputs of dimension 1 given inputs.
+        """Return n predicted outputs of dimension 1 given inputs.
 
         Args:
             predict_x (np.ndarray[float]): n by d array of n input samples of d
@@ -236,17 +228,16 @@ class LModel(RegressionModel):
 
 
 class GPModel(RegressionModel):
-    """
-    Uses Gaussian process regression.
-    Interpolates & extrapolates.
-    Acts in any dimension d >= 1.
-    Learns from any number of training data points n >= 3.
-    Time complexity of around O(n^3).
-    (also requires hyperparameter optimisation).
+    """Gaussian process regressor.
+
+    Uses Gaussian process regression. Interpolates & extrapolates. Acts in any
+    dimension d >= 1. Learns from any number of training data points n >= 3.
+    Time complexity of around O(n^3). Requires hyperparameter optimisation.
     """
 
     def __init__(self, num_input_dim: int) -> None:
-        """
+        """Initialise class instance.
+
         Args:
             num_input_dim (int): number of features (dimensions) for the
                 training data.
@@ -261,8 +252,7 @@ class GPModel(RegressionModel):
     def fit(
         self, train_x: np.ndarray[float], train_y: np.ndarray[float]
     ) -> None:
-        """
-        Fits the model to some training data.
+        """Fit the model to some training data.
 
         Args:
             train_x (np.ndarray[float]): n by d array of n training inputs with
@@ -276,8 +266,7 @@ class GPModel(RegressionModel):
         self._regressor.fit(scaled_x, train_y)
 
     def predict(self, predict_x: np.ndarray[float]) -> np.ndarray[float]:
-        """
-        Returns n predicted outputs of dimension 1 given inputs.
+        """Return n predicted outputs of dimension 1 given inputs.
 
         Args:
             predict_x (np.ndarray[float]): n by d array of n input samples of d
@@ -291,16 +280,16 @@ class GPModel(RegressionModel):
 
 
 class PModel(RegressionModel):
-    """
-    Uses a polynomial fit.
-    Interpolates and extrapolates.
-    Acts in 1D only.
-    Learns from any number of training data points n >= degree.
-    Time complexity of around O(n^2).
+    """Polynomial fit regressor.
+
+    Uses a polynomial fit. Interpolates and extrapolates. Acts in 1D only.
+    Learns from any number of training data points n >= degree. Time complexity
+    of around O(n^2).
     """
 
     def __init__(self, num_input_dim: int, degree=3) -> None:
-        """
+        """Initialise class instance.
+
         Args:
             num_input_dim (int): number of features (dimensions) for the
                 training data.
@@ -316,8 +305,7 @@ class PModel(RegressionModel):
     def fit(
         self, train_x: np.ndarray[float], train_y: np.ndarray[float]
     ) -> None:
-        """
-        Fits the model to some training data.
+        """Fit the model to some training data.
 
         Args:
             train_x (np.ndarray[float]): n by d array of n training inputs with
@@ -337,8 +325,7 @@ class PModel(RegressionModel):
         )
 
     def predict(self, predict_x: np.ndarray[float]) -> np.ndarray[float]:
-        """
-        Returns n predicted outputs of dimension 1 given inputs.
+        """Return n predicted outputs of dimension 1 given inputs.
 
         Args:
             predict_x (np.ndarray[float]): n by d array of n input samples of d
@@ -352,16 +339,16 @@ class PModel(RegressionModel):
 
 
 class CSModel(RegressionModel):
-    """
-    Uses cubic spline interpolation.
-    Interpolates and extrapolates.
-    Acts in 1D only.
-    Learns from any number of training data points n >= 2.
-    Time complexity of around O(n).
+    """Cubic spline regressor.
+    
+    Uses cubic spline interpolation. Interpolates and extrapolates. Acts in
+    1D only. Learns from any number of training data points n >= 2. Time
+    complexity of around O(n).
     """
 
     def __init__(self, num_input_dim: int) -> None:
-        """
+        """Initialise class instance.
+
         Args:
             num_input_dim (int): number of features (dimensions) for the
                 training data.
@@ -376,8 +363,7 @@ class CSModel(RegressionModel):
     def fit(
         self, train_x: np.ndarray[float], train_y: np.ndarray[float]
     ) -> None:
-        """
-        Fits the model to some training data.
+        """Fit the model to some training data.
 
         Args:
             train_x (np.ndarray[float]): n by d array of n training inputs with
@@ -395,8 +381,7 @@ class CSModel(RegressionModel):
         )
 
     def predict(self, predict_x: np.ndarray[float]) -> np.ndarray[float]:
-        """
-        Returns n predicted outputs of dimension 1 given inputs.
+        """Return n predicted outputs of dimension 1 given inputs.
 
         Args:
             predict_x (np.ndarray[float]): n by d array of n input samples of d
@@ -410,16 +395,16 @@ class CSModel(RegressionModel):
 
 
 class CTModel(RegressionModel):
-    """
-    Uses a Clough Tocher interpolation.
-    Interpolates only.
-    Acts in 2D only.
-    Learns from any number of training data points n >= 3.
-    Time complexity of around O(n log(n)) due to the triangulation involved.
+    """Clough Tocher regressor.
+
+    Uses a Clough Tocher interpolation. Interpolates only. Acts in 2D only,
+    Learns from any number of training data points n >= 3. Time complexity of
+    around O(n log(n)) due to the triangulation involved.
     """
 
     def __init__(self, num_input_dim: int) -> None:
-        """
+        """Initialise class instance.
+
         Args:
             num_input_dim (int): number of features (dimensions) for the
                 training data.
@@ -435,8 +420,7 @@ class CTModel(RegressionModel):
     def fit(
         self, train_x: np.ndarray[float], train_y: np.ndarray[float]
     ) -> None:
-        """
-        Fits the model to some training data.
+        """Fit the model to some training data.
 
         Args:
             train_x (np.ndarray[float]): n by d array of n training inputs with
@@ -449,8 +433,7 @@ class CTModel(RegressionModel):
         )
 
     def predict(self, predict_x: np.ndarray[float]) -> None:
-        """
-        Returns n predicted outputs of dimension 1 given inputs.
+        """Return n predicted outputs of dimension 1 given inputs.
 
         Args:
             predict_x (np.ndarray[float]): n by d array of n input samples of d

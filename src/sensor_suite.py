@@ -1,6 +1,7 @@
 """
-SensorSuite class for cyclops. Handles the various sensors employed by an
-experiment.
+SensorSuite class for cyclops.
+
+Handles the various sensors employed by an experiment.
 
 (c) Copyright UKAEA 2023.
 """
@@ -10,14 +11,16 @@ import numpy as np
 
 
 class SensorSuite:
-    """
+    """Class for a sensor suite.
+
     Holds the sensors and allows a field to be predicted from the sensor data.
     """
 
     def __init__(
         self, field: Field, sensors: np.ndarray[Sensor], symmetry=[]
     ) -> None:
-        """
+        """Initialise class instance.
+
         Args:
             field (Field): field to use as sensor field.
             sensors (np.ndarray[Sensor]): array of sensors to measure the
@@ -36,8 +39,7 @@ class SensorSuite:
         )
 
     def set_active_sensors(self, active_sensors: np.ndarray[bool]):
-        """
-        Set which sensors are active.
+        """Set which sensors are active.
 
         Args:
             active_sensors (np.ndarray[bool]): array of booleans to show which
@@ -46,8 +48,7 @@ class SensorSuite:
         self.__active_sensors = active_sensors
 
     def set_sensor_pos(self, sensor_pos: np.ndarray[float]):
-        """
-        Set the positions of the sensors.
+        """Set the positions of the sensors.
 
         Args:
             sensor_pos (np.ndarray[float]): n by d array of n positions of d
@@ -56,8 +57,7 @@ class SensorSuite:
         self.__sensor_pos = sensor_pos
 
     def get_sensor_sites(self) -> np.ndarray[float]:
-        """
-        Returns the positions from which the sensors sample from.
+        """Return the positions from which the sensors sample from.
 
         Returns:
             np.ndarray[float]: n by d array of n positions of d dimensions to
@@ -73,9 +73,7 @@ class SensorSuite:
     def __measure_sensor_values(
         self, site_values: np.ndarray[float]
     ) -> tuple[np.ndarray]:
-        """
-        Calculates the values measured by the sensors, and the positions those
-            values are thought to be at.
+        """Calculate sensor positions and values.
 
         Args:
             site_values (np.ndarray[float]): s by t by m array of s*t values of
@@ -102,8 +100,7 @@ class SensorSuite:
         return np.array(field_values), np.array(field_pos)
 
     def fit_sensor_model(self, site_values: np.ndarray[float]):
-        """
-        Fit the model based off the sensor data.
+        """Fit the model based off the sensor data.
 
         Args:
             site_values (np.ndarray[float]): n by m array of the n values of
@@ -117,8 +114,7 @@ class SensorSuite:
         self.__field.fit_model(known_pos, known_values)
 
     def predict_data(self, field_pos: np.ndarray[float]) -> np.ndarray[float]:
-        """
-        Predict values of the field at the points specified.
+        """Predict values of the field at the points specified.
 
         Args:
             field_pos (np.ndarray[float]): n by d array of n positions of
@@ -130,9 +126,10 @@ class SensorSuite:
         return self.__field.predict_values(field_pos)
 
     def calc_keys(self, num_repetitions: int) -> np.ndarray[bool]:
-        """
-        Calculate a number of potential arrays for the active sensors based off
-            the chances that the sensors fail.
+        """Calculate potential sensor arrays.
+
+        Calculate a number of potential arrays for the active sensors based
+        off the chances that the sensors fail.
 
         Args:
             num_repetitions (int): number of keys needed.
@@ -150,62 +147,43 @@ class SensorSuite:
         return keys
 
     def get_num_sensors(self):
-        """
-        Returns:
-            _type_: number of sensors.
-        """
+        """Return the number of sensors."""
         return self.__sensors.size
 
 
 class SymmetryManager:
-    """
-    Allows assumptions about the symmetry of the temperature field to be built
-        into the predicted temperature field.
+    """Class for applying symmetry assumptions to fields.
+
+    Allows assumptions about the symmetry of a field to be built into the
+    predicted field.
     """
 
     def __init__(self) -> None:
-        """
-        Initialises the symmetry parameters.
-        """
+        """Initialise class instance."""
         self.__x_point = 0
         self.__x_line = 0
         self.__y_line = 0
         self.__grad = 0
 
     def set_1D_x(self, value: float) -> None:
-        """
-        Args:
-            value (float): the reflection point in 1D.
-        """
+        """Set the reflection point in 1D."""
         self.__x_point = value
 
     def set_2D_x(self, value: float) -> None:
-        """
-        Args:
-            value (float): the reflection x-axis point in 2D for reflection
-                parallel to the x axis.
-        """
+        """Set the reflection x-axis point in 2D."""
         self.__x_line = value
 
     def set_2D_y(self, value: float) -> None:
-        """
-        Args:
-            value (float): the reflection y-axis point in 2D for reflection
-                parallel to the y axis.
-        """
+        """Set the reflection y-axis point in 2D."""
         self.__y_line = value
 
     def set_2D_grad(self, value: float) -> None:
-        """
-        Args:
-            value (float): the gradient of the line through the origin for
-                reflection in that line.
-        """
+        """Set the gradient of the line through the origin."""
         self.__grad = value
 
     def reflect_1D(self, x_pos: np.ndarray[float]) -> np.ndarray[float]:
-        """
-        Reflects an array of positions about the reflection axis.
+        """Reflect an array of positions about the reflection axis.
+
         Returns both reflected and original positions.
 
         Args:
@@ -219,8 +197,8 @@ class SymmetryManager:
         return np.concatenate((x_pos, reflected_arr), axis=0)
 
     def reflect_2D_horiz(self, pos: np.ndarray[float]) -> np.ndarray[float]:
-        """
-        Reflects an array of positions parallel to the x axis.
+        """Reflect an array of positions parallel to the x axis.
+
         Returns both reflected and original positions.
 
         Args:
@@ -235,8 +213,8 @@ class SymmetryManager:
         return np.concatenate((pos, reflected_arr), axis=0)
 
     def reflect_2D_vert(self, pos: np.ndarray[float]) -> np.ndarray[float]:
-        """
-        Reflects an array of positions parallel to the y axis.
+        """Reflect an array of positions parallel to the y axis.
+
         Returns both reflected and original positions.
 
         Args:
@@ -251,9 +229,8 @@ class SymmetryManager:
         return np.concatenate((pos, reflected_arr), axis=0)
 
     def reflect_2D_line(self, pos: np.ndarray[float]) -> np.ndarray[float]:
-        """
-        Reflects an array of positions in the line that passes through the
-            origin with gradient as specified.
+        """Reflect an array of positions across a specified line.
+
         Returns both reflected and original positions.
 
         Args:

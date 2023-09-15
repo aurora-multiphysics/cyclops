@@ -1,21 +1,22 @@
 """
-Experiment class for cyclops. Handles ground truth and sensor suite
-optimisation.
+Experiment class for cyclops.
+
+Handles ground truth and sensor suite optimisation.
 
 (c) Copyright UKAEA 2023.
 """
 from pymoo.core.problem import StarmapParallelization
 from optimisers import Problem, Optimiser
-from sensor_group import SensorSuite
+from sensor_suite import SensorSuite
 from fields import Field
 import multiprocessing
 import numpy as np
 
 
 class Experiment:
-    """
-    Manages the optimisers, true field and sensor suite.
-    3 main functions.
+    """Manage the optimisers, true field and sensor suite.
+
+    This class serves three main purposes:
     1. Initialisation to define experiment parameters.
     2. Planning to prepare for optimisation.
     3. Design to optimise the experiment.
@@ -27,7 +28,8 @@ class Experiment:
         comparison_pos: np.ndarray[float],
         optimiser: Optimiser,
     ) -> None:
-        """
+        """Initialise class instance.
+
         Parameters:
             true_field (Field): the field we got from the simulation - that we
                 expect to measure in an experiment.
@@ -59,8 +61,7 @@ class Experiment:
         repetitions=10,
         num_cores=8,
     ) -> None:
-        """
-        Prepare for single-objective optimisation.
+        """Prepare for single-objective optimisation.
 
         Args:
             sensor_suite (SensorSuite): describes which sensors we will use for
@@ -86,8 +87,7 @@ class Experiment:
         min_active=3,
         num_cores=8,
     ) -> None:
-        """
-        Prepare for multi-objective optimisation.
+        """Prepare for multi-objective optimisation.
 
         Args:
             sensor_suite (SensorSuite): describes which sensors we will use for
@@ -104,7 +104,7 @@ class Experiment:
         self.__sensor_suite = sensor_suite
         num_sensors = sensor_suite.get_num_sensors()
         self.__problem = self.__build_problem(
-            sensor_bounds, num_sensors, 2, self.calc_MOO_loss, num_cores
+            sensor_bounds, num_sensors, 2, self.calc_moo_loss, num_cores
         )
 
         self.__keys = self.__sensor_suite.calc_keys(repetitions)
@@ -120,7 +120,8 @@ class Experiment:
         loss_function: callable,
         num_cores: int,
     ) -> Problem:
-        """
+        """Build problem object.
+
         Args:
             sensor_bounds (np.ndarray[float]): bounds within which a sensor can
                 be placed.
@@ -147,16 +148,16 @@ class Experiment:
         )
 
     def design(self) -> any:
-        """
+        """Design experiment.
+
         Returns:
             any: results object containing Pareto-optimal layouts and
                 optimisation history.
         """
         return self.__optimiser.optimise(self.__problem)
 
-    def calc_MOO_loss(self, sensor_array: np.ndarray[float]) -> list[float]:
-        """
-        Calculates the MOO loss of a specific sensor layout.
+    def calc_moo_loss(self, sensor_array: np.ndarray[float]) -> list[float]:
+        """Calculate the moo loss of a specific sensor layout.
 
         Args:
             sensor_array (np.ndarray[float]): unshaped sensor layout from
@@ -185,8 +186,7 @@ class Experiment:
         return [expected_loss, failure_chance]
 
     def calc_SOO_loss(self, sensor_array: np.ndarray[float]) -> list[float]:
-        """
-        Calculates loss for SOO.
+        """Calculate loss for SOO.
 
         Args:
             sensor_array (np.ndarray[float]): unshaped sensor layout from
@@ -202,8 +202,8 @@ class Experiment:
         return [np.mean(losses)]
 
     def get_MSE(self, sensor_pos: np.ndarray[float]) -> float:
-        """
-        Calculate the MSE from an array of proposed sensor positions.
+        """Calculate the MSE from an array of proposed sensor positions.
+
         1. Update the sensor suite to the values at those positions.
         2. See what the sensor suite predicts the rest of the field would be.
         3. Calculate MSE.
@@ -228,8 +228,7 @@ class Experiment:
     def get_SOO_plotting_arrays(
         self, sensor_array: np.ndarray[float]
     ) -> tuple:
-        """
-        Finds the necessary data to plot graphs of the potential sensor setup.
+        """Find the necessary data to plot plots of the potential sensor setup.
 
         Args:
             sensor_array (np.ndarray[float]): array of unshaped sensor

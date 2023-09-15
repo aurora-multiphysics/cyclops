@@ -16,9 +16,7 @@ import numpy as np
 
 
 class Problem(ElementwiseProblem):
-    """
-    Problem class allows a function to be minimised.
-    """
+    """Problem class; allows a function to be minimised."""
 
     def __init__(
         self,
@@ -28,8 +26,7 @@ class Problem(ElementwiseProblem):
         borders: np.ndarray,
         **kwargs
     ) -> None:
-        """
-        Setup the problem.
+        """Set up the problem.
 
         Args:
             num_dim (int): number of dimensions of the function input.
@@ -55,8 +52,7 @@ class Problem(ElementwiseProblem):
         *args: any,
         **kwargs: any
     ) -> None:
-        """
-        Evaluates the loss function.
+        """Evaluate the loss function.
 
         Args:
             optim_array (np.ndarray[float]): the proposed input to the loss
@@ -67,13 +63,10 @@ class Problem(ElementwiseProblem):
 
 
 class Optimiser:
-    """
-    This is an abstract class to define various kinds of optimisers from.
-    """
+    """Optimiser base class."""
 
     def __init__(self, time_limit: str, algorithm: any) -> None:
-        """
-        Sets up the optimisers.
+        """Set up the optimisers.
 
         Args:
             time_limit (str): the maximum time the optimiser should run for.
@@ -83,8 +76,7 @@ class Optimiser:
         self._algorithm = algorithm
 
     def optimise(self, problem: Problem) -> any:
-        """
-        Minimises the problem.
+        """Minimise the problem.
 
         Args:
             problem (Problem): the problem describing the function to minimise.
@@ -105,13 +97,14 @@ class Optimiser:
 
 
 class NSGA2Optimiser(Optimiser):
-    """
-    MOO optimiser.
+    """Multi-objective optimiser.
+
     Simulates evolution.
     """
 
     def __init__(self, time_limit) -> None:
-        """
+        """Initialise class instance.
+
         Args:
             time_limit (_type_): time the optimisation should run for.
         """
@@ -127,13 +120,14 @@ class NSGA2Optimiser(Optimiser):
 
 
 class PSOOptimiser(Optimiser):
-    """
-    SOO optimiser.
+    """Single-objective optimiser.
+
     Simulates birds searching for food.
     """
 
     def __init__(self, time_limit) -> None:
-        """
+        """Initialise class instance.
+
         Args:
             time_limit (_type_): time the optimisation should run for.
         """
@@ -142,13 +136,14 @@ class PSOOptimiser(Optimiser):
 
 
 class GAOptimiser(Optimiser):
-    """
-    SOO optimiser.
+    """Single-objective optimiser.
+
     Simulates evolution.
     """
 
     def __init__(self, time_limit) -> None:
-        """
+        """Initialise class instance.
+
         Args:
             time_limit (_type_): time the optimisation should run for.
         """

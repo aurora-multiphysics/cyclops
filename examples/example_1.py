@@ -1,18 +1,18 @@
 from sensors import Sensor, PointSensor, RoundSensor, Thermocouple, MultiSensor
 from regressors import RBFModel, LModel, GPModel, CSModel, CTModel, PModel
 from optimisers import NSGA2Optimiser, PSOOptimiser, GAOptimiser
-from sensor_group import SensorSuite, SymmetryManager
+from sensor_suite import SensorSuite, SymmetryManager
 from fields import ScalarField, VectorField
 from object_reader import PickleManager
 from experiment import Experiment
-from graphs import GraphManager
+from plotting import PlotManager
 import numpy as np
 
 
 if __name__ == "__main__":
     # Load any objects necessary
     pickle_manager = PickleManager()
-    graph_manager = GraphManager()
+    graph_manager = PlotManager()
     true_temp_field = pickle_manager.read_file(
         "simulation", "temp_line_field.obj"
     )
@@ -56,7 +56,7 @@ if __name__ == "__main__":
             model_temps,
             sensor_values,
         ) = experiment.get_SOO_plotting_arrays(res.X[int(display_str)])
-        print("\nLoss:", experiment.calc_MOO_loss(res.X[int(display_str)]))
+        print("\nLoss:", experiment.calc_moo_loss(res.X[int(display_str)]))
         graph_manager.build_1D_compare(
             grid, proposed_layout, sensor_values, true_temps, model_temps
         )

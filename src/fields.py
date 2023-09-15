@@ -1,5 +1,7 @@
 """
-Field classes for cyclops. Handles scalar and vector fields for the experiment.
+Field classes for cyclops.
+
+Handles scalar and vector fields for the experiment.
 
 (c) Copyright UKAEA 2023.
 """
@@ -7,9 +9,9 @@ import numpy as np
 
 
 class Field:
-    """
-    This is an abstract class to describe fields.
-    They have 3 core methods.
+    """Abstract class to describe fields.
+
+    Three core methods.
     1. Initialisation with correct parameters.
     2. Fitting with training data to describe known values at known positions
         in the field.
@@ -19,7 +21,8 @@ class Field:
     def __init__(
         self, regression_type: type, bounds: np.ndarray[float]
     ) -> None:
-        """
+        """Initialise class instance.
+
         Args:
             regression_type (type): type of regression model.
             bounds (np.ndarray[float]): 2D array of the form [[min pos],
@@ -30,14 +33,16 @@ class Field:
         self._num_dim = bounds.shape[1]
 
     def get_bounds(self) -> np.ndarray[float]:
-        """
+        """Get bounds.
+
         Returns:
             np.ndarray[float]: the bounds of the field.
         """
         return self._bounds
 
     def get_dim(self) -> int:
-        """
+        """Get dimensions.
+
         Returns:
             int: the dimensions of the field positions.
         """
@@ -45,12 +50,12 @@ class Field:
 
 
 class ScalarField(Field):
-    """
-    Field that contains scalar values.
-    """
+    """Subclass for a scalar field."""
 
     def __init__(self, regression_type: type, bounds: np.ndarray) -> None:
         """
+        Initialise class instance.
+
         Args:
             regression_type (type): the type of regression algorithm to use to
                 predict the scalar values.
@@ -88,8 +93,12 @@ class ScalarField(Field):
 
 
 class VectorField(Field):
+    """Subclass for a vector field."""
+
     def __init__(self, regression_type: type, bounds: np.ndarray) -> None:
         """
+        Initialise class instance.
+
         Args:
             regression_type (type): the type of regression algorithm to use to
                 predict the vector values.
