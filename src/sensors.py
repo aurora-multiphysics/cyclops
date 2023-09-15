@@ -1,3 +1,9 @@
+"""
+Sensor classes for cyclops. These handle sensor properties and can emulate
+exact or noisy sensor readings.
+
+(c) Copyright UKAEA 2023.
+"""
 from regressors import PModel, CSModel
 import numpy as np
 

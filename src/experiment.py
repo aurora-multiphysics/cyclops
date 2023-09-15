@@ -1,3 +1,9 @@
+"""
+Experiment class for cyclops. Handles ground truth and sensor suite
+optimisation.
+
+(c) Copyright UKAEA 2023.
+"""
 from pymoo.core.problem import StarmapParallelization
 from optimisers import Problem, Optimiser
 from sensor_group import SensorSuite

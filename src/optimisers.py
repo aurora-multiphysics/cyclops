@@ -1,3 +1,8 @@
+"""
+Optimiser classes for cyclops. These handle optimisation of sensor placement.
+
+(c) Copyright UKAEA 2023.
+"""
 from pymoo.operators.sampling.rnd import FloatRandomSampling
 from pymoo.algorithms.soo.nonconvex.pso import PSO
 from pymoo.core.problem import ElementwiseProblem

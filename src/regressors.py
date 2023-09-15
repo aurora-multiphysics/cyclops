@@ -1,3 +1,9 @@
+"""
+Regression classes for cyclops. These handle generation of predicted fields
+from sensor data.
+
+(c) Copyright UKAEA 2023.
+"""
 from scipy.interpolate import (
     RBFInterpolator,
     CloughTocher2DInterpolator,

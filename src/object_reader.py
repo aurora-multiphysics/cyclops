@@ -1,3 +1,8 @@
+"""
+PickleManager class for cyclops. Handles serialisation of objects.
+
+(c) Copyright UKAEA 2023.
+"""
 import pickle
 import os
 

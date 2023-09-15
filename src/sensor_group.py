@@ -1,3 +1,9 @@
+"""
+SensorSuite class for cyclops. Handles the various sensors employed by an
+experiment.
+
+(c) Copyright UKAEA 2023.
+"""
 from sensors import Sensor
 from fields import Field
 import numpy as np

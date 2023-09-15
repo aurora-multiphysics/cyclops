@@ -1,3 +1,9 @@
+"""
+MeshReader and Unfolder classes for cyclops. These handle reading simulation
+data into usable planes.
+
+(c) Copyright UKAEA 2023.
+"""
 import numpy as np
 import meshio
 import os

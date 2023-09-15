@@ -1,3 +1,8 @@
+"""
+Field classes for cyclops. Handles scalar and vector fields for the experiment.
+
+(c) Copyright UKAEA 2023.
+"""
 import numpy as np
 
 

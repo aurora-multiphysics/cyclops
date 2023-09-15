@@ -1,3 +1,8 @@
+"""
+GraphManager class for cyclops. Handles plotting functions.
+
+(c) Copyright UKAEA 2023.
+"""
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import scienceplots  # noqa F401
