@@ -16,15 +16,11 @@ import numpy as np
 import unittest
 
 
-# Key
-# i means interpolation test
-# r means extrapolation test
-# e means exception handling test
-
-
 class TestRegressors(unittest.TestCase):
-    def test_rbf_model_i1(self):
-        # Test interpolation 1
+    """Tests for Regressors."""
+
+    def test_rbf_model_interpolation_1(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = x
         rbf_model = RBFModel(1)
@@ -36,8 +32,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-    def test_rbf_model_i2(self):
-        # Test interpolation 2
+    def test_rbf_model_interpolation_2(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.square(x)
         rbf_model = RBFModel(1)
@@ -49,8 +45,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-    def test_rbf_model_i3(self):
-        # Test interpolation 3
+    def test_rbf_model_interpolation_3(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sqrt(x)
         rbf_model = RBFModel(1)
@@ -62,8 +58,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-    def test_rbf_model_i4(self):
-        # Test interpolation 4
+    def test_rbf_model_interpolation_4(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sin(x)
         rbf_model = RBFModel(1)
@@ -75,8 +71,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-    def test_rbf_model_r1(self):
-        # Test extrapolation 1
+    def test_rbf_model_extrapolation_1(self):
+        """Test model extrapolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = x
         rbf_model = RBFModel(1)
@@ -88,8 +84,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-    def test_rbf_model_r2(self):
-        # Test extrapolation 2
+    def test_rbf_model_extrapolation_2(self):
+        """Test model extrapolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.square(x)
         rbf_model = RBFModel(1)
@@ -101,8 +97,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], -2)
 
-    def test_rbf_model_r3(self):
-        # Test extrapolation 3
+    def test_rbf_model_extrapolation_3(self):
+        """Test model extrapolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sin(x)
         rbf_model = RBFModel(1)
@@ -114,8 +110,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], -2)
 
-    def test_rbf_model_e1(self):
-        # Test error catching 1
+    def test_rbf_model_exception_1(self):
+        """Test error catching."""
         error_1 = "Input data should have d >= 1 dimensions."
         with self.assertRaises(Exception) as context:
             rbf_model = RBFModel(0)
@@ -133,8 +129,8 @@ class TestRegressors(unittest.TestCase):
         rbf_model = RBFModel(5)
         rbf_model = RBFModel(10)
 
-    def test_rbf_model_e2(self):
-        # Test error catching 2
+    def test_rbf_model_exception_2(self):
+        """Test error catching."""
         error_2 = "Input data should be a numpy array of shape (-1, 1)."
         with self.assertRaises(Exception) as context:
             rbf_model = RBFModel(1)
@@ -153,8 +149,8 @@ class TestRegressors(unittest.TestCase):
             rbf_model.fit(x, y)
         self.assertTrue(error_2 in str(context.exception))
 
-    def test_rbf_model_e3(self):
-        # Test error catching 3
+    def test_rbf_model_exception_3(self):
+        """Test error catching."""
         error_3 = "Output data should be a numpy array of shape (-1, 1)."
         with self.assertRaises(Exception) as context:
             rbf_model = RBFModel(2)
@@ -165,8 +161,8 @@ class TestRegressors(unittest.TestCase):
             rbf_model.fit(xy, z)
         self.assertTrue(error_3 in str(context.exception))
 
-    def test_rbf_model_e4(self):
-        # Test error catching 4
+    def test_rbf_model_exception_4(self):
+        """Test error catching."""
         error_4 = "Input data should have a length of >= 2."
         with self.assertRaises(Exception) as context:
             rbf_model = RBFModel(2)
@@ -175,8 +171,8 @@ class TestRegressors(unittest.TestCase):
             rbf_model.fit(x, y)
         self.assertTrue(error_4 in str(context.exception))
 
-    def test_rbf_model_e5(self):
-        # Test error catching 5
+    def test_rbf_model_exception_5(self):
+        """Test error catching."""
         error_5 = "Input data should be a numpy array of shape (-1, 1)"
         with self.assertRaises(Exception) as context:
             rbf_model = RBFModel(1)
@@ -186,8 +182,8 @@ class TestRegressors(unittest.TestCase):
             rbf_model.predict([[1, 1], [2, 2]])
         self.assertTrue(error_5 in str(context.exception))
 
-    def test_l_model_i1(self):
-        # Test interpolation 1
+    def test_l_model_interpolation_1(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20)
         y = np.linspace(0, 10, 20)
         all_xy = []
@@ -210,8 +206,8 @@ class TestRegressors(unittest.TestCase):
         for i, z_val in enumerate(test_z):
             self.assertAlmostEqual(z_val[0], new_z[i, 0], 3)
 
-    def test_l_model_i2(self):
-        # Test interpolation 2
+    def test_l_model_interpolation_2(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20)
         y = np.linspace(0, 10, 20)
         all_xy = []
@@ -235,8 +231,8 @@ class TestRegressors(unittest.TestCase):
         for i, z_val in enumerate(test_z):
             self.assertAlmostEqual(z_val[0], new_z[i, 0], 0)
 
-    def test_l_model_i3(self):
-        # Test interpolation 3
+    def test_l_model_interpolation_3(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20)
         y = np.linspace(0, 10, 20)
         all_xy = []
@@ -260,8 +256,8 @@ class TestRegressors(unittest.TestCase):
         for i, z_val in enumerate(test_z):
             self.assertAlmostEqual(z_val[0], new_z[i, 0], 0)
 
-    def test_l_model_i4(self):
-        # Test interpolation 4
+    def test_l_model_interpolation_4(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20)
         y = np.linspace(0, 10, 20)
         all_xy = []
@@ -285,8 +281,8 @@ class TestRegressors(unittest.TestCase):
         for i, z_val in enumerate(test_z):
             self.assertAlmostEqual(z_val[0], new_z[i, 0], 0)
 
-    def test_l_model_r1(self):
-        # Test extrapolation 1
+    def test_l_model_extrapolation_1(self):
+        """Test model extrapolation."""
         x = np.linspace(0, 1, 20)
         y = np.linspace(0, 1, 20)
         all_xy = []
@@ -310,8 +306,8 @@ class TestRegressors(unittest.TestCase):
         for i, z_val in enumerate(test_z):
             self.assertEqual(z_val[0], np.mean(z))
 
-    def test_l_model_e1(self):
-        # Test error catching 1
+    def test_l_model_exception_1(self):
+        """Test error catching."""
         error_1 = "Input data should have d >= 2 dimensions."
         with self.assertRaises(Exception) as context:
             l_model = LModel(1)
@@ -329,8 +325,8 @@ class TestRegressors(unittest.TestCase):
         l_model = LModel(5)
         l_model = LModel(10)
 
-    def test_l_model_e2(self):
-        # Test error catching 2
+    def test_l_model_exception_2(self):
+        """Test error catching."""
         error_2 = "Input data should be a numpy array of shape (-1, 2)."
         with self.assertRaises(Exception) as context:
             l_model = LModel(2)
@@ -338,8 +334,8 @@ class TestRegressors(unittest.TestCase):
             l_model.fit(x, x)
         self.assertTrue(error_2 in str(context.exception))
 
-    def test_l_model_e3(self):
-        # Test error catching 3
+    def test_l_model_exception_3(self):
+        """Test error catching."""
         error_3 = "Output data should be a numpy array of shape (-1, 1)."
         with self.assertRaises(Exception) as context:
             l_model = LModel(2)
@@ -350,8 +346,8 @@ class TestRegressors(unittest.TestCase):
             l_model.fit(xy, z)
         self.assertTrue(error_3 in str(context.exception))
 
-    def test_l_model_e4(self):
-        # Test error catching 4
+    def test_l_model_exception_4(self):
+        """Test error catching."""
         error_4 = "Input data should have a length of >= 3."
         with self.assertRaises(Exception) as context:
             l_model = LModel(2)
@@ -360,8 +356,8 @@ class TestRegressors(unittest.TestCase):
             l_model.fit(x, y)
         self.assertTrue(error_4 in str(context.exception))
 
-    def test_l_model_e5(self):
-        # Test error catching 5
+    def test_l_model_exception_5(self):
+        """Test error catching."""
         error_5 = "Input data should be a numpy array of shape (-1, 2)"
         with self.assertRaises(Exception) as context:
             l_model = LModel(2)
@@ -371,8 +367,8 @@ class TestRegressors(unittest.TestCase):
             l_model.predict([[1], [2]])
         self.assertTrue(error_5 in str(context.exception))
 
-    def test_ct_model_i1(self):
-        # Test interpolation 1
+    def test_ct_model_interpolation_1(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20)
         y = np.linspace(0, 10, 20)
         all_xy = []
@@ -395,8 +391,8 @@ class TestRegressors(unittest.TestCase):
         for i, z_val in enumerate(test_z):
             self.assertAlmostEqual(z_val[0], new_z[i, 0], 3)
 
-    def test_ct_model_i2(self):
-        # Test interpolation 2
+    def test_ct_model_interpolation_2(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20)
         y = np.linspace(0, 10, 20)
         all_xy = []
@@ -420,8 +416,8 @@ class TestRegressors(unittest.TestCase):
         for i, z_val in enumerate(test_z):
             self.assertAlmostEqual(z_val[0], new_z[i, 0], 0)
 
-    def test_ct_model_i3(self):
-        # Test interpolation 3
+    def test_ct_model_interpolation_3(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20)
         y = np.linspace(0, 10, 20)
         all_xy = []
@@ -445,8 +441,8 @@ class TestRegressors(unittest.TestCase):
         for i, z_val in enumerate(test_z):
             self.assertAlmostEqual(z_val[0], new_z[i, 0], 0)
 
-    def test_ct_model_i4(self):
-        # Test interpolation 4
+    def test_ct_model_interpolation_4(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20)
         y = np.linspace(0, 10, 20)
         all_xy = []
@@ -470,8 +466,8 @@ class TestRegressors(unittest.TestCase):
         for i, z_val in enumerate(test_z):
             self.assertAlmostEqual(z_val[0], new_z[i, 0], 0)
 
-    def test_ct_model_r1(self):
-        # Test extrapolation 1
+    def test_ct_model_extrapolation_1(self):
+        """Test model extrapolation."""
         x = np.linspace(0, 1, 20)
         y = np.linspace(0, 1, 20)
         all_xy = []
@@ -495,8 +491,8 @@ class TestRegressors(unittest.TestCase):
         for i, z_val in enumerate(test_z):
             self.assertEqual(z_val[0], np.mean(z))
 
-    def test_ct_model_e1(self):
-        # Test error catching 1
+    def test_ct_model_exception_1(self):
+        """Test error catching."""
         error_1 = "Input data should have d = 2 dimensions."
         with self.assertRaises(Exception) as context:
             ct_model = CTModel(1)
@@ -512,8 +508,8 @@ class TestRegressors(unittest.TestCase):
 
         ct_model = CTModel(2)
 
-    def test_ct_model_e2(self):
-        # Test error catching 2
+    def test_ct_model_exception_2(self):
+        """Test error catching."""
         error_2 = "Input data should be a numpy array of shape (-1, 2)."
         with self.assertRaises(Exception) as context:
             ct_model = CTModel(2)
@@ -521,8 +517,8 @@ class TestRegressors(unittest.TestCase):
             ct_model.fit(x, x)
         self.assertTrue(error_2 in str(context.exception))
 
-    def test_ct_model_e3(self):
-        # Test error catching 3
+    def test_ct_model_exception_3(self):
+        """Test error catching."""
         error_3 = "Output data should be a numpy array of shape (-1, 1)."
         with self.assertRaises(Exception) as context:
             ct_model = CTModel(2)
@@ -533,8 +529,8 @@ class TestRegressors(unittest.TestCase):
             ct_model.fit(xy, z)
         self.assertTrue(error_3 in str(context.exception))
 
-    def test_ct_model_e4(self):
-        # Test error catching 4
+    def test_ct_model_exception_4(self):
+        """Test error catching."""
         error_4 = "Input data should have a length of >= 3."
         with self.assertRaises(Exception) as context:
             ct_model = CTModel(2)
@@ -543,8 +539,8 @@ class TestRegressors(unittest.TestCase):
             ct_model.fit(x, y)
         self.assertTrue(error_4 in str(context.exception))
 
-    def test_ct_model_e5(self):
-        # Test error catching 5
+    def test_ct_model_exception_5(self):
+        """Test error catching."""
         error_5 = "Input data should be a numpy array of shape (-1, 2)"
         with self.assertRaises(Exception) as context:
             ct_model = CTModel(2)
@@ -554,8 +550,8 @@ class TestRegressors(unittest.TestCase):
             ct_model.predict([[1], [2]])
         self.assertTrue(error_5 in str(context.exception))
 
-    def test_cs_model_i1(self):
-        # Test interpolation 1
+    def test_cs_model_interpolation_1(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = x
         cs_model = CSModel(1)
@@ -567,8 +563,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-    def test_cs_model_i2(self):
-        # Test interpolation 2
+    def test_cs_model_interpolation_2(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.square(x)
         cs_model = CSModel(1)
@@ -580,8 +576,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-    def test_cs_model_i3(self):
-        # Test interpolation 3
+    def test_cs_model_interpolation_3(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sqrt(x)
         cs_model = CSModel(1)
@@ -593,8 +589,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-    def test_cs_model_i4(self):
-        # Test interpolation 4
+    def test_cs_model_interpolation_4(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sin(x)
         cs_model = CSModel(1)
@@ -606,8 +602,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-    def test_cs_model_r1(self):
-        # Test extrapolation 1
+    def test_cs_model_extrapolation_1(self):
+        """Test model extrapolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = x
         cs_model = CSModel(1)
@@ -619,8 +615,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-    def test_cs_model_r2(self):
-        # Test extrapolation 2
+    def test_cs_model_extrapolation_2(self):
+        """Test model extrapolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.square(x)
         cs_model = CSModel(1)
@@ -632,8 +628,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], -2)
 
-    def test_cs_model_r3(self):
-        # Test extrapolation 3
+    def test_cs_model_extrapolation_3(self):
+        """Test model extrapolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sin(x)
         cs_model = CSModel(1)
@@ -645,8 +641,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], -2)
 
-    def test_cs_model_e1(self):
-        # Test error catching 1
+    def test_cs_model_exception_1(self):
+        """Test error catching."""
         error_1 = "Input data should have d = 1 dimensions."
         with self.assertRaises(Exception) as context:
             cs_model = CSModel(0)
@@ -662,8 +658,8 @@ class TestRegressors(unittest.TestCase):
 
         cs_model = CSModel(1)
 
-    def test_cs_model_e2(self):
-        # Test error catching 2
+    def test_cs_model_exception_2(self):
+        """Test error catching."""
         error_2 = "Input data should be a numpy array of shape (-1, 1)."
         with self.assertRaises(Exception) as context:
             cs_model = CSModel(1)
@@ -674,8 +670,8 @@ class TestRegressors(unittest.TestCase):
             cs_model.fit(xy, z)
         self.assertTrue(error_2 in str(context.exception))
 
-    def test_cs_model_e3(self):
-        # Test error catching 3
+    def test_cs_model_exception_3(self):
+        """Test error catching."""
         error_3 = "Output data should be a numpy array of shape (-1, 1)."
         with self.assertRaises(Exception) as context:
             cs_model = CSModel(1)
@@ -686,8 +682,8 @@ class TestRegressors(unittest.TestCase):
             cs_model.fit(x, z)
         self.assertTrue(error_3 in str(context.exception))
 
-    def test_cs_model_e4(self):
-        # Test error catching 4
+    def test_cs_model_exception_4(self):
+        """Test error catching."""
         error_4 = "Input data should have a length of >= 2."
         with self.assertRaises(Exception) as context:
             cs_model = CSModel(1)
@@ -696,8 +692,8 @@ class TestRegressors(unittest.TestCase):
             cs_model.fit(x, y)
         self.assertTrue(error_4 in str(context.exception))
 
-    def test_cs_model_e5(self):
-        # Test error catching 5
+    def test_cs_model_exception_5(self):
+        """Test error catching."""
         error_5 = "Input data should be a numpy array of shape (-1, 1)"
         with self.assertRaises(Exception) as context:
             cs_model = CSModel(1)
@@ -707,8 +703,8 @@ class TestRegressors(unittest.TestCase):
             cs_model.predict([[1, 1], [2, 2]])
         self.assertTrue(error_5 in str(context.exception))
 
-    def test_p_model_i1(self):
-        # Test interpolation 1
+    def test_p_model_interpolation_1(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = x
         p_model = PModel(1)
@@ -720,8 +716,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-    def test_p_model_i2(self):
-        # Test interpolation 2
+    def test_p_model_interpolation_2(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.square(x)
         p_model = PModel(1)
@@ -733,8 +729,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-    def test_p_model_i3(self):
-        # Test interpolation 3
+    def test_p_model_interpolation_3(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sqrt(x)
         p_model = PModel(1)
@@ -746,8 +742,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 0)
 
-    def test_p_model_i4(self):
-        # Test interpolation 4
+    def test_p_model_interpolation_4(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sin(x)
         p_model = PModel(1)
@@ -759,8 +755,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], -1)
 
-    def test_p_model_r1(self):
-        # Test extrapolation 1
+    def test_p_model_extrapolation_1(self):
+        """Test model extrapolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = x
         p_model = PModel(1)
@@ -772,8 +768,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-    def test_p_model_r2(self):
-        # Test extrapolation 2
+    def test_p_model_extrapolation_2(self):
+        """Test model extrapolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.square(x)
         p_model = PModel(1)
@@ -785,8 +781,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], -2)
 
-    def test_p_model_r3(self):
-        # Test extrapolation 3
+    def test_p_model_extrapolation_3(self):
+        """Test model extrapolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sin(x)
         p_model = PModel(1)
@@ -798,8 +794,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], -2)
 
-    def test_p_model_e1(self):
-        # Test error catching 1
+    def test_p_model_exception_1(self):
+        """Test error catching."""
         error_1 = "Input data should have d = 1 dimensions."
         with self.assertRaises(Exception) as context:
             p_model = PModel(0)
@@ -815,8 +811,8 @@ class TestRegressors(unittest.TestCase):
 
         p_model = PModel(1)
 
-    def test_p_model_e2(self):
-        # Test error catching 2
+    def test_p_model_exception_2(self):
+        """Test error catching."""
         error_2 = "Input data should be a numpy array of shape (-1, 1)."
         with self.assertRaises(Exception) as context:
             p_model = PModel(1)
@@ -827,8 +823,8 @@ class TestRegressors(unittest.TestCase):
             p_model.fit(xy, z)
         self.assertTrue(error_2 in str(context.exception))
 
-    def test_p_model_e3(self):
-        # Test error catching 3
+    def test_p_model_exception_3(self):
+        """Test error catching."""
         error_3 = "Output data should be a numpy array of shape (-1, 1)."
         with self.assertRaises(Exception) as context:
             p_model = PModel(1)
@@ -839,8 +835,8 @@ class TestRegressors(unittest.TestCase):
             p_model.fit(x, z)
         self.assertTrue(error_3 in str(context.exception))
 
-    def test_p_model_e4(self):
-        # Test error catching 4
+    def test_p_model_exception_4(self):
+        """Test error catching."""
         error_4 = "Input data should have a length of >= 3."
         with self.assertRaises(Exception) as context:
             p_model = PModel(1)
@@ -849,8 +845,8 @@ class TestRegressors(unittest.TestCase):
             p_model.fit(x, y)
         self.assertTrue(error_4 in str(context.exception))
 
-    def test_p_model_e5(self):
-        # Test error catching 5
+    def test_p_model_exception_5(self):
+        """Test error catching."""
         error_5 = "Input data should be a numpy array of shape (-1, 1)"
         with self.assertRaises(Exception) as context:
             p_model = PModel(1)
@@ -860,8 +856,8 @@ class TestRegressors(unittest.TestCase):
             p_model.predict([[1, 1], [2, 2]])
         self.assertTrue(error_5 in str(context.exception))
 
-    def test_gp_model_i1(self):
-        # Test interpolation 1
+    def test_gp_model_interpolation_1(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = x
         gp_model = GPModel(1)
@@ -873,8 +869,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-    def test_gp_model_i2(self):
-        # Test interpolation 2
+    def test_gp_model_interpolation_2(self):
+        """Test model interpolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.square(x)
         gp_model = GPModel(1)
@@ -886,8 +882,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-    def test_gp_model_r1(self):
-        # Test extrapolation 1
+    def test_gp_model_extrapolation_1(self):
+        """Test model extrapolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = x
         gp_model = GPModel(1)
@@ -899,8 +895,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], 2)
 
-    def test_gp_model_r2(self):
-        # Test extrapolation 2
+    def test_gp_model_extrapolation_2(self):
+        """Test model extrapolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.square(x)
         gp_model = GPModel(1)
@@ -912,8 +908,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], -2)
 
-    def test_gp_model_r3(self):
-        # Test extrapolation 3
+    def test_gp_model_extrapolation_3(self):
+        """Test model extrapolation."""
         x = np.linspace(0, 10, 20).reshape(-1, 1)
         y = np.sin(x)
         gp_model = GPModel(1)
@@ -925,8 +921,8 @@ class TestRegressors(unittest.TestCase):
         for i, y_val in enumerate(new_y):
             self.assertAlmostEqual(y_val[0], test_y[i, 0], -2)
 
-    def test_gp_model_e1(self):
-        # Test error catching 1
+    def test_gp_model_exception_1(self):
+        """Test error catching."""
         error_1 = "Input data should have d >= 1 dimensions."
         with self.assertRaises(Exception) as context:
             gp_model = GPModel(0)
@@ -944,8 +940,8 @@ class TestRegressors(unittest.TestCase):
         gp_model = GPModel(5)
         gp_model = GPModel(10)
 
-    def test_gp_model_e2(self):
-        # Test error catching 2
+    def test_gp_model_exception_2(self):
+        """Test error catching."""
         error_2 = "Input data should be a numpy array of shape (-1, 1)."
         with self.assertRaises(Exception) as context:
             gp_model = GPModel(1)
@@ -964,8 +960,8 @@ class TestRegressors(unittest.TestCase):
             gp_model.fit(x, y)
         self.assertTrue(error_2 in str(context.exception))
 
-    def test_gp_model_e3(self):
-        # Test error catching 3
+    def test_gp_model_exception_3(self):
+        """Test error catching."""
         error_3 = "Output data should be a numpy array of shape (-1, 1)."
         with self.assertRaises(Exception) as context:
             gp_model = GPModel(2)
@@ -976,8 +972,8 @@ class TestRegressors(unittest.TestCase):
             gp_model.fit(xy, z)
         self.assertTrue(error_3 in str(context.exception))
 
-    def test_gp_model_e4(self):
-        # Test error catching 4
+    def test_gp_model_exception_4(self):
+        """Test error catching."""
         error_4 = "Input data should have a length of >= 3."
         with self.assertRaises(Exception) as context:
             gp_model = GPModel(2)
@@ -986,8 +982,8 @@ class TestRegressors(unittest.TestCase):
             gp_model.fit(x, y)
         self.assertTrue(error_4 in str(context.exception))
 
-    def test_gp_model_e5(self):
-        # Test error catching 5
+    def test_gp_model_exception_5(self):
+        """Test error catching."""
         error_5 = "Input data should be a numpy array of shape (-1, 1)"
         with self.assertRaises(Exception) as context:
             gp_model = GPModel(1)

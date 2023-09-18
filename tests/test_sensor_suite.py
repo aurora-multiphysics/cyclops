@@ -19,19 +19,14 @@ import numpy as np
 import unittest
 
 
-# Key
-# g means grid test (2D field plane)
-# l means line test (1D field line)
-
-
 class TestSensorSuite(unittest.TestCase):
-    def test_sensor_suite1(self):
-        def f(x):
-            return np.zeros(x.shape)
+    """Tests for SensorSuite."""
 
+    def test_sensor_suite(self):
+        """Test that sensor suite core functionality works as expected."""
         sensor = Sensor(
             0,
-            f,
+            lambda x: np.zeros(x.shape),
             0.1,
             np.array([[-50], [50]]),
             np.array([[0, 0], [-1, -1], [1, 1]]),
@@ -54,8 +49,7 @@ class TestSensorSuite(unittest.TestCase):
         sensor_suite.fit_sensor_model(site_values)
 
         test_pos = np.array([[0, 0], [1, 10], [2, -2], [3, -3], [4, -4]])
-        values = sensor_suite.predict_data(test_pos)
-        print(values)
+        sensor_suite.predict_data(test_pos)
 
 
 if __name__ == "__main__":

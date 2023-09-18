@@ -23,8 +23,10 @@ import unittest
 
 
 class TestFields(unittest.TestCase):
-    def test_scalar_field_g1(self):
-        # Test interpolation 1
+    """Tests for Fields."""
+
+    def test_scalar_field_plane_1(self):
+        """Test 2D planar scalar field."""
         grid = []
         for x in np.linspace(-10, 10, 20):
             for y in np.linspace(-10, 10, 20):
@@ -48,8 +50,8 @@ class TestFields(unittest.TestCase):
         for i, scalar in enumerate(new_scalars):
             self.assertAlmostEqual(scalar[0], test_scalars[i, 0], -1)
 
-    def test_scalar_field_g2(self):
-        # Test interpolation 2
+    def test_scalar_field_plane_2(self):
+        """Test 2D planar scalar field."""
         grid = []
         for x in np.linspace(-10, 10, 20):
             for y in np.linspace(-10, 10, 20):
@@ -73,8 +75,8 @@ class TestFields(unittest.TestCase):
         for i, scalar in enumerate(new_scalars):
             self.assertAlmostEqual(scalar[0], test_scalars[i, 0], -1)
 
-    def test_scalar_field_l1(self):
-        # Test interpolation 3
+    def test_scalar_field_line_1(self):
+        """Test 1D linear scalar field."""
         line = np.linspace(-10, 10, 20).reshape(-1, 1)
         scalars = np.sum(line, axis=1).reshape(-1, 1)
         scalars = np.square(scalars)
@@ -90,8 +92,8 @@ class TestFields(unittest.TestCase):
         for i, scalar in enumerate(new_scalars):
             self.assertAlmostEqual(scalar[0], test_scalars[i, 0], -1)
 
-    def test_scalar_field_l2(self):
-        # Test interpolation 4
+    def test_scalar_field_line_2(self):
+        """Test 1D linear scalar field."""
         line = np.linspace(-10, 10, 20).reshape(-1, 1)
         scalars = np.sum(line, axis=1).reshape(-1, 1)
         scalars = np.sin(scalars)
@@ -107,8 +109,8 @@ class TestFields(unittest.TestCase):
         for i, scalar in enumerate(new_scalars):
             self.assertAlmostEqual(scalar[0], test_scalars[i, 0], -1)
 
-    def test_vector_field_g1(self):
-        # Test interpolation 1
+    def test_vector_field_plane_1(self):
+        """Test 2D planar vector field."""
         grid = []
         for x in np.linspace(-10, 10, 20):
             for y in np.linspace(-10, 10, 20):
@@ -140,8 +142,8 @@ class TestFields(unittest.TestCase):
             self.assertAlmostEqual(vector[1], test_vectors[i, 1], -1)
             self.assertAlmostEqual(vector[2], test_vectors[i, 2], -1)
 
-    def test_vector_field_g2(self):
-        # Test interpolation 2
+    def test_vector_field_plane_2(self):
+        """Test 2D planar vector field."""
         grid = []
         for x in np.linspace(-10, 10, 20):
             for y in np.linspace(-10, 10, 20):
@@ -174,7 +176,7 @@ class TestFields(unittest.TestCase):
             self.assertAlmostEqual(vector[2], test_vectors[i, 2], -1)
 
     def test_vector_field_l1(self):
-        # Test interpolation 3
+        """Test 1D linear vector field."""
         line = np.linspace(-10, 10, 20).reshape(-1, 1)
         vectors = []
         for x in line:
@@ -197,7 +199,7 @@ class TestFields(unittest.TestCase):
             self.assertAlmostEqual(vector[2], test_vectors[i, 2], -1)
 
     def test_vector_field_l2(self):
-        # Test interpolation 4
+        """Test 1D linear vector field."""
         line = np.linspace(-10, 10, 20).reshape(-1, 1)
         vectors = []
         for x in line:

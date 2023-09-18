@@ -17,13 +17,13 @@ import unittest
 
 
 class TestSensors(unittest.TestCase):
-    def test_sensor_scalar(self):
-        def f(x):
-            return np.zeros(x.shape)
+    """Tests for Sensor classes."""
 
+    def test_sensor_scalar(self):
+        """Test scalar sensors."""
         sensor = Sensor(
             0.0,
-            f,
+            lambda x: np.zeros(x.shape),
             0.1,
             np.array([[-500], [500]]),
             np.array([[0, 0], [1, 1], [-1, -1]]),
@@ -45,12 +45,10 @@ class TestSensors(unittest.TestCase):
         self.assertEqual(sensor_pos[0, 1], 5)
 
     def test_sensor_vector(self):
-        def f(x):
-            return np.zeros(x.shape)
-
+        """Test vector sensors."""
         sensor = Sensor(
             0.0,
-            f,
+            lambda x: np.zeros(x.shape),
             0.1,
             np.array([[-500, -500], [500, 500]]),
             np.array([[0, 0], [1, 1], [-1, -1]]),
