@@ -14,16 +14,16 @@ if __name__ == "__main__":
     pickle_manager = PickleManager()
     graph_manager = PlotManager()
     true_temp_field = pickle_manager.read_file(
-        "simulation", "temp_line_field.obj"
+        "simulation", "temp_line_field.pickle"
     )
-    grid = pickle_manager.read_file("simulation", "temp_line_points.obj")
+    grid = pickle_manager.read_file("simulation", "temp_line_points.pickle")
 
     field_bounds = true_temp_field.get_bounds()
     sensor_bounds = field_bounds + np.array([[1], [-1]]) * 0.002
 
     # Setup the sensor suite
-    temps = pickle_manager.read_file("sensors", "k-type-T.obj")
-    voltages = pickle_manager.read_file("sensors", "k-type-V.obj")
+    temps = pickle_manager.read_file("sensors", "k-type-T.pickle")
+    voltages = pickle_manager.read_file("sensors", "k-type-V.pickle")
     sensor = Thermocouple(temps, voltages, 1)
     sensors = np.array([sensor] * 5)
 
@@ -40,7 +40,7 @@ if __name__ == "__main__":
         num_cores=8,
     )
     res = experiment.design()
-    pickle_manager.save_file("results", "Temp_1D_res.obj", res)
+    pickle_manager.save_file("results", "Temp_1D_res.pickle", res)
 
     graph_manager.build_pareto(res.F)
     graph_manager.draw()
