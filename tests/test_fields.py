@@ -17,11 +17,6 @@ import numpy as np
 import unittest
 
 
-# Key
-# g means grid test (2D field plane)
-# l means line test (1D field line)
-
-
 class TestFields(unittest.TestCase):
     """Tests for Fields."""
 
