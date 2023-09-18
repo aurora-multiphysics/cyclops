@@ -132,8 +132,8 @@ class Experiment:
         Returns:
             Problem: problem object to optimise.
         """
-        low_border = list(sensor_bounds[0]) * num_sensors
-        high_border = list(sensor_bounds[1]) * num_sensors
+        low_bound = list(sensor_bounds[0]) * num_sensors
+        high_bound = list(sensor_bounds[1]) * num_sensors
 
         n_processes = num_cores
         pool = multiprocessing.Pool(n_processes)
@@ -143,7 +143,7 @@ class Experiment:
             num_dim=num_sensors * self.__num_dim,
             num_obj=num_obj,
             loss_function=loss_function,
-            borders=[low_border, high_border],
+            bounds=[low_bound, high_bound],
             elementwise_runner=runner,
         )
 

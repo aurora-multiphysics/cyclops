@@ -23,7 +23,7 @@ class Problem(ElementwiseProblem):
         num_dim: int,
         num_obj: int,
         loss_function: callable,
-        borders: np.ndarray,
+        bounds: np.ndarray,
         **kwargs
     ) -> None:
         """Set up the problem.
@@ -33,14 +33,14 @@ class Problem(ElementwiseProblem):
             num_obj (int): number of objectives (return values) of the
                 function.
             loss_function (callable): function to minimise.
-            borders (np.ndarray): the upper and lower values of the function
+            bounds (np.ndarray): the upper and lower values of the function
                 domain.
         """
         super().__init__(
             n_var=num_dim,
             n_obj=num_obj,
-            xl=borders[0],
-            xu=borders[1],
+            xl=bounds[0],
+            xu=bounds[1],
             **kwargs
         )
         self.__loss_function = loss_function
