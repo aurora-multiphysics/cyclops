@@ -7,13 +7,12 @@ Handle reading simulation data into usable planes.
 """
 import numpy as np
 import meshio
-import os
 
 
 class MeshReader:
     """Class to read mesh files using meshio."""
 
-    def __init__(self, file_name: str) -> None:
+    def __init__(self, file_path: str) -> None:
         """Load a mesh file from the simulation folder.
 
         Loaded mesh is read into a private attribute __mesh.
@@ -21,25 +20,10 @@ class MeshReader:
         https://pypi.org/project/meshio/
 
         Args:
-            file_name (str): the name of the mesh file, eg 'mesh.e'.
+            file_path (str): path to the mesh file e.g. 'simulation/mesh.e'.
         """
-        self.__mesh = self.__generate_mesh(file_name)
+        self.__mesh = meshio.read(file_path)
         print(self.__mesh)
-
-    def __generate_mesh(self, file_name: str) -> meshio.Mesh:
-        """Read in the file name, generate path to file, return the mesh.
-
-        Args:
-            file_name (str): name of the mesh.
-
-        Returns:
-            meshio.Mesh: mesh object.
-        """
-        dir_path = os.path.dirname(os.path.dirname(__file__))
-        full_path = os.path.join(
-            os.path.sep, dir_path, "simulation", file_name
-        )
-        return meshio.read(full_path)
 
     def read_pos(self, set_name: str) -> np.ndarray[float]:
         """Record the points described by the region into a numpy array.
