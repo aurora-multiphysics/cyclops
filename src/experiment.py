@@ -94,12 +94,14 @@ class Experiment:
                 the experiment.
             sensor_bounds (np.ndarray[float]): bounds within which a sensor can
                 be placed.
-            depth (int, optional): how many sensors will fail at most. Defaults
-                to 3.
             repetitions (int, optional): number of repetitions to average
                 error over. Defaults to 10.
             loss_limit (_type_, optional): maximum MSE for a successful
                 experiment. Defaults to 80.
+            min_active (int, optional): if the number of active sensors falls
+            below this value due to emulated sensor failure, the loss is set to
+            the maximum i.e. it is assumed the experiment would be invalidated.
+            Defaults to 3.
         """
         self.__sensor_suite = sensor_suite
         num_sensors = sensor_suite.get_num_sensors()
