@@ -61,7 +61,7 @@ class Experiment:
         repetitions=10,
         num_cores=8,
     ) -> None:
-        """Prepare for single-objective optimisation.
+        """Prepare for Single-Objective Optimisation (SOO).
 
         Args:
             sensor_suite (SensorSuite): the collection of sensors used for
@@ -87,7 +87,7 @@ class Experiment:
         min_active=3,
         num_cores=8,
     ) -> None:
-        """Prepare for multi-objective optimisation.
+        """Prepare for Multi-Objective Optimisation (MOO).
 
         Args:
             sensor_suite (SensorSuite): the collection of sensors used for
@@ -202,7 +202,7 @@ class Experiment:
         return [np.mean(losses)]
 
     def get_MSE(self, sensor_pos: np.ndarray[float]) -> float:
-        """Calculate the MSE from an array of proposed sensor positions.
+        """Calculate Mean Squared Error (MSE) from an array sensor positions.
 
         1. Update the sensor suite to the values at those positions.
         2. See what the sensor suite predicts the rest of the field would be.
