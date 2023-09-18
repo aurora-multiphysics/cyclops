@@ -31,12 +31,12 @@ class Experiment:
         """Initialise class instance.
 
         Parameters:
-            true_field (Field): the field we got from the simulation - that we
-                expect to measure in an experiment.
-            comparison_pos (np.ndarray[float]): the positions we will use to
-                compare the true field to the predicted sensor-based field.
+            true_field (Field): the simulated field which acts as the ground
+                truth against which to compare the predicted field.
+            comparison_pos (np.ndarray[float]): the positions used to
+                compare the true field to the predicted field.
             optimiser (Optimiser):
-                the optimiser we will use to design the experiment.
+                the optimiser used to optimise sensor layout.
         """
         self.__true_field = true_field
         self.__num_dim = true_field.get_dim()
@@ -64,11 +64,11 @@ class Experiment:
         """Prepare for single-objective optimisation.
 
         Args:
-            sensor_suite (SensorSuite): describes which sensors we will use for
+            sensor_suite (SensorSuite): the collection of sensors used for
                 the experiment.
             sensor_bounds (np.ndarray[float]): bounds within which a sensor can
                 be placed.
-            repetitions (int, optional): number of repetitions we will average
+            repetitions (int, optional): number of repetitions to average
                 error over. Defaults to 10.
         """
         self.__sensor_suite = sensor_suite
@@ -90,13 +90,13 @@ class Experiment:
         """Prepare for multi-objective optimisation.
 
         Args:
-            sensor_suite (SensorSuite): describes which sensors we will use for
+            sensor_suite (SensorSuite): the collection of sensors used for
                 the experiment.
             sensor_bounds (np.ndarray[float]): bounds within which a sensor can
                 be placed.
             depth (int, optional): how many sensors will fail at most. Defaults
                 to 3.
-            repetitions (int, optional): number of repetitions we will average
+            repetitions (int, optional): number of repetitions to average
                 error over. Defaults to 10.
             loss_limit (_type_, optional): maximum MSE for a successful
                 experiment. Defaults to 80.

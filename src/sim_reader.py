@@ -46,7 +46,7 @@ class MeshReader:
 
         Args:
             set_name (str): region name
-            scalar_name (str): name of the scalar value we are finding
+            scalar_name (str): name of the scalar value to read
 
         Returns:
             np.ndarray[float]: n long array of n scalar values
