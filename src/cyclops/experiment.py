@@ -5,12 +5,13 @@ Handles ground truth and sensor suite optimisation.
 
 (c) Copyright UKAEA 2023.
 """
-from pymoo.core.problem import StarmapParallelization
-from optimisers import Problem, Optimiser
-from sensor_suite import SensorSuite
-from fields import Field
-import multiprocessing
 import numpy as np
+from pymoo.core.problem import StarmapParallelization
+import multiprocessing
+
+from cyclops.fields import Field
+from cyclops.optimisers import Problem, Optimiser
+from cyclops.sensor_suite import SensorSuite
 
 
 class Experiment:
