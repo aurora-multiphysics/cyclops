@@ -15,9 +15,12 @@ import scienceplots  # noqa F401, required for plt.style.use("science")
 class PlotManager:
     """Class for managing plots and visualisations."""
 
-    def __init__(self):
+    def __init__(self, latex_mode=False):
         """Initialise class instance."""
-        plt.style.use("science")
+        if latex_mode:
+            plt.style.use("science")
+        else:
+            plt.style.use(["science", "no-latex"])
 
     def draw(self):
         plt.show()
