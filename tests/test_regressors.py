@@ -3,17 +3,10 @@ Tests for the cyclops regression classes.
 
 (c) Copyright UKAEA 2023.
 """
-import sys
-import os
-
-# Sort the paths out to run from this file
-parent_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-src_path = os.path.join(os.path.sep, parent_path, "src")
-sys.path.append(src_path)
-
-from regressors import RBFModel, LModel, GPModel, PModel, CSModel, CTModel
 import numpy as np
 import unittest
+
+from cyclops.regressors import RBFModel, LModel, GPModel, PModel, CSModel, CTModel
 
 
 class TestRegressors(unittest.TestCase):
