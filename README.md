@@ -4,88 +4,86 @@ Cyclops is a sensor suite optimisation program, designed for fusion engineering 
 
 Cyclops takes a simulated experiment and searches for the optimal layout of sensors whose readings allow for an accurate reconstruction of the full field information, while remaining robust to sensor failures.
 
-After reading this, go to '*tutorials/0 overview.ipynb*' to find tutorials on how to use the software.
-
-
 # Installation
-
-Clone the repository. Then add in a `results` folder at the `cyclops/results` level. This folder is where your results will be stored.
 
 ## Linux
 
-1. Install the requirements as below. You will need Python 3.8 or higher.
+Create a virtual environment and activate it. (Skip this step if you intend to install cyclops into an existing python environment.)
+```
+python -m venv venv
+source venv/bin/activate
+```
 
-`python3 -m venv venv`
+### Standard install
+To install `cyclops`, run the following:
+```
+# Ensure `build` package is installed.
+pip install build --upgrade
 
-`source venv/bin/activate`
+# Build the distribution package.
+python -m build
 
-`pip install -r requirements.txt`
+# Install the built distribution.
+pip install ./dist/*.whl
+```
 
-2. Install Latex on your device to let latex style plots be plotted. 
+Cyclops can now be imported into python as:
+```
+import cyclops
+```
 
-`sudo apt-get install dvipng texlive-latex-extra texlive-fonts-recommended cm-super`
+To test the installation, run `python -c "import cyclops"`. If the installation was unsuccessful, an error will be raised.
 
-If you don't care about the latex style plots or can't install latex then go to src/graph_management.py and then change the line in `PlotManager.__init__()` about `plt.style.use('science')` to the line below.
+### Editable install (developer mode)
+Developers may wish to create an editable installation. This allows changes to the source code to immediately take effect without the need to re-package and re-install cyclops. This can be useful when running tests and other scripts.
+To install `cyclops` this way, run the following:
+```
+# Install as an editable installation.
+pip install --editable .
+```
 
-`plt.style.use(['science','no-latex'])`
+### Latex plots
 
+To enable Latex style plots, install latex via:
+```
+sudo apt-get install dvipng texlive-latex-extra texlive-fonts-recommended cm-super
+```
+Then initialise the plot manager as `PlotManager(latex_mode=True)`.
 
 ## Windows
 
-1. Install the requirements as below. You will need Python 3.8 or higher.
+> Windows installation is untested.
 
-`python3 -m venv venv`
+## MacOS
 
-`venv/scripts/activate`
-
-`pip install -r requirements.txt`
-
-2. Install Latex on your device to let latex style plots be plotted. 
-
-On Windows I recommend MikTex https://miktex.org/.
-
-If you don't care about the latex style plots or can't install latex then go to src/graph_management.py and then change the line in `PlotManager.__init__()` about `plt.style.use('science')` to the line below.
-
-`plt.style.use(['science','no-latex'])`
+> MacOS installation is untested.
 
 
-## Mac
+# Getting started
 
-Note that the mac installation is untested.
+To start using cyclops, please refer to the included tutorials in `cyclops/tutorials/`.
 
-1. Install the requirements as below. You will need Python 3.8 or higher.
+Example scripts are also included in `cyclops/examples/`.
 
-`python3 -m venv venv`
-
-`source venv/bin/activate`
-
-`pip install -r requirements.txt`
-
-2. Install Latex on your device to let latex style plots be plotted. 
-
-On MacOS I recommend MacTex https://www.tug.org/mactex/.
-
-If you don't care about the latex style plots or can't install latex then go to src/graph_management.py and then change the line in `PlotManager.__init__()` about `plt.style.use('science')` to the line below.
-
-`plt.style.use(['science','no-latex'])`
-
-
-# Citations needed:
-
-1. Matplotlib (https://matplotlib.org/stable/users/project/citing.html)
-2. Meshio (https://github.com/nschloe/meshio/blob/main/CITATION.cff)
-3. NumPy (https://numpy.org/citing-numpy/)
-4. SciencePlots (https://github.com/garrettj403/SciencePlots)
-5. Scikit-learn (https://scikit-learn.org/stable/about.html#citing-scikit-learn)
-6. SciPy (https://scipy.org/citing-scipy/)
-
-
-# Contributers
+# Contributors
 
 Dom Harrington, UK Atomic Energy Authority
 
 Luke Humphrey, UK Atomic Energy Authority
 
 Lloyd Fletcher, UK Atomic Energy Authority
+
+# Citing Cyclops
+
+If using Cyclops in your research, please be sure to cite its key dependencies. Information on what to cite can be found on each package's website as follows:
+
+- Scikit-learn (https://scikit-learn.org/stable/about.html#citing-scikit-learn)
+- Meshio (https://github.com/nschloe/meshio/blob/main/CITATION.cff)
+- NumPy (https://numpy.org/citing-numpy/)
+- SciPy (https://scipy.org/citing-scipy/)
+- Matplotlib (https://matplotlib.org/stable/users/project/citing.html)
+- SciencePlots (https://github.com/garrettj403/SciencePlots#citing-scienceplots)
+
+
 
 
