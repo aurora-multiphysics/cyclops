@@ -69,5 +69,5 @@ if __name__ == '__main__':
     pickle_manager = PickleManager()
 
     temperatures, voltages = reader.generate_thermo_data()
-    pickle_manager.save_file('sensors', 'k-type-T.pickle', temperatures)
-    pickle_manager.save_file('sensors', 'k-type-V.pickle', voltages)
+    pickle_manager.save_file('sensors/k-type-T.pickle', temperatures)
+    pickle_manager.save_file('sensors/k-type-V.pickle', voltages)
