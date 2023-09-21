@@ -23,9 +23,7 @@ class PlotManager:
         plt.show()
         plt.close()
 
-    def save_png(self, folder, file_name):
-        dir_path = os.path.dirname(os.path.dirname(__file__))
-        file_path = os.path.join(os.path.sep, dir_path, folder, file_name)
+    def save_png(self, file_path):
         plt.savefig(file_path)
         plt.close()
 

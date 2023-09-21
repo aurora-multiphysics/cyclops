@@ -5,53 +5,37 @@ Handles serialisation of objects.
 
 (c) Copyright UKAEA 2023.
 """
-import os
 import pickle
+import pathlib
 
 
 class PickleManager:
     """Read and write .pickle files."""
 
-    def correct_path(self, folder: str, file_name: str) -> os.PathLike:
-        """Find the absolute path for a certain file.
-
-        Args:
-            folder (str): path relative to the directory (folder name).
-            file_name (str): name of file.
-
-        Returns:
-            os.PathLike: absolute path.
-        """
-        dir_path = os.path.dirname(os.path.dirname(__file__))
-        return os.path.join(os.path.sep, dir_path, folder, file_name)
-
     def save_file(
-        self, folder: str, file_name: str, save_object: object
+        self, file_path: str, object_to_save: object
     ) -> None:
-        """Save an object into a pickle file.
+        """Serialise an object instance to a .pickle file.
 
         Args:
-            folder (str): folder to save the object in.
-            file_name (str): name of the object file.
-            save_object (object): object to save.
+            file_path (str): absolute or relative path to the file to write.
+            object_to_save (object): object instance to write to file.
         """
-        full_path = self.correct_path(folder, file_name)
-        save_file = open(full_path, "wb")
-        pickle.dump(save_object, save_file)
-        save_file.close()
+        file_path = pathlib.Path(file_path)
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(file_path, "wb") as file:
+            pickle.dump(object_to_save, file)
 
-    def read_file(self, folder: str, file_name: str) -> object:
-        """Read a pickle file and return the object.
+    def read_file(self, file_path: str) -> object:
+        """Read an object instance from a .pickle file and return it.
 
         Args:
-            folder (str): folder where the object is.
-            file_name (str): name of object file.
+            file_path (str): absolute or relative path to the file to read.
 
         Returns:
-            object: object.
+            object_to_return (object): the object instance loaded from file.
         """
-        full_path = self.correct_path(folder, file_name)
-        read_file = open(full_path, "rb")
-        read_object = pickle.load(read_file)
-        read_file.close()
-        return read_object
+        file_path = pathlib.Path(file_path)
+        with open(file_path, "rb") as file:
+            object_to_return = pickle.load(file)
+        return object_to_return
