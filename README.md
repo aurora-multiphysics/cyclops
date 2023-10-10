@@ -15,7 +15,7 @@ source venv/bin/activate
 ```
 
 ### Standard install
-To install `cyclops`, run the following:
+To install Cyclops, run the following:
 ```
 # Ensure `build` package is installed.
 pip install build --upgrade
@@ -27,16 +27,24 @@ python -m build
 pip install ./dist/*.whl
 ```
 
-Cyclops can now be imported into python as:
+If you intend to use the jupyter notebook tutorials, also run the following line:
 ```
-import cyclops
+# Enable virtual environment in the tutorial notebooks.
+python -m ipykernel install --user --name=venv
 ```
 
-To test the installation, run `python -c "import cyclops"`. If the installation was unsuccessful, an error will be raised.
+Cyclops can now be imported into python using: `import cyclops`
+
+To test the installation, run the following:
+
+```
+python -c "import cyclops"
+```
+If the installation was unsuccessful, an error will be raised.
 
 ### Editable install (developer mode)
 Developers may wish to create an editable installation. This allows changes to the source code to immediately take effect without the need to re-package and re-install cyclops. This can be useful when running tests and other scripts.
-To install `cyclops` this way, run the following:
+To install Cyclops in this way, run the following:
 ```
 # Install as an editable installation.
 pip install --editable .
