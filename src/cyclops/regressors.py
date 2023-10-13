@@ -5,6 +5,7 @@ Handles the generation of predicted fields from sensor data.
 
 (c) Copyright UKAEA 2023.
 """
+import numpy as np
 from scipy.interpolate import (
     RBFInterpolator,
     CloughTocher2DInterpolator,
@@ -14,10 +15,8 @@ from scipy.interpolate import (
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 from sklearn import preprocessing
-import numpy as np
+
 import warnings
-
-
 warnings.filterwarnings("ignore")
 
 

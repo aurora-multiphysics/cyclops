@@ -3,16 +3,17 @@ Optimiser classes for cyclops. These handle optimisation of sensor placement.
 
 (c) Copyright UKAEA 2023.
 """
-from pymoo.operators.sampling.rnd import FloatRandomSampling
+import numpy as np
+
 from pymoo.algorithms.soo.nonconvex.pso import PSO
-from pymoo.core.problem import ElementwiseProblem
 from pymoo.algorithms.soo.nonconvex.ga import GA
-from pymoo.termination import get_termination
-from pymoo.operators.crossover.sbx import SBX
 from pymoo.algorithms.moo.nsga2 import NSGA2
+from pymoo.core.problem import ElementwiseProblem
+from pymoo.termination import get_termination
+from pymoo.operators.sampling.rnd import FloatRandomSampling
+from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PM
 from pymoo.optimize import minimize
-import numpy as np
 
 
 class Problem(ElementwiseProblem):

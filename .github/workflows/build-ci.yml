@@ -1,0 +1,40 @@
+name: CI
+
+# This section controls when the workflow will run
+on:
+  # Run the workflow on push to "main"
+  push:
+    branches: [ "main" ]
+  # Run the workflow on pull request to "main"
+  pull_request:
+    branches: [ "main"]
+  # Run the workflow when manually dispatched
+  workflow_dispatch:
+
+# This section controls which jobs the workflow will run
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Create venv and install
+        run: |
+          python3 -m venv venv
+          . venv/bin/activate
+          pip3 install build --upgrade
+          python -m build
+          pip3 install ./dist/*.whl
+          
+      - name: Run linter
+        run: |
+          . venv/bin/activate
+          pip3 install flake8
+          flake8 . --exclude=venv* --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --exclude=venv* --count --exit-zero --max-complexity=10 --max-line-length=79 --statistics
+
+      - name: Run tests
+        run: |
+          . venv/bin/activate
+          python -m unittest discover -s tests -p test_*.py

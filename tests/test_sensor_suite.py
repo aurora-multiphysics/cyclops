@@ -3,20 +3,13 @@ Tests for the cyclops SensorSuite class.
 
 (c) Copyright UKAEA 2023.
 """
-import sys
-import os
-
-# Sort the paths out to run from this file
-parent_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-src_path = os.path.join(os.path.sep, parent_path, "src")
-sys.path.append(src_path)
-
-from regressors import RBFModel, LModel, GPModel, CSModel, CTModel, PModel
-from sensor_suite import SensorSuite, SymmetryManager
-from fields import ScalarField, VectorField
-from sensors import Sensor
 import numpy as np
 import unittest
+
+from cyclops.regressors import RBFModel, LModel, GPModel, CSModel, CTModel, PModel
+from cyclops.sensor_suite import SensorSuite, SymmetryManager
+from cyclops.fields import ScalarField, VectorField
+from cyclops.sensors import Sensor
 
 
 class TestSensorSuite(unittest.TestCase):

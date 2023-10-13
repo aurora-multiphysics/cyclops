@@ -5,27 +5,28 @@ Handles plotting functions.
 
 (c) Copyright UKAEA 2023.
 """
+import os
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import scienceplots  # noqa F401, required for plt.style.use("science")
-import numpy as np
-import os
 
 
 class PlotManager:
     """Class for managing plots and visualisations."""
 
-    def __init__(self):
+    def __init__(self, latex_mode=False):
         """Initialise class instance."""
-        plt.style.use("science")
+        if latex_mode:
+            plt.style.use("science")
+        else:
+            plt.style.use(["science", "no-latex"])
 
     def draw(self):
         plt.show()
         plt.close()
 
-    def save_png(self, folder, file_name):
-        dir_path = os.path.dirname(os.path.dirname(__file__))
-        file_path = os.path.join(os.path.sep, dir_path, folder, file_name)
+    def save_png(self, file_path):
         plt.savefig(file_path)
         plt.close()
 

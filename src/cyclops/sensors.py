@@ -5,8 +5,9 @@ Handle sensor properties and can emulate exact or noisy sensor readings.
 
 (c) Copyright UKAEA 2023.
 """
-from regressors import PModel, CSModel
 import numpy as np
+
+from cyclops.regressors import PModel, CSModel
 
 
 class Sensor:
