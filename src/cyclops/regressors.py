@@ -6,11 +6,16 @@ Handles the generation of predicted fields from sensor data.
 (c) Copyright UKAEA 2023.
 """
 import numpy as np
+import holoviews as hv
+hv.extension('matplotlib')
+from collections import deque
 from scipy.interpolate import (
     RBFInterpolator,
     CloughTocher2DInterpolator,
     CubicSpline,
     LinearNDInterpolator,
+    RegularGridInterpolator,
+    griddata
 )
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
@@ -49,9 +54,8 @@ class RegressionModel:
         self._min_length = min_length
 
     def prepare_fit(
-        self, train_x: np.ndarray[float], train_y: np.ndarray[float]
-    ) -> np.ndarray[float]:
-        """Check training data dimensions and normalise.
+        self, *train_args: np.ndarray[float]) -> np.ndarray[float]:
+        """Check training data dimensions #and normalise#.
 
         Args:
             train_x (np.ndarray[float]): n by d array of n input data values of
@@ -62,16 +66,35 @@ class RegressionModel:
             np.ndarray[float]: scaled n by d array of n input data values of
                 dimension d.
         """
-        self.check_dim(len(train_x[0]), self._x_dim, "Input")
-        self.check_length(len(train_x))
-        if type(train_y[0]) != np.ndarray:
-            raise Exception(
-                "Output data should be a numpy array of shape (-1, 1)."
-            )
-        self.check_dim(len(train_y[0]), 1, "Output")
+        
+        
+        
+        og_shapes = []
 
-        self._scaler.fit(train_x)
-        return self._scaler.transform(train_x)
+        for dim_array in train_args[0][1:]:
+            #print("heres the size", dim_array.size)
+            og_s = dim_array.shape
+            og_shape = dim_array.reshape(og_s)
+            og_shapes.append(og_shape)
+            
+        for each_array, i in zip(train_args[0], range(len(train_args[0]))):
+            #print(each_array)
+            train_args[0][i] = each_array.flatten()
+            #print(each_array.flatten())
+            #print(train_args[0][i].shape)
+        
+        
+        #scaler = preprocessing.StandardScaler().fit(X_train)
+        #X_scaled = scaler.transform(X_train)
+        #print("train_args[0]", train_args[0])
+        scaler = self._scaler.fit(train_args[0])
+        scaled_output = scaler.transform(train_args[0])
+        #scale2 = self._scaler.fit(train_args[0][2:-1])
+        #scaled_output2 = self._scaler.transform(train_args[0][2:-1])
+        
+        all_scaled_output = scaled_output#1 + scaled_output2
+        #print(all_scaled_output)
+        return all_scaled_output, og_shapes
 
     def prepare_predict(
         self, predict_x: np.ndarray[float]
@@ -100,13 +123,13 @@ class RegressionModel:
         Raises:
             Exception: error to explain user's mistake.
         """
-        if dim != correct_dim:
-            raise Exception(
-                data_name
-                + " data should be a numpy array of shape (-1, "
-                + str(correct_dim)
-                + ")."
-            )
+#        if dim != correct_dim:
+#            raise Exception(
+#                data_name
+#                + " data should be a numpy array of shape (-1, "
+#                + str(correct_dim)
+#                + ")."
+#            )
 
     def check_length(self, length: int) -> None:
         """Check the number of training data is above a minimum length.
@@ -224,6 +247,159 @@ class LModel(RegressionModel):
         scaled_x = self.prepare_predict(predict_x)
         value = self._regressor(scaled_x).reshape(-1, 1)
         return value
+
+#########################
+class RegGridInterp(RegressionModel):
+    """Multidimensional interpolation on regular or rectilinear grids.
+
+    The data must be defined on a rectilinear grid; that is, a rectangular grid with even or uneven spacing. Linear, nearest-neighbor, spline interpolations are supported. 
+    - Must update description with equivalent data to the following for it: Only interpolates. Acts in any dimension d > 1. Learns
+    from any number of training data points n >= 3. Time complexity of around
+    O(n).
+    """
+
+    def __init__(self, num_input_dim) -> None:
+        """Initialise class instance.
+
+        Args:
+            num_input_dim (int): number of features (dimensions) for the
+                training data.
+
+        Raises:
+            Exception: error to explain user's mistake.
+        """
+        super().__init__(num_input_dim, 3) #come back to generalise this
+        #if num_input_dim <= 1:
+        #    raise Exception("Input data should have d >= 2 dimensions.")
+
+    def fit(
+        self, pos_data: np.ndarray[float], field_data: np.ndarray[float]) -> None:
+        """Fit the model to some training data.
+
+        Args:
+            *args (np.ndarray[float]): a series of n by d arrays containing n
+            training inputs with d dimensions each. The last argument MUST be values at points described by other arguments.
+        """
+        
+        pos_data = pos_data.T
+         
+        x = np.array(pos_data[0])
+        y = np.array(pos_data[1])
+        z = np.array(pos_data[2])
+        
+        data = [field_data, x, y, z]
+        # We scale the data in order to avoid numerical errors when scales of different dimensions/points are very different
+        scaled_data, og_shapes = self.prepare_fit(data)
+        
+        scaleT = np.array(scaled_data[0])
+        scaleX = np.array(scaled_data[1])
+        scaleY = np.array(scaled_data[2])
+        scaleZ = np.array(scaled_data[3])
+        
+        xi,yi,zi=np.ogrid[0:1:11j, 0:1:11j, 0:1:11j]
+        X1=xi.reshape(xi.shape[0],)
+        Y1=yi.reshape(yi.shape[1],)
+        Z1=zi.reshape(zi.shape[2],)
+        
+        ar_len=len(X1)*len(Y1)*len(Z1)
+        
+        X=np.arange(ar_len,dtype=float)
+        Y=np.arange(ar_len,dtype=float)
+        Z=np.arange(ar_len,dtype=float)
+        
+        l=0
+        for i in range(0,len(X1)):
+            for j in range(0,len(Y1)):
+                for k in range(0,len(Z1)):
+                    X[l]=X1[i]
+                    Y[l]=Y1[j]
+                    Z[l]=Z1[k]
+                    l=l+1
+
+        #interpolate scaled data on new grid "scaleX,scaleY,scaleZ"
+        print("Interpolate...")
+        V = griddata((scaleX,scaleY,scaleZ), scaleT, (scaleX,scaleY,scaleZ), method='linear')
+        print("griddata completed running...")
+        xlim = (min(x), max(x))
+        ylim = (min(y), max(y))
+        xx = np.arange(min(x), max(x), 1)
+        yy = np.arange(min(y), max(y), 1)
+        
+        zz = griddata((x,y), z, (xx, yy), method="linear")
+        print("zz", zz)
+        mesh = hv.QuadMesh((xx, yy, zz))
+        #img_stk = hv.ImageStack(z, bounds=(min(x), min(y), max(x), max(y)))
+        #img_stk
+        contour = hv.operation.contours(mesh, levels=8)
+        scatter = hv.Scatter((x, y))
+        contour_mesh = mesh * contour * scatter
+        contour_mesh.redim(
+            x=hv.Dimension("x", range=xlim), y=holoviews.Dimension("y", range=ylim),
+        ) 
+
+        #xi,yi,zi=np.ogrid[0:1:11j, 0:1:11j, 0:1:11j]
+        #print("xi", xi)
+        #print("   ")
+        #X1=xi.reshape(xi.shape[0],)
+        #Y1=yi.reshape(yi.shape[1],)
+        #Z1=zi.reshape(zi.shape[2],)
+        
+        #X1 = x.flatten()
+        #print("X1.shape", X1.shape)
+        #Y1 = y.flatten()
+        #print("Y1.shape", Y1.shape)
+        #Z1 = z.flatten()
+        
+        #ar_len=len(X1) -1
+        #print("ar_len", ar_len)
+        #X=np.arange(len(X1),dtype=float)
+        #print("X.shape", X.shape)
+        #Y=np.arange(len(Y1),dtype=float)
+        #print("Y.shape", Y.shape)
+        #Z=np.arange(len(Z1),dtype=float)
+        #print("Z.shape", Z.shape)
+        #l=0
+        #for i in range(0,ar_len):
+        #    for j in range(0,ar_len):
+        #        for k in range(0,ar_len):
+        #            X[l]=X1[i]
+        #            Y[l]=Y1[j]
+        #            Z[l]=Z1[k]
+        #    l=l+1
+        #v = temperatures
+        #interpolate "data.v" on new grid "X,Y,Z"
+        #print("Interpolate...")
+        #V = griddata((x,y,z), v, (X,Y,Z), method='linear')
+        
+        #return(V, (x, y, z), (X,Y,Z))
+
+ #       grid_x, grid_y, grid_z = np.meshgrid(x, y, z, indexing='ij')
+ #       grid_temperature = temperatures[0]
+
+        # Create a RegularGridInterpolator
+  #      interpolator = RegularGridInterpolator((x, y, z), grid_temperature)
+
+        
+        #xg, yg ,zg = np.meshgrid(x, y, z, indexing='ij', sparse=True)
+        #mesh_data = np.meshgrid(*args[0:-1], indexing='ij', sparse=True)
+        
+        #interp = RegularGridInterpolator((y,x,z), args[-1])
+        
+
+    def predict(self, predict_x: np.ndarray[float]) -> np.ndarray[float]:
+        """Return n predicted outputs of dimension 1 given inputs.
+
+        Args:
+            predict_x (np.ndarray[float]): n by d array of n input samples of d
+                dimensions.
+
+        Returns:
+            np.ndarray[float]: n by 1 array of n predicted 1D values.
+        """
+        scaled_x = self.prepare_predict(predict_x)
+        value = self._regressor(scaled_x).reshape(-1, 1)
+        return value
+######    
 
 
 class GPModel(RegressionModel):

@@ -77,6 +77,14 @@ class ScalarField(Field):
             known_scalars (np.ndarray): n by 1 array of n scalar values.
         """
         self._regressor = self._regression_type(self._num_dim)
+        print("          ")
+        print("fit_model, known_pos", type(known_pos))
+        print("          ")
+        print("fit_model, known_scalars", type(known_scalars))
+        print("          ")
+        print("About to attempt regressor.fit")
+        print("          ")
+        print(self._regressor)
         self._regressor.fit(known_pos, known_scalars)
 
     def predict_values(self, pos: np.ndarray) -> np.ndarray[float]:
@@ -124,7 +132,7 @@ class VectorField(Field):
         self._regressors = []
         for i in range(vector_dim):
             regressor = self._regression_type(self._num_dim)
-            regressor.fit(known_pos, known_vectors[:, i].reshape(-1, 1))
+            regressor.fit(known_pos, known_vectors[:, i].reshape(-1, self._num_dim))
             self._regressors.append(regressor)
 
     def predict_values(self, pos: np.ndarray) -> np.ndarray[float]:
