@@ -8,6 +8,7 @@ Handles the generation of predicted fields from sensor data.
 import numpy as np
 import holoviews as hv
 hv.extension('matplotlib')
+from matplotlib import pyplot as plt
 from collections import deque
 from scipy.interpolate import (
     RBFInterpolator,
@@ -282,12 +283,16 @@ class RegGridInterp(RegressionModel):
         """
         
         pos_data = pos_data.T
-         
-        x = np.array(pos_data[0])
-        y = np.array(pos_data[1])
-        z = np.array(pos_data[2])
         
-        data = [field_data, x, y, z]
+        print(pos_data)
+         
+        x = np.array(pos_data[0][0:10])
+        x = np.multipy(x, 10)
+        #x = np.array([123, 134, 163, 192, 133, 150, 157, 143, 128, 137])
+        y = np.array(pos_data[1][0:10])
+        z = np.array(pos_data[2][0:10])
+        
+        data = [field_data[0:10], x, y, z]
         # We scale the data in order to avoid numerical errors when scales of different dimensions/points are very different
         scaled_data, og_shapes = self.prepare_fit(data)
         
@@ -316,27 +321,86 @@ class RegGridInterp(RegressionModel):
                     Z[l]=Z1[k]
                     l=l+1
 
-        #interpolate scaled data on new grid "scaleX,scaleY,scaleZ"
-        print("Interpolate...")
-        V = griddata((scaleX,scaleY,scaleZ), scaleT, (scaleX,scaleY,scaleZ), method='linear')
-        print("griddata completed running...")
+
         xlim = (min(x), max(x))
         ylim = (min(y), max(y))
-        xx = np.arange(min(x), max(x), 1)
-        yy = np.arange(min(y), max(y), 1)
+        xgrid = np.arange(min(x), max(x), 1)
+        ygrid = np.arange(min(y), max(y), 1)
+        xx, yy = np.meshgrid(xgrid, ygrid, indexing='ij')
         
-        zz = griddata((x,y), z, (xx, yy), method="linear")
-        print("zz", zz)
-        mesh = hv.QuadMesh((xx, yy, zz))
+        x, y, z = np.meshgrid(scaleX, scaleY, scaleZ, indexing='ij')
+       
+        #interpolate scaled data on new grid "scaleX,scaleY,scaleZ"
+        print("Interpolate...")
+        #scaleintZ = griddata((scaleX,scaleY), scaleZ, (scaleX,scaleY), method='linear')
+        #scaleintT = griddata((xi,yi,zi), scaleT, (xi,yi,zi), method='linear')
+        print("griddata completed running...")
+        #print(scaleintT)
+        print(len(xgrid),len(ygrid),len(zi),len(xx),len(yy))
+        zz = griddata((scaleX,scaleY), scaleZ, (xx, yy), method="linear")
+
+        #mesh = hv.QuadMesh((xx, yy, zz))
         #img_stk = hv.ImageStack(z, bounds=(min(x), min(y), max(x), max(y)))
         #img_stk
-        contour = hv.operation.contours(mesh, levels=8)
-        scatter = hv.Scatter((x, y))
-        contour_mesh = mesh * contour * scatter
-        contour_mesh.redim(
-            x=hv.Dimension("x", range=xlim), y=holoviews.Dimension("y", range=ylim),
-        ) 
+        #contour = hv.operation.contours(mesh, levels=8)
+        #scatter = hv.Scatter((x, y))
+        #contour_mesh = mesh * contour * scatter
+        #contour_mesh.redim(
+        #    x=hv.Dimension("x", range=xlim), y=hv.Dimension("y", range=ylim),
+        #) 
 
+        X, Y, Z = np.meshgrid(scaleX, scaleY, scaleZ)
+
+        # Create fake data
+        data = scaleT
+
+        kw = {
+            'vmin': scaleT.min(),
+            'vmax': scaleT.max(),
+            'levels': np.linspace(data.min(), data.max(), 10),
+            }
+
+        # Create a figure with 3D ax
+        fig = plt.figure(figsize=(5, 4))
+        ax = fig.add_subplot(111, projection='3d')
+
+        # Plot contour surfaces
+        _ = ax.contourf(X[:, :, 0], Y[:, :, 0], data[:, :, 0],
+    zdir='z', offset=0, **kw
+        )
+        _ = ax.contourf(
+            X[0, :, :], data[0, :, :], Z[0, :, :],
+            zdir='y', offset=0, **kw
+        )
+        C = ax.contourf(
+            data[:, -1, :], Y[:, -1, :], Z[:, -1, :],
+            zdir='x', offset=X.max(), **kw
+        )
+# --
+        
+        # Set limits of the plot from coord limits
+        xmin, xmax = scaleX.min(), scaleX.max()
+        ymin, ymax = scaleY.min(), scaleY.max()
+        zmin, zmax = scaleZ.min(), scaleZ.max()
+        ax.set(xlim=[xmin, xmax], ylim=[ymin, ymax], zlim=[zmin, zmax])
+
+        # Plot edges
+        edges_kw = dict(color='0.4', linewidth=1, zorder=1e3)
+        ax.plot([xmax, xmax], [ymin, ymax], 0, **edges_kw)
+        ax.plot([xmin, xmax], [ymin, ymin], 0, **edges_kw)
+        ax.plot([xmax, xmax], [ymin, ymin], [zmin, zmax], **edges_kw)
+        
+        
+        # Set labels and zticks
+        ax.set(
+        xlabel='X [km]',
+        ylabel='Y [km]',
+        zlabel='Z [m]')
+        
+        
+        plt.show()
+        
+        #contour_mesh
         #xi,yi,zi=np.ogrid[0:1:11j, 0:1:11j, 0:1:11j]
         #print("xi", xi)
         #print("   ")

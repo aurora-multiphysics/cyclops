@@ -69,43 +69,42 @@ class Unfolder:
     reading the mesh. Will later be generalised to unfold 3D meshes into 2D
     planes, and produce an array of boundaries describing their boundaries.
     """
+    def compress_2D(self, pos_3D: np.ndarray[float]) -> np.ndarray[float]:
+         """Compress an array of 3D points into 2D points.
 
-    # def compress_2D(self, pos_3D: np.ndarray[float]) -> np.ndarray[float]:
-    #     """Compress an array of 3D points into 2D points.
+         Simple implementation by: (x, y, z) -> (z, y).
 
-    #     Simple implementation by: (x, y, z) -> (z, y).
+         Args:
+             pos_3D (np.ndarray[float]): n by 3 array of n 3D position vectors.
 
-    #     Args:
-    #         pos_3D (np.ndarray[float]): n by 3 array of n 3D position vectors.
+         Returns:
+             np.ndarray[float]: n by 2 array of n 2D position vectors.
+         """
+         pos_2D = []
+         for pos in pos_3D:
+             pos_2D.append(np.array([pos[2], pos[1]]))
+         return np.array(pos_2D)
 
-    #     Returns:
-    #         np.ndarray[float]: n by 2 array of n 2D position vectors.
-    #     """
-    #     pos_2D = []
-    #     for pos in pos_3D:
-    #         pos_2D.append(np.array([pos[2], pos[1]]))
-    #     return np.array(pos_2D)
+    def compress_1D(self, points: np.ndarray[float]) -> np.ndarray[float]:
+         """Compress an array of 2D/3D points into 1D points.
 
-    # def compress_1D(self, points: np.ndarray[float]) -> np.ndarray[float]:
-    #     """Compress an array of 2D/3D points into 1D points.
+         Works by considering the distances between each point vector.
 
-    #     Works by considering the distances between each point vector.
+         Args:
+             points (np.ndarray[float]): n by 2 (or 3) array of n 2D (or 3D)
+                 position vectors.
 
-    #     Args:
-    #         points (np.ndarray[float]): n by 2 (or 3) array of n 2D (or 3D)
-    #             position vectors.
-
-    #     Returns:
-    #         np.ndarray[float]: n by 1 array of n 1D position vectors.
-    #     """
-    #     sub = np.zeros(points.shape)
-    #     for i, pos in enumerate(points[:-1]):
-    #         sub[i + 1] = pos
-    #     diff = points - sub
-    #     diff[0] = np.zeros(diff[0].shape)
-    #     out_arr = np.sqrt((diff * diff).sum(axis=1))
-    #     out_arr = np.cumsum(out_arr)
-    #     return out_arr.reshape(-1, 1)
+         Returns:
+             np.ndarray[float]: n by 1 array of n 1D position vectors.
+         """
+         sub = np.zeros(points.shape)
+         for i, pos in enumerate(points[:-1]):
+             sub[i + 1] = pos
+         diff = points - sub
+         diff[0] = np.zeros(diff[0].shape)
+         out_arr = np.sqrt((diff * diff).sum(axis=1))
+         out_arr = np.cumsum(out_arr)
+         return out_arr.reshape(-1, 1)
 
     def generate_grid(
         self, bounds: np.ndarray[float], num_x: int, num_y: int

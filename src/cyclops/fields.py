@@ -132,7 +132,14 @@ class VectorField(Field):
         self._regressors = []
         for i in range(vector_dim):
             regressor = self._regression_type(self._num_dim)
-            regressor.fit(known_pos, known_vectors[:, i].reshape(-1, self._num_dim))
+            print(regressor)
+            print("known_pos", known_pos)
+            print("known_vectors", known_vectors[:, i])
+            #if len(known_vectors[:, i]) % 2 != 0:
+             #   for j in range(len(known_vectors)):
+              #      np.delete(known_vectors, [j,-1])
+            print(len(known_vectors), len(known_pos))
+            regressor.fit(known_pos, known_vectors)#.reshape(5050, self._num_dim))
             self._regressors.append(regressor)
 
     def predict_values(self, pos: np.ndarray) -> np.ndarray[float]:
