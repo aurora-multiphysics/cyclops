@@ -7,7 +7,9 @@ Reduces dimensionality of input while maintaining boundary conditions.
 (c) Copyright UKAEA 2023.
 """
 import numpy as np
+from scipy.linalg import svd
 from scipy.optimize import least_squares, Bounds, nnls
+
 
 def standardise(input_dims: np.array) -> np.array:
     """ Takes a dataset and standardises the variance of the different 
@@ -51,46 +53,71 @@ def update_a(A: np.array, B: np.array, X: np.array, I: float):
     #print(A)
     #Calculating the constant in row I
     X_noi = np.delete(X, I, 0)
+    #print(X_noi)
     A_noi = np.delete(A, I, 0)
+    #print(A_noi.shape, "A_noi")    
+    #print(X_noi.shape, "X_noi")
+    #print((B.T).shape, "B")    
     inner = np.subtract(X_noi, np.matmul(A_noi,B.T))
     absou = np.absolute(inner)
     row_const = np.matmul(absou,absou.T)
-    print(row_const)
 
-    a_i, res = nnls(B, X[I])
-    print(a_i)
-    print(res)
-
-    U = B
-    W = a_i
-    V = X[I]
     G = np.c_[B, -B]
     h = np.c_[X[I], -X[I]]
+    #print("G", G.shape)
+    #print("h", h.shape)
+
 
     #S = Qy-P_i.T*v
-    #minimise s**2 + p_2.T v
-    LDP_to_NNLS(G, h, U, False)
+    #now have LDP problem minimise s**2 + p_2.T*v s.t. GRQ^1s > h -GRQ^-1P_1'*v
+    #Convert the LDP problem to an NNLS one 
+    E, n, f = LDP_to_NNLS(G, h)
+    #r, rnorm = nnls(E, f)
 
 
-def LDP_to_NNLS(G: np.array, h: np.array, U: np.array, phi: bool):
+    U = B
+    W = r
+    V = X[I]
+
+
+def LDP_to_NNLS(G: np.array, h: np.array):
     """Transforms a bounded LDP problem to a NNLS one"""
 
     E = np.hstack((G, h))
+    print(E)
     E = E.T
+    n = E.shape[0]
+    f = np.zeros((n,1))
 
-    P, Q, R = np.linalg.svd(E, full_matrices=False)
+    return(E, n, f)
 
 
-a = [[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]
-std_input = standardise(a)
+def check_shape(n: np.array):
+    """Function to ensure any 1D arrays are in correct form for later use"""
 
+    if len(n.shape) == 1:
+        #Potential issue -> what if n is expected to be a row vector not column?
+        n = np.expand_dims(n, axis=1)
+    return n
+
+
+# Data needs to be organised as having samples in rows, variables in columns for later calculations
+data = np.array([[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]]).T
+std_input = standardise(data)
+bounds_vec = np.array([[0, 0, 0, 0, 0], [8, 8, 8, 8, 8]]).T
 #Performing SVD on standardised, mean-centered data
 U, s, Vt = np.linalg.svd(std_input, full_matrices=False)
 
-#Principal components (PCs) and Component Scores (CSs) are in SVD output
-PCs = Vt.T #B
-CSs = np.dot(a, PCs) #A
+#Principal Axes (PAs) and Component Scores (CSs) calculated from SVD output
+#for ||X-AB'||**2
+CSs = np.dot(U, s) # A (Component Scores)
+CSs = check_shape(CSs)
+print("CSs", CSs.shape)
+CLM = np.dot(Vt.T, s)/(len(std_input)-1)**(1/2) # B (Component loading matrix)
+CLM = check_shape(CLM)
+print("CLM", CLM.shape)
+PAs = Vt.T # Principal Axes
+PAs = check_shape(PAs)
+print("PAs", PAs.shape)
 
-reconst = np.dot(CSs,PCs.T) #X
-#print(reconst)
-update_a(CSs, PCs, std_input, 1)
+update_a(CSs, CLM, bounds_vec, 1)
