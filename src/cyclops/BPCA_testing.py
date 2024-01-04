@@ -7,10 +7,12 @@ Reduces dimensionality of input while maintaining boundary conditions.
 (c) Copyright UKAEA 2023.
 """
 import numpy as np
-from scipy.linalg import svd, diagsvd
+import random as rnd
+from scipy.linalg import svd, diagsvd, norm
 from scipy.optimize import least_squares, Bounds, nnls, lsq_linear
+from sklearn import decomposition as decomp
 
-
+#checked
 def standardise(input_dims: np.array, X: np.array) -> np.array:
     """ Takes a dataset and standardises the variance of the different 
     dimensions. This is done to prevent bias in a particular direction due to 
@@ -19,34 +21,35 @@ def standardise(input_dims: np.array, X: np.array) -> np.array:
     if not isinstance(input_dims, np.ndarray):
         input_dims = np.array(input_dims)
 
+    Upper = X[1]
+    Lower = X[0]
+    #reshape to be compatible with data - maybe not needed for real data?
     std_dims = np.zeros(input_dims.shape)
     std_hi = np.zeros(X[0].shape)
     std_lo = np.zeros(X[1].shape)
-    i=0
-    for dim_array, hi_array, lo_array in zip(input_dims, X[1], X[0]) :
+    #Want to take mean along columns
+    for i in range(4):
+        dim_array = np.array(input_dims[:, i])
+        hi_array = np.array(Upper[:, i])
+        lo_array = np.array(Lower[:, i])
         if not isinstance(dim_array, np.ndarray):
             dim_array = np.array(dim_array)
-    
+        
         #creating mean-centered, standardised data
         mean_array = dim_array.mean()
-        stdev = np.std(dim_array) * np.ones(dim_array.shape)
-        standised_dim = dim_array.astype(float) - mean_array.astype(float)
+        stdev = np.std(dim_array)
+        standised_dim = np.subtract(dim_array, mean_array)
         standised_dim = np.divide(standised_dim.astype(float), stdev.astype(float))
-        std_dims[i] = standised_dim
+        std_dims[:,i] = standised_dim
         #performing the same transform on boundary conditions
-        stdhi_cond = hi_array.astype(float) - mean_array.astype(float)
+        stdhi_cond = np.subtract(hi_array.astype(float), mean_array.astype(float))
         stdhi_cond = np.divide(stdhi_cond.astype(float), stdev.astype(float))
-        #print("STDHI", stdhi_cond)
-        std_hi[i] = stdhi_cond
-        stdlo_cond = lo_array.astype(float) - mean_array.astype(float)
+        std_hi[:,i] = stdhi_cond
+        stdlo_cond = np.subtract(lo_array.astype(float), mean_array.astype(float))
         stdlo_cond = np.divide(stdlo_cond.astype(float), stdev.astype(float))
-        #print("STDLO", stdlo_cond)
-        std_lo[i] = stdlo_cond
+        std_lo[:,i] = stdlo_cond
         i += 1
 
-    #print("Final std_hi", std_hi)
-    #print("Final std_lo", std_lo)
-    #print("This is the standardised matrix", std_dims)
     return(np.array(std_dims),np.array((std_lo, std_hi)))
 
 
@@ -105,7 +108,6 @@ def pad_to_subtract(matrix1, matrix2):
         zeros_to_add = rows2 - rows1
         padded_matrix1 = np.pad(matrix1, pad_width=((0, zeros_to_add), (0, 0)))
         padded_matrix2 = matrix2
-        #print(padded_matrix1)
     # Pad matrix2 with rows to match matrix1 if it has more
     elif rows1 > rows2:
         zeros_to_add = rows1 - rows2
@@ -127,161 +129,204 @@ def pad_to_subtract(matrix1, matrix2):
     return padded_matrix1, padded_matrix2
 
 
-def update_a(A: np.array, B: np.array, X: np.array, I: float):
-    """Function updates row I of matrix A according to BPCA algorithm"""
+def update_row(A: np.array, B: np.array, X: np.array, I: float):
+    """Function updates row I of matrix A according to BPCA algorithm
+    (This is used to update rows in both "A" and "B" from the in-paper
+    equations, but is written using the A orientated INSERTFORGOTTENWORDHERE)"""
 
-    print("Run", I, " X shape ", X.shape)
-    X_low = X[0][I]
+    print("Run", I, " X shape ", X.shape) 
+    X_low = X[0][I] 
     X_high = X[1][I]
+
     #Start from LSI problem
+    #checked
     def calc_top_const(A: np.array, B: np.array, X: np.array, I: float):
         """Function calculates the value of the constant in the initial
-        minimisation problem for a row I"""
+        minimisation problem for a given row I"""
         #Calculating the constant for row being updated, row I
         #const is given by mod(X_noi - A_noi*B.T)^2
-        X_noi = np.delete(X, I, 0)
-        A_noi = np.delete(A, I, 0)
+        #print(X[0])
+        X_noi_L = np.delete(X[0][:], I, 0)
+        X_noi_H = np.delete(X[1][:], I, 0) 
+        new_row_len = X_noi_L.shape[0] + X_noi_H.shape[0]
+        X_noi = np.array([X_noi_L, X_noi_H])
+        X_noi = np.reshape(X_noi, (new_row_len, X.shape[2]))
+        A_noi = np.delete(A, I, 0) 
         #Pad A_noi and/or B to allow matrix multiplication
-        A_noi, B_T = pad_matrices(A_noi, B.T)
+        A_noi, B_T = pad_matrices(A_noi, B.T) 
         AB_T = np.matmul(A_noi,B_T)
         #Pad X_noi/AB to allow matrix subtraction
-        X_noi, AB_T = pad_to_subtract(X_noi, AB_T)
-        inner = np.subtract(X_noi, AB_T)
-        In0 = inner.shape[0]
-        In1 = inner.shape[1]
-        if In0>In1:
+        X_noi, AB_T = pad_to_subtract(X_noi, AB_T) 
+        inner = X_noi - AB_T 
+        In0, In1 = inner.shape
+        if In0>In1: 
             inner = np.pad(inner, pad_width=((0,0), (0, In0 - In1))) 
-        elif In1>In0:
+        elif In1>In0: 
             inner = np.pad(inner, pad_width=((0, In1 - In0), (0,0)))
+        LSI_row_const= np.square(norm(inner))
+        print("LSI_row_const", LSI_row_const)
+        return LSI_row_const
 
-        inner = drop_null_cols(inner)
-        row_const = np.linalg.norm(inner)
-        return row_const
+    LSI_row_const= calc_top_const(A, B, X, I)
 
-    #Remeber to come back and change U = B to avoid accidental linking
     #seeking optimal row A[I] in boundaries now
-    U = B
     W = A[I]
     #Initial guess for V, not expected to be accurate
-    V = np.mean( np.array([ X_low, X_high ]), axis=0 )
-    V = check_shape(V)
-    #print("V", V, V.shape)
-    G = np.c_[B, -B]
-    h = np.c_[X_low, -X_high]
+    X_high_sample = len(range(0, int(max(X_high))))
+    V = rnd.sample(range(int(max(X_high))), min(X_high_sample,len(B))) 
+    V = np.array(V) 
+    V = check_shape(V) 
+    G = np.c_[B, -B] 
+    h = np.c_[X_low, -X_high] 
 
     #As in paper, let S = Qy-P_i.T*v to get to a LDP problem as follows
     #min||s||**2 + ||p_2.T*v||**2 s.t. GRQ^1s > h -GRQ^-1P_1'*v
-    E, n, min_S_sq, LDP_const, f = LSI_to_LDP(G, h, U, W, V) #new_bounds = LSI_to_LDP(G, h, U, W, V)
-    f_len = f.shape[0]
-    E_len = E.shape[0]
-    E_pad = np.pad(E, pad_width=((0, f_len - E_len), (0, 0)))
-    solution_vec, resid = nnls(E_pad, f)
-    E_sol = np.matmul(E_pad, solution_vec)
+    Z, R_minus1, f_1, LDP_const, new_bounds = LSI_to_LDP(G, h, B, W, V)
 
-    #E_sol = drop_null_rows(E_sol)
-    #print("E_sol", E_sol.shape)
-    #solution_vec = drop_null_cols(solution_vec)
-    #print("solution_vec", solution_vec.shape)
-    #print("f", f.shape)
-    if E_sol.shape[0] >= f_len:
-        zeros = np.zeros(E_sol.shape[0] - f_len)
-        f_pad = np.hstack((f, zeros))
-    #    print(f_pad.shape)
-    r = np.subtract(E_sol, f_pad)
-    #print("r", r)
+    #LDP problem Iz>=L is r = Eu -f where column vec E= [I.T, L.T], f = vec
+    #let I=new_bounds[1], L=new_bounds[0] and x = Z
+    solution_vec, resid = LDP_to_NNLS_sol(new_bounds[1], new_bounds[0], Z)
+
+        #solve for solution vector x = Ky = R-1(Z + f_1)
+    #sol_vec_x = np.matmul()
+    print("solution_vec", solution_vec)
+    solution_vec += LDP_const
+
+    r = [x + LSI_row_const for x in solution_vec]
     
     return r, resid
 
 
-def LSI_to_LDP(G: np.array, h: np.array, U: np.array, W: np.array, V: np.array):
-    """Transforms a bounded LSI problem to a bounded LDP one with use of SVD on
-    U, rewriting the problem as an LDP + constant with new bounds. See 
-    'Principal component analysis with boundary constraints' by Paolo Giordani
-     and Henk A. L. Kiers"""
+def LDP_to_NNLS_sol(G: np.array, h: np.array, x: np.array):
+    """Function to calculate needed matrices and constants for the transformation
+    of a problem between LDP form and that of NNLS."""
 
-    # Still needs to calculate the constant for the row mod(P_2' * v)**2 Should return
-    # S for minimisation, the constant and the new form of the boundary conditions.
-    # min w ||Uw -v||**2 s.t. Gw>=h
-
-    #Decompose matrix U
-    P, Q, R_t = np.linalg.svd(U, full_matrices=True) 
-    Q = diagsvd(Q, P.shape[0], R_t.shape[-1])
-    #print(P.shape, Q.shape, R_t.shape)
-    P_shape = P.shape[1]
-    R_t_shape = R_t.shape[0]  
-    Q_shape = Q.shape
-    Q0 = Q_shape[0]
- 
-    W = check_shape(W)
-    R_t, W = pad_matrices(R_t, W)
-    y = np.matmul(R_t, W)
-    hshape = h.shape[0]
-    gshape = G.shape[0]
-    #print("h.T,G.T", h.T.shape, G.T.shape)
-    h_padded, g_padded = pad_to_subtract(h, G)
-
-    #Let s = Qy-P_1.T v  s.t. our problem is now min s ||s||**2 ||P_2.T v||**2
-    # s.t. GR(Q^-1)*s + GR(Q^-1)*(P_1.T)*v>=h
-    E = np.vstack((g_padded.T, h_padded.T))
-    #print("E", E.shape)
-    #Note the shapes of P_1 and P_2 are (nxm) and (nx(n-m)) where P from 
-    # earlier is (nxn) and R_t is (mxm)
-    P_1 = P[:, :R_t_shape] 
-    P_2 = P[:, :(P.shape[0] - R_t_shape)] 
-    P_1_padded_T, V_padded1 = pad_matrices(P_1.T, V)
-    Qy = np.matmul(Q, y)
-    P1TV = np.matmul(P_1_padded_T, V_padded1)
-    S_LDP = np.subtract(Qy, P1TV)
-    min_S_sq = np.square(np.linalg.norm(S_LDP))
-    #print(min_S_sq)
-
-    P_2_padded_T, V_padded2 = pad_matrices(P_2.T, V)
-    P2TV = np.matmul(P_2_padded_T, V_padded2)
-    LDP_const = np.square(np.linalg.norm(P2TV))
+    ht_padded, gt_padded = pad_to_subtract(h.T, G.T)
+    E = np.vstack((gt_padded, ht_padded))
     n = E.shape[0]
-    f = np.zeros((n-1))
+    f = np.zeros((n))
     f = np.append(f, [1])
-    f = f.T
+    f = f.T   
+    #can now use NNLS to compute an m-vector, u, to solve NNLS problem:
+    #Minimize ||Eu — f|| subject to  u>=0
+    E_pad = np.pad(E, pad_width=((0, 1), (0, 0)))
+    u, resid = nnls(E_pad, f)
+    # print("E", E)
+    # print("u", u)
+    u = check_shape(u)
+    E_pad, u_pad = pad_matrices(E, u)
+    Eu = np.matmul(E_pad, u_pad)
+    f = check_shape(f)
+    Eu_pad, f_pad = pad_to_subtract(Eu, f)
+    r = np.subtract(Eu_pad, f_pad)
+    # print("r", r)
+
+    phi = True
+    print("r[n+1]", r[-1])
+    rn = r[-1]
+    x_sol = -1*np.divide(r, rn)
+    # while phi == True:
+    #     if norm(r) == 0:
+    #         phi = False
+    #     r = -np.divide(r[0], r[n])
+    #     for j in range(1, n):
+    #         print("rj", r[j-1])
+    #         x_j = -np.divide()
+    #         # print("x_j", x_j)
+    #         x_sol[j] = x_j
+            # print(x_sol)
+
+    return x_sol, resid
+
+
+def LSI_to_LDP(G: np.array, h: np.array, E: np.array, X: np.array, F: np.array):
+    """Transforms a bounded LSI problem to a bounded LDP one with use of SVD on
+    E, rewriting the problem as an LDP + constant with new bounds. See 
+    'Principal component analysis with boundary constraints' by Paolo Giordani
+     and Henk A. L. Kiers. This does not aim to *solve* the problem, simply
+     return the components of the transformed form of it."""
+
+    #Decompose matrix E
+    Q, R, K_t = np.linalg.svd(E, full_matrices=True) 
+    R = diagsvd(R, Q.shape[-1], K_t.shape[0]) 
+    reconst = np.matmul(R, K_t)
+    reconst = np.matmul(Q, reconst)
+    n_size = K_t.shape[0] #m
+    X = check_shape(X) 
+    K_t, X = pad_matrices(K_t, X) # because x=Ky
+    y = np.matmul(K_t, X) # check
+ 
+    #Let z = Ry-Q_1.T*f  s.t. our problem is now min z ||z||**2 ||Q_2.T v||**2
+    # s.t. GK(R^-1)*z >= h - GK(R^-1)*(Q_1.T)*f
+    h_padded, g_padded = pad_to_subtract(h.T, G.T) 
+ 
+    #Note the shapes of Q_1 and Q_2 are (nxm) and (nx(n-m)) where Q from 
+    # earlier is (mxm) and K_t is (nxn)
+    Q_1 = Q[:, :n_size] 
+    Q_2 = Q[:, n_size:]
+
+    Ry = np.matmul(R, y)
+    #f_tilde = Q_T * f
+    Q_1_padded_T, F_padded = pad_matrices(Q_1.T, F) 
+    f_1 = np.matmul(Q_1_padded_T, F_padded) 
+    Ry_padded, f1_padded = pad_to_subtract(Ry, f_1)
+    z_LDP = np.subtract(Ry_padded, f1_padded)
+    Z = [Ry_padded, f1_padded] # will be passed back to be treated as LDP 
+
+    #calc constant
+    Q_2_padded_T, F_padded = pad_matrices(Q_2.T, F)
+    f_2 = np.matmul(Q_2_padded_T, F_padded)
+    LDP_const = np.square(np.linalg.norm(f_2)) #should this be squared?
+    print("LDP_const", LDP_const)
 
     #Calulate new, transformed boundaries
+    G, K = pad_matrices(G, K_t.T)
+    GK = np.matmul(G, K)
+    #R may not be square, check and calculate pseudoinverse instead of
+    # inverse if not
+    R_minus1 = inverse_or_pseudo(R)
+    R_minus1_z = np.matmul(R_minus1, z_LDP)
+    GK, R_minus1_z = pad_matrices(GK, R_minus1_z)
+    upper_boundaries = np.matmul(GK, R_minus1_z)
 
-    #Q may not be square, check and calculate pseudoinverse instead of
-    # inverse if it is not
-    Q_minus1 = inverse_or_pseudo(Q)
-    Q_minus1_s = Q_minus1*min_S_sq
-    #print(Q_minus1_s)
-    #print("R_t.shape, Q_minus1_s.shape", R_t.shape, Q_minus1_s.shape)
-    R, Q_minus1_s = pad_matrices(R_t.T, Q_minus1_s)
-    RQ_minus1_s = np.matmul(R, Q_minus1_s)
-    #print("G, RQ_minus1_s", G.shape, RQ_minus1_s.shape)
-    G, RQ_minus1_s = pad_matrices(G, RQ_minus1_s)
-    #print("G, RQ_minus1_s", G)
-    #print("RQ_minus1_s", RQ_minus1_s)
-    GRQ_minus1_s = np.matmul(G, RQ_minus1_s)
+    R_minus1, f_1 = pad_matrices(R_minus1, f_1)
+    R_minus1f1 = np.matmul(R_minus1, f_1)
+    GK, R_minus1f1 = pad_matrices(GK, R_minus1f1)
+    GKR_minus1f1 = np.matmul(GK, R_minus1f1)
+    h, GKR_minus1f1 = pad_to_subtract(h, GKR_minus1f1)
+    lower_boundaries = np.subtract(h, GKR_minus1f1)
+    upper_boundaries, lower_boundaries = pad_to_subtract(upper_boundaries,
+                                                         lower_boundaries)
 
-    P1_Tv = np.matmul(P_1_padded_T, V_padded1)
-    Q_minus1, P1_Tv = pad_matrices(Q_minus1, P1_Tv)
-    Q_minus1P1_Tv = np.matmul(Q_minus1, P1_Tv)
-    R, Q_minus1P1_Tv = pad_matrices(R, Q_minus1P1_Tv)
-    RQ_minus1P1_Tv = np.matmul(R, Q_minus1P1_Tv)
-    G, RQ_minus1P1_Tv = pad_matrices(G, RQ_minus1P1_Tv)
-    GRQ_minus1P1_Tv = np.matmul(G, RQ_minus1P1_Tv)
-    #print("GRQ_minus1_s", GRQ_minus1_s.shape)
-    #print("GRQ_minus1P1_Tv", GRQ_minus1P1_Tv.shape)
-    #GRQ_minus1_s, GRQ_minus1P1_Tv = pad_to_subtract(GRQ_minus1_s, GRQ_minus1P1_Tv)
-    #upper_boundaries = GRQ_minus1_s + GRQ_minus1P1_Tv
-    h, GRQ_minus1P1_Tv = pad_to_subtract(h, GRQ_minus1P1_Tv)
-    upper_boundaries = GRQ_minus1_s
-    lower_boundaries = h - GRQ_minus1P1_Tv
-    upper_boundaries, lower_boundaries = pad_to_subtract(upper_boundaries, lower_boundaries)
-    #print("upper_boundaries", upper_boundaries)
-    #print("lower_boundaries", lower_boundaries)
-    #upper_boundaries, h = pad_to_subtract(upper_boundaries, h)
+    new_boundaries = np.array((upper_boundaries, lower_boundaries))
+    print("LDP_bounds", new_boundaries)
 
-    # new_boundaries = np.array((upper_boundaries, h))
-    # #print(new_boundaries)
+    return(Z, R_minus1, f_1, LDP_const, new_boundaries)
 
-    return(E, n, min_S_sq, LDP_const, f)#, new_boundaries)
+
+def check_xi_bounds(X: np.array, I: float, B: np.array, A: np.array):
+    """Function to check if the new row found for matrix A obeys the
+    necessary boundary conditions for acceptance, else raises an error."""
+
+    X_low = X[0][I]
+    X_high = X[1][I]
+    Row_Xi = check_shape(X_low)
+    Col_Xi = check_shape(X_high)
+    A_i = A[I]
+    A_i = check_shape(A_i)
+    Ai_T, B_T = pad_matrices(A_i.T, B.T)
+    AiB_T = np.matmul(Ai_T, B_T)
+
+    low_check = X_low < AiB_T
+    high_check = X_high > AiB_T
+    print(low_check)
+    print(high_check)
+    contains_false = ((low_check == False).any() or
+                      (high_check == False).any())
+    print(contains_false)
+
+    if contains_false:
+        raise ValueError("Boundary conditions violated during 'check_xi_bounds'!")
 
 
 def solve_for_A(A: np.array, B: np.array, X: np.array, n):
@@ -289,73 +334,56 @@ def solve_for_A(A: np.array, B: np.array, X: np.array, n):
     matrix. Will calculate a new row for each in initial A value and update
       the matrix with these."""
 
-    A, B_T = pad_matrices(A, B.T)
-    AB_T = np.matmul(A, B_T)
-    X_lo = X[0]
-    X_hi = X[1]
-    #print("X_lo", X_lo)
-    #print("X_hi", X_hi)
-    lo_check = X_lo < AB_T
-    print(lo_check)
-    hi_check = X_hi > AB_T
-    print(hi_check)
-
+    A = check_shape(A) 
+    B = check_shape(B) 
+    A, B_T = pad_matrices(A, B.T) 
+    AB_T = np.matmul(A, B_T) 
+    X_lo = X[0] 
+    X_hi = X[1] 
+    lo_check = X_lo <= AB_T 
+    hi_check = X_hi >= AB_T 
+    print("lo_check", (lo_check == False).any())
+    print("hi_check",  (hi_check == False).any())
     contains_false = ((lo_check == False).any() or
-                      (hi_check == False).any())
+                      (hi_check == False).any()) 
+    if contains_false:
+         print("Boundary conditions violated in 'solve_for_A'!")
 
-    for i in range(len(A)):
-        #print("I is : ", i)
-
+    for i, j in zip(range(2),range(2)):
+        print("I is : ", i) 
+        print("J is : ", j)         
+        new_row_a, resid = update_row(A, B, X, i)
         #Check boundary conditions apply: row(X_i).T =< A_i.T * B.T =< col(X_i).T
+        # new_row_a = np.array(new_row_a)
+        # A_shape = A.shape
+        # print("Ashape", A_shape)
+        # new_row_a = check_shape(new_row_a)
+        # if new_row_a.shape[0] > A.shape[1]:
+        #     zeros_to_add = len(new_row_a) - A_shape[1]
+        #     new_A = np.pad(A, pad_width=((0, 0), (0, zeros_to_add)))
+        # elif A.shape[1] > new_row_a.shape[0]:
+        #     zeros_to_add = A.shape[1] - len(new_row_a)
+        #     new_row_a = np.pad(new_row_a, pad_width=((0, 0), (0, zeros_to_add)))
+        #     print("new_row_a.shape", new_row_a.shape)
+        # if len(new_row_a.shape) > 1:
+        #     A[i] = new_row_a.flatten()
+        # else:
+        #     A[i] = new_row_a
+        # print("A", A)
+        # check_xi_bounds(X, i, B, A)
 
-        def check_xi_bounds(X: np.array, I: float, B: np.array, A: np.array):
-            """Function to check if the new row found for matrix A obeys the
-            necessary boundary conditions for acceptance, else raises an error."""
+    # for i in range(len(B)):
 
-            X_low = X[0][I]
-            X_high = X[1][I]
-            Row_Xi = check_shape(X_low)
-            Col_Xi = check_shape(X_high)
-            A_i = A[i]
-            #print("A_i", A_i)
-            A_i = check_shape(A_i)
-            #print("B_T", B.T)
-            Ai_T, B_T = pad_matrices(A_i.T, B.T)
-            AiB_T = np.matmul(Ai_T, B_T)
-            #print(AiB_T)
+    #     new_row_b, resid = update_row(B, A, X, i)
+    #     #Check boundary conditions apply: row(X_i).T =< A_i.T * B.T =< col(X_i).T
+    #     check_xi_bounds(X, i, B, A)
 
-            low_check = X_low < AiB_T
-            print(low_check)
-            high_check = X_high > AiB_T
-            print(high_check)
-
-            contains_false = ((low_check == False).any() or
-                              (high_check == False).any())
-
-            if contains_false:
-                raise ValueError("Boundary conditions violated during 'check_xi_bounds'!")
-
-        new_row, resid = update_a(A, B, X, i)
-        check_xi_bounds(X, i, B, A)
-
-        A_shape = A.shape
-        print("A shape", A.shape)
-        if new_row.shape[0] >= A.shape[1]:
-            #print("A shape", A_shape)
-            #print("new_row", new_row.shape)
-            zeros_to_add = len(new_row) - A_shape[1]
-            #print(zeros_to_add)
-            new_A = np.pad(A, pad_width=((0, 0), (0, zeros_to_add)))
-            #A = np.hstack((A, zeros))
-            print("A shape", new_A.shape)
-        A = new_A    
-        A[i] = new_row
-
-
-def solve_for_B(A: np.array, B: np.array, X: np.array):
-    """Function to find optimal matrix B for PCA performed on original data
-    matrix. Will calculate a new row for each initial row in B and update 
-    the matrix with these."""
+    #     B_shape = B.shape
+    #     if new_row_b.shape[0] >= B.shape[1]:
+    #         zeros_to_add = len(new_row_b) - B_shape[1]
+    #         new_B = np.pad(A, pad_width=((0, 0), (0, zeros_to_add)))
+    #     B = new_B    
+    #     B[i] = new_row_b
 
 
 def inverse_or_pseudo(matrix):
@@ -401,45 +429,36 @@ def check_shape(n: np.array):
     return n
 
 
-def LDP_to_NNLS():
-    """Function to calculate needed matrices and constants for the transformation
-    of a problem between LDP form and that of NNLS."""
-
-
-def problem_setup(data: np.array, X: np.array):
+def problem_setup(data: np.array, X: np.array,n: int):
     """Function takes data matrix and boundary vectors then
     sets up needed variables for the BPCA algorithm, including
     performing standardisation, SVD and calculation of the
     component scores and component loading matrices"""
 
-    std_input, std_conds = standardise(data, X)
-    print(std_conds)
+    std_input, std_conds = standardise(data, X) 
+    print("std_input", std_input)
+    print("std_conds", std_conds)
     #Performing SVD on standardised, mean-centered data
-    U, s, Vt = svd(std_input, full_matrices=True)
+    U, s, Vt = svd(std_input, full_matrices=True) 
     s = diagsvd(s, U.shape[0], Vt.shape[-1])
 
-    #Principal Axes (PAs) and Component Scores (CSs) calculated from SVD output
-    #for ||X-AB'||**2
-    CSs = np.matmul(U, s) # A (Component Scores)
-    CSs = check_shape(CSs)
+    pca = decomp.PCA(n_components=n)
+    pca.fit(std_input)
+    # A (Component Scores/ Principal Components)
+    pca_PAs = pca.components_.T
+    component_scores = pca.transform(std_input)
+    # B (Component loading matrix)
+    pca_clm = np.dot(pca.components_.T, np.sqrt(pca.explained_variance_))
 
-    sshape = s.shape[0]
-    Vtshape = Vt.shape[1]
-    if Vtshape < sshape:
-        Vt = np.pad(Vt, pad_width=((0, sshape - Vtshape ), (0,0)))
-    elif sshape < Vtshape:
-        s = np.pad(s, pad_width=((0, Vtshape-sshape), (0,0)))
-  
-    CLM = np.dot(Vt.T, np.dot(s, np.sqrt(len(data)-n))) # B (Component loading matrix)
-    CLM = check_shape(CLM)
-    PAs = Vt.T # Principal Axes
-    PAs = check_shape(PAs)
-
-    return s, CSs, CLM, PAs, std_conds
-
+    return s, component_scores, pca_clm, pca_PAs, std_conds
 
 def drop_null_cols(AMatrix: np.array):
     null_cols = []
+
+    cov_matrix = np.dot(std_input.T, std_input) / len(std_input)
+    for eigenvector in pca.components_:
+        print(np.dot(eigenvector.T, np.dot(cov_matrix, eigenvector)))
+
 
     for col in range(AMatrix.shape[1]):
         if sum(AMatrix[:,col]) == 0:
@@ -459,21 +478,15 @@ def drop_null_rows(AMatrix: np.array):
 
 
 # Data needs to be organised as having samples in rows, variables in columns for later calculations
-#data = np.array([[1.7, 2, 3, 4, 5, 4, 3, 4, 1.8, 5], [6, 2, 3, 4, 5, 2.2, 3, 4, 5, 3]]).T 
-#data2 = np.array([[1.9, 1.89, 3, 3, 4, 5, 2.5, 3, 4.9, 6], [1.9, 1.8, 2, 3, 5, 5, 2.8, 3, 4, 5]]).T
-
-data = np.array([[1.7, 2, 3, 2, 3, 2.4, 3, 1.9, 1.8, 2.7], [3, 2, 3, 1.8, 2.5, 2.2, 3, 2.1, 1.9, 3]]).T 
-data2 = np.array([[1.9, 1.89, 3.2, 3.1, 3, 1.9, 2.5, 3, 2.9, 2.6], [1.9, 1.8, 2, 3, 1.8, 2, 2.8, 3, 2.5, 2]]).T
-data = np.hstack((data,data2))*10
-#print(data.shape)
+data = np.array([[2, 6, 2, 3, 3, 2, 3, 2, 7, 3], [3, 2, 3, 3, 3, 2, 3, 2, 1, 3]]).T 
+data2 = np.array([[2, 3, 3, 2.6, 2.7, 2, 3, 5, 3, 3], [2, 3, 6, 4, 2, 2, 3, 2, 3, 3]]).T
+data = np.hstack((data,data2))
 #Number of dimensions to reduce by
 n = 1
 #Boundaries arrays
-low_bound = np.ones((10,4))
-high_bound = low_bound*99
+low_bound = np.ones((10,4))*-2
+high_bound = low_bound*-10
 bounds_vec = np.array((low_bound, high_bound))
 
-#print(bounds_vec)
-s, CSs, CLM, PAs, bounds_vec = problem_setup(data, bounds_vec)
-
+s, CSs, CLM, PAs, bounds_vec = problem_setup(data, bounds_vec, n)
 solve_for_A(CSs, CLM, bounds_vec, n)
