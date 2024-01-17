@@ -69,6 +69,7 @@ class Unfolder:
     reading the mesh. Will later be generalised to unfold 3D meshes into 2D
     planes, and produce an array of boundaries describing their boundaries.
     """
+
     def compress_2D(self, pos_3D: np.ndarray[float]) -> np.ndarray[float]:
          """Compress an array of 3D points into 2D points.
 
