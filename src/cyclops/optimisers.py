@@ -73,6 +73,7 @@ class Optimiser:
             time_limit (str): the maximum time the optimiser should run for.
             algorithm (any): the kind of optimiser.
         """
+        #Remove time_limit and replace with convergence conditions
         self._limit = get_termination("time", time_limit)
         self._algorithm = algorithm
 

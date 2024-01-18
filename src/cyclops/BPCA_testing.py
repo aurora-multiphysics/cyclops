@@ -495,7 +495,6 @@ def update_row(M1: np.array, M2: np.array, X: np.array, I: int, col_row: int):
     return sol_vec_x, resid
 
 
-
 def LSI_to_LDP(G: np.array, h: np.array, E: np.array, w: np.array, F: np.array):
     """Transforms a bounded LSI problem to a bounded LDP one with use of SVD on
     E, rewriting the problem as an LDP + constant with new bounds. See 

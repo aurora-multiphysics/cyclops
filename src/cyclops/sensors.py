@@ -21,6 +21,8 @@ class Sensor:
         value_range: np.ndarray[float],
         relative_sites: np.ndarray[float],
     ) -> None:
+
+
         """Initialise class instance.
 
         Args:
@@ -42,6 +44,9 @@ class Sensor:
         self._value_dim = len(value_range[0])
 
     def get_failure_chance(self) -> float:
+        #failure_change needs to be updated to take into account the
+        #conditions in each potential sensor spot rather than being a single,
+        #static value.
         """Return the chance of the sensor failing."""
         return self._failure_chance
 
@@ -113,6 +118,8 @@ class Sensor:
 
 class PointSensor(Sensor):
     """Point sensor; samples one point only."""
+    #Value_range needs updating to the upper/lower bound matrices from the
+    #BPCA 
 
     def __init__(
         self,
@@ -152,6 +159,8 @@ class RoundSensor(Sensor):
 
     Used for 2D fields.
     """
+    #Value_range needs updating to the upper/lower bound matrices from the
+    #BPCA 
 
     def __init__(
         self,
@@ -199,6 +208,8 @@ class MultiSensor(Sensor):
     It doesn't have a meaningful position - the input sites are the same
     regardless of the actual_pos. Used for 1D or 2D fields.
     """
+    #Value_range needs updating to the upper/lower bound matrices from the
+    #BPCA 
 
     def __init__(
         self,
