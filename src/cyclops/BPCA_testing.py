@@ -15,7 +15,7 @@ def pad_matrices(matrix1: np.array, matrix2: np.array):
     """Function to enable matrix multiplication of otherwise incompatible
     matrices. The matrices MUST be entered in the order they will appear
     in the multiplication, otherwise this will pad the wrong dimensions!
-    
+
     Args:
     ----
     matrix1 : ndarray with shape (n, m) containing floats. Will be treated
@@ -26,7 +26,7 @@ def pad_matrices(matrix1: np.array, matrix2: np.array):
         as if it were the second matrix in a matrix multiplication, if dim i
         is less than the second dim of matrix1 it will be increased to match 
         the second dim of matrix1 by the addition of rows of zeros.
-    
+
     Returns:
     -------
     Returned variables dependent on relative sizes of input matrices, it will
@@ -203,49 +203,49 @@ def standardise(input_dims: np.array, X: np.array) -> np.array:
 
     Upper = X[1]
     Lower = X[0]
-    #reshape to be compatible with data - maybe not needed for real data?
+    # reshape to be compatible with data - maybe not needed for real data?
     std_dims = np.zeros(input_dims.shape)
     std_hi = np.zeros(X[0].shape)
     std_lo = np.zeros(X[1].shape)
-    #variables to hold data for reversal of standardisation
+    # variables to hold data for reversal of standardisation
     rev_data_std = []
     array_mean_val = 0
     mean_val_list = []
     stdev_val_list = []
-    #Want to take mean along columns
+    # Want to take mean along columns
     for i in range(4):
         dim_array = np.array(input_dims[:, i])
         hi_array = np.array(Upper[:, i])
         lo_array = np.array(Lower[:, i])
         if not isinstance(dim_array, np.ndarray):
             dim_array = np.array(dim_array)
-        #Creating mean-centered, standardised data
+        # Creating mean-centered, standardised data
         array_mean_val = dim_array.mean()
         stdev = np.std(dim_array)
         standised_dim = np.subtract(dim_array, array_mean_val)
         standised_dim = np.divide(
                             standised_dim.astype(float), stdev.astype(float))
-        std_dims[:,i] = standised_dim
+        std_dims[:, i] = standised_dim
         mean_val_list.append(array_mean_val)
         stdev_val_list.append(stdev)
-        #Performing the same transform on boundary conditions
+        # Performing the same transform on boundary conditions
         stdhi_cond = np.subtract(hi_array.astype(float),
                                  array_mean_val.astype(float))
         stdhi_cond = np.divide(stdhi_cond.astype(float),
                                stdev.astype(float))
-        std_hi[:,i] = stdhi_cond
+        std_hi[:, i] = stdhi_cond
         stdlo_cond = np.subtract(lo_array.astype(float),
                                  array_mean_val.astype(float))
         stdlo_cond = np.divide(stdlo_cond.astype(float),
                                stdev.astype(float))
-        std_lo[:,i] = stdlo_cond
+        std_lo[:, i] = stdlo_cond
         i += 1
     mean_val_list = np.array(mean_val_list)
     stdev_val_list = np.array(stdev_val_list)
     rev_data_std = np.vstack(((mean_val_list.T), (stdev_val_list.T)))
     std_bounds = np.array((std_lo, std_hi))
 
-    return(np.array(std_dims), std_bounds, rev_data_std)
+    return (np.array(std_dims), std_bounds, rev_data_std)
 
 
 def problem_setup(data: np.array, X: np.array, n: int):
@@ -335,13 +335,13 @@ def solve_for_A_B(A: np.array, B: np.array, X: np.array, org_dat: np.array,
     AB_T = np.matmul(A, B_T)
     X_lo = X[0] 
     X_hi = X[1]
-    #for i in range(X_hi.shape(-1)):
+    # f or i in range(X_hi.shape(-1)):
     lo_check = X_lo <= AB_T
     hi_check = X_hi >= AB_T
-    contains_false = ((lo_check == False).any() or
-                      (hi_check == False).any()) 
-    if contains_false:
-         raise ValueError("Boundary conditions violated in 'solve_for_A_B'!")
+    contains_false = ((lo_check is False).any() or
+                      (hi_check is False).any()) 
+    if contains_false is True:
+        raise ValueError("Boundary conditions violated in 'solve_for_A_B'!")
 
     def F(A: np.array, B: np.array, X: np.array):
         """Calculates the loss function for the matrices A and B according to
@@ -374,12 +374,12 @@ def solve_for_A_B(A: np.array, B: np.array, X: np.array, org_dat: np.array,
 
     f = F(A, B, org_dat)
     new_f = f-1
-    #Loop calculates an update row for A then B in succession
+    # Loop calculates an update row for A then B in succession
     while abs(f-new_f) > epsilon:
         print("Difference between current and previous f value is {0}".format(
             f-new_f))
         f = new_f
-        for i,j in zip(range(len(A)-1), range(len(B)-1)):
+        for i, j in zip(range(len(A)-1), range(len(B)-1)):
             new_row_a, resid = update_row(A, B, X, i, 0)
             new_row_a = np.array(new_row_a)
             A_shape = A.shape
@@ -430,7 +430,7 @@ def solve_for_A_B(A: np.array, B: np.array, X: np.array, org_dat: np.array,
     return A, B
 
 
-def update_row(M1: np.array, M2: np.array, X: np.array, I: int, col_row: int):
+def update_row(M1: np.array, M2: np.array, X: np.array, R: int, col_row: int):
     """Function updates row I of matrix M1 according to the BPCA algorithm
     found in Chemometrics 2007; 21: 547–556 #DOI: 10.1002/cem . This is used
     to update rows in both "A" and "B", if updating A then M1=A and col_row=0,
@@ -457,29 +457,29 @@ def update_row(M1: np.array, M2: np.array, X: np.array, I: int, col_row: int):
     #or a row of the original matrix B which are col_row=0,1 respectively
     if col_row == 0:
         #Algorithm requires rows of X bounds
-        X_low = X_low[I]
-        X_high = X_high[I]      
+        X_low = X_low[R]
+        X_high = X_high[R]      
     elif col_row == 1:
-        #Algorithm requires columns of X bounds
-        X_low = X_low[:,I]
-        X_high = X_high[:,I]
+        # Algorithm requires columns of X bounds
+        X_low = X_low[:, R]
+        X_high = X_high[:, R]
 
-    #seeking optimal row M1[I] in boundaries now
-    W = M1[I]
-    #Initial guess for V, not expected to be accurate
-    V = np.zeros((10,1))
+    # seeking optimal row M1[R] in boundaries now
+    W = M1[R]
+    # Initial guess for V, not expected to be accurate
+    V = np.zeros((10, 1))
     G = np.c_[M2, -M2] 
     h = np.c_[X_low, -X_high]
-    #As in paper, let S = Qy-P_i.T*v to get to a LDP problem as follows
-    #min||s||**2 + ||p_2.T*v||**2 s.t. GRQ^1s > h -GRQ^-1P_1'*v
+    # As in paper, let S = Qy-P_i.T*v to get to a LDP problem as follows
+    # min||s||**2 + ||p_2.T*v||**2 s.t. GRQ^1s > h -GRQ^-1P_1'*v
     Z, R_minus1, f_1, LDP_const, new_bounds = LSI_to_LDP(G, h, M2, W, V)
 
-    #LDP problem Iz>=L is r = Eu -f where column vec E= [I.T, L.T], f = vec
-    #let I=new_bounds[1], L=new_bounds[0], can use to find Z
+    # LDP problem Rz>=L is r = Eu -f where column vec E= [R.T, L.T], f = vec
+    # let R=new_bounds[1], L=new_bounds[0], can use to find Z
     u_vec, r_vec, resid = LDP_to_NNLS_sol(new_bounds[1], new_bounds[0])
     
     #Algorithm from "Solving Least Squares Problems indicates that vector Z is
-    #given by I.T * u_vec * norm(r_vec)**-2"
+    #given by R.T * u_vec * norm(r_vec)**-2"
     r_norm = norm(r_vec)
     r_minus2 = r_norm**(-2)
     Ur = np.multiply(u_vec, r_minus2)
@@ -544,19 +544,19 @@ def LSI_to_LDP(G: np.array, h: np.array, E: np.array, w: np.array, F: np.array):
         boundaries for the LDP problem to adhere to.
     """
 
-    #Decompose matrix E
+    # Decompose matrix E
     Q, R, K_t = np.linalg.svd(E, full_matrices=True) 
     R = diagsvd(R, Q.shape[-1], K_t.shape[0]) 
     reconst = np.matmul(R, K_t)
     reconst = np.matmul(Q, reconst)
-    n_size = K_t.shape[0] #m
+    n_size = K_t.shape[0]  # m
     w = check_shape(w)
-    #let w=Ky as in "Solving Least Squares by Charles Lawson and
-    #Richard Henson, chapter 23"
+    # let w=Ky as in "Solving Least Squares by Charles Lawson and
+    # Richard Henson, chapter 23"
     K_t, w = pad_matrices(K_t, w)
     y = np.matmul(K_t, w)
  
-    #Let z = Ry-Q_1.T*f  s.t. our problem is now min z ||z||**2 ||Q_2.T v||**2
+    # Let z = Ry-Q_1.T*f  s.t. our problem is now min z ||z||**2 ||Q_2.T v||**2
     # s.t. GK(R^-1)*z >= h - GK(R^-1)*(Q_1.T)*f
     h_padded, g_padded = pad_to_subtract(h.T, G.T) 
  
@@ -571,14 +571,14 @@ def LSI_to_LDP(G: np.array, h: np.array, E: np.array, w: np.array, F: np.array):
     f_1 = np.matmul(Q_1_padded_T, F_padded) 
     Ry_padded, f1_padded = pad_to_subtract(Ry, f_1)
     z_LDP = np.subtract(Ry_padded, f1_padded)
-    Z = [Ry_padded, f1_padded] # will be passed back to be treated as LDP 
+    Z = [Ry_padded, f1_padded]  # will be passed back to be treated as LDP 
 
-    #calc constant
+    # calc constant
     Q_2_padded_T, F_padded = pad_matrices(Q_2.T, F)
     f_2 = np.matmul(Q_2_padded_T, F_padded)
     LDP_const = np.square(np.linalg.norm(f_2))
 
-    #Calulate new, transformed boundaries
+    # Calulate new, transformed boundaries
     G, K = pad_matrices(G, K_t.T)
     GK = np.matmul(G, K)
     #R may not be square, check and calculate pseudoinverse instead of
@@ -624,14 +624,14 @@ def LDP_to_NNLS_sol(G: np.array, h: np.array):
         of the LDP problem that was converted to NNLS form.
     resid : (float) The residual value for the solution vector u."""
 
-    ht_padded, gt_padded = h.T, G.T #pad_to_subtract(h.T, G.T)
+    ht_padded, gt_padded = h.T, G.T  # pad_to_subtract(h.T, G.T)
     E = np.vstack((gt_padded, ht_padded))
     n = E.shape[0]
     f = np.zeros((n-1))
     f = np.append(f, [1])
     f = f.T   
-    #can now use NNLS to compute an m-vector, u, to solve NNLS problem:
-    #Minimize ||Eu — f|| subject to  u>=0
+    # can now use NNLS to compute an m-vector, u, to solve NNLS problem:
+    # Minimize ||Eu — f|| subject to  u>=0
     reg_nnls = lsq_linear(E, f, bounds=(0, np.inf))
     u = reg_nnls.x
     resid = reg_nnls.fun
@@ -645,7 +645,7 @@ def LDP_to_NNLS_sol(G: np.array, h: np.array):
     return u, r, resid
 
 
-def check_xi_bounds(X: np.array, I: float, A: np.array, B: np.array, row_col: int):
+def check_xi_bounds(X: np.array, R: float, A: np.array, B: np.array, row_col: int):
     """Function to check if the new row found for matrix A obeys the
     necessary boundary conditions for acceptance, else raises an error. row_col 
     determines whether bounds are being checked using the rows or columns of X.
@@ -654,7 +654,7 @@ def check_xi_bounds(X: np.array, I: float, A: np.array, B: np.array, row_col: in
     ----
     X : (ndarray of arrays) Contains two matrices, the upper and lower bounds
         on the update of either A or B. 
-    I : (ndarray of floats) the 'partner matrix' i.e. either B or A, needed
+    R : (ndarray of floats) the 'partner matrix' i.e. either B or A, needed
         to calculate the update to the first matrix.
     A : (ndarray of floats) The updated matrix, either A or B depending on 
         stage of algorithm.
@@ -671,15 +671,15 @@ def check_xi_bounds(X: np.array, I: float, A: np.array, B: np.array, row_col: in
     X_low = X[0]
     X_high = X[1]
     if row_col == 0:
-        X_low = X_low[I]
-        X_high = X_high[I]
+        X_low = X_low[R]
+        X_high = X_high[R]
     elif row_col == 1:
-        X_low = X_low[:,I]
-        X_high = X_high[:,I]
+        X_low = X_low[:,R]
+        X_high = X_high[:,R]
     
     Row_Xi = check_shape(X_low)
     Col_Xi = check_shape(X_high)
-    A_i = A[I]
+    A_i = A[R]
     A_i = check_shape(A_i)
     Ai_T, B_T = pad_matrices(A_i.T, B.T)
     AiB_T = np.matmul(Ai_T, B_T)
@@ -687,8 +687,8 @@ def check_xi_bounds(X: np.array, I: float, A: np.array, B: np.array, row_col: in
     X_high = check_shape(X_high)
     low_check = X_low <= AiB_T
     high_check = X_high >= AiB_T
-    contains_false = ((low_check == False).any() or
-                      (high_check == False).any())
+    contains_false = ((low_check is False).any() or
+                      (high_check is False).any())
 
     if contains_false:
         raise ValueError("Boundary conditions violated during 'check_xi_bounds'!")

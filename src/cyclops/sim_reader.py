@@ -8,9 +8,9 @@ Handle reading simulation data into usable planes.
 import alphashape
 import numpy as np
 import meshio
-from descartes import PolygonPatch
+#from descartes import PolygonPatch
 from skspatial.objects import Plane
-from scipy.spatial import Delaunay
+#from scipy.spatial import Delaunay
 from random import uniform
 
 
@@ -82,8 +82,6 @@ class Unfolder:
     Performs a number of operations on the position arrays produced by
     reading in a given mesh.
     """
-
-
     def find_bounds(self, point_cloud: np.ndarray, points_per_plane: int
                     ) -> np.ndarray[float]:
         """Function finds the the upper and lower bounds enclosing an array of
@@ -101,8 +99,7 @@ class Unfolder:
         lower_bounds : (ndarray of floats) and array of the lower bound
             coordinates for the given points/mesh.
         """
-
-        #Find optimal polygon to encompass points
+        # Find optimal polygon to encompass points
         alpha_shape = alphashape.alphashape(point_cloud)
         shape_points = alpha_shape.vertices
 
@@ -207,7 +204,8 @@ class Dim_reduction:
 
 
     def BPCA_data_prep(self, loaded_mesh: MeshReader, point_sets: list(),
-                        measureable: str) -> np.ndarray[float]:
+                        measureable: str, vec_or_scale: str, k: float
+                        ) -> np.ndarray[float]:
         """Prepares input data to be handled by the BPCA function, i.e.
         matrices with columns "X,Y,Z" and "I" where I is the property being
         measured, temperature for example. Iterates over the different
@@ -217,29 +215,48 @@ class Dim_reduction:
         lower bound matrices of the same size and shape as the data matrix.
 
         Args:
-        ----
+        -----
         loaded_mesh : (meshio file that has been read in)
-        sim_reader.MeshReader object containing 3D points and associated
-        values.
+            sim_reader.MeshReader object containing 3D points and associated
+            values.
         point_sets : (list of strings) the names of the different sections of
-        the data mesh, needed to access said data.
+            the data mesh, needed to access said data.
         measurable : (string) the name of the measured property, i.e.
-        'temperature'
+            'temperature'
+        vec_or_scale : (string) either 'vector' or 'scalar', indicating the
+            type of field the 'measureable' is.
+        k : (float) the number of points to generate on each triangle making
+            up the shape of the mesh. These points will serve as boundary
+            conditions for those triangles. A larger k will be more
+            representative but also take longer to calculate. 
 
         Returns:
-        -------
+        --------
         reduced_matrix : (np.ndarray[float]) n by 2 array of n 2D position vectors.
         """
-        
-        data_matrix = []
-        upper_bound_matrix = []
-        lower_bound_matrix = []
+        #Need to implement 'read_vector' correctly in MeshReader so that
+        #vectors can be processed.
+        data_matrix = np.c_()
+        upper_bound_matrix = np.c_()
+        lower_bound_matrix = np.c_()
+        measured_field = np.c_()
         for pos in point_sets:
             pos_3D = loaded_mesh.read_pos(pos)
-            bounds = Unfolder.find_bounds(pos_3D, 10)
+            if vec_or_scale == 'scalar':
+                field = MeshReader.read_scalar(pos, measureable).reshape(-1,1)
+            measured_field.append(field)
+            # elif vec_or_scale == 'vector':
+            #     field = MeshReader.read_vector(pos, measureable)
+            bounds = Unfolder.find_bounds(pos_3D, k)
+
+            upper_bound_matrix.append(bounds[0])
+            lower_bound_matrix.append(bounds[1])
             data_matrix.append(pos_3D)
 
-
+        data_matrix = np.array(data_matrix)
+        upper_bound_matrix = np.array(upper_bound_matrix)
+        lower_bound_matrix = np.array(lower_bound_matrix)
+        measured_field = np.array(measured_field)
 
         #return reduced_matrix
 
