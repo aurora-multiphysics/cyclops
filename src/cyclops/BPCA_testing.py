@@ -335,6 +335,7 @@ def solve_for_A_B(A: np.array, B: np.array, X: np.array, org_dat: np.array,
     AB_T = np.matmul(A, B_T)
     X_lo = X[0] 
     X_hi = X[1]
+    #for i in range(X_hi.shape(-1)):
     lo_check = X_lo <= AB_T
     hi_check = X_hi >= AB_T
     contains_false = ((lo_check == False).any() or

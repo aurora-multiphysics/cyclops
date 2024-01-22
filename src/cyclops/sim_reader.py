@@ -11,6 +11,7 @@ import meshio
 from descartes import PolygonPatch
 from skspatial.objects import Plane
 from scipy.spatial import Delaunay
+from random import uniform
 
 
 class MeshReader:
@@ -35,20 +36,22 @@ class MeshReader:
         print("Loaded mesh: ", self.__mesh)
 
     def read_pos(self, set_name: str) -> np.ndarray[float]:
-        """Read and record the points described by current region in a numpy
+        """Reads and records the points described by given region in a numpy
         array.
 
         Args:
-            set_name (str): region name.
+        -----
+        set_name : (str) the current region name.
 
         Returns:
-            np.ndarray[float]: n by d array of n positions with d dimensions.
+        --------
+        np.ndarray : (float) n by d array of n positions with d dimensions.
         """
         points = []
         print("now reading positions in...")
         for point_index in self.__mesh.point_sets[set_name]:
             points.append(self.__mesh.points[point_index])
-        #print("                        ")
+        print("                        ")
         return np.array(points)
 
     def read_scalar(
@@ -80,8 +83,131 @@ class Unfolder:
     reading in a given mesh.
     """
 
+
+    def find_bounds(self, point_cloud: np.ndarray, points_per_plane: int
+                    ) -> np.ndarray[float]:
+        """Function finds the the upper and lower bounds enclosing an array of
+        points from a given mesh.
+
+        Args:
+        -----
+        point_cloud : (np.ndarray) an array of 3D points from a section of the
+            overall mesh, or the full mesh if it contains only one point set.
+
+        Returns:
+        --------
+        upper_bounds : (ndarray of floats) an array of the upper bound
+            coordinates for the given points/mesh.
+        lower_bounds : (ndarray of floats) and array of the lower bound
+            coordinates for the given points/mesh.
+        """
+
+        #Find optimal polygon to encompass points
+        alpha_shape = alphashape.alphashape(point_cloud)
+        shape_points = alpha_shape.vertices
+
+        def triangle_side(p1, p2, a, b):
+            """Function to check if a point is on the correct side of two
+            lines along a triangle to be inside that triangle."""
+
+            cp1 = np.cross(b-a, p1-a)
+            cp2 = np.cross(b-a, p2-a)
+            if np.dot(cp1, cp2) >= 0:
+                return True
+            else:
+                return False
+
+        def PointInTri(p, a, b, c):
+            """Function to check if a point p is inside triangle abc"""
+            if triangle_side(p, a, b, c) and triangle_side(p, b, a, c) and \
+                triangle_side(p, c, a, b):
+                return True
+            else:
+                return False
+
+        #Get plane equation for each constituent plane
+        for triangle in alpha_shape.triangles:
+            x_vals = triangle[:,0]
+            y_vals = triangle[:,1]
+            z_vals = triangle[:,2]
+            plane = Plane.best_fit(triangle)
+            #coefficients in form, (a, b, c, d) where these correspond to the
+            #plane eqn ax + by + cz + d = 0
+            a, b, c, d = plane.cartesian()
+            plane_points = ()
+            while len(plane_points) < points_per_plane:
+                x = uniform(min(x_vals), max(x_vals))
+                y = uniform(min(y_vals), max(y_vals))
+                z = (a*x + b*y + d)/c
+                tri_pt0 = (x_vals[0], y_vals[0], z_vals[0])
+                tri_pt1 = (x_vals[1], y_vals[1], z_vals[1])
+                tri_pt2 = (x_vals[2], y_vals[2], z_vals[2])
+                new_pt = (x, y, z)
+                if PointInTri(new_pt, tri_pt0, tri_pt1, tri_pt2):
+                    plane_points.append(new_pt)
+            
+            z_median = np.median(point_cloud[:,2])
+
+        def split_bounds(plane_points: list, z_median: float):
+            """Function determines which surface points will be used as upper
+            and lower bounds for the mesh. Default behaviour is to split along
+            the plane z = z_median, where z_median is the median value of the 
+            z coordinates of all the data points. User will be prompted to 
+            provide an alternative plane to cut along in the form of a plane
+            eqn ax + by + cz + d = 0 should they wish to do so.
+            
+            Args:
+            -----
+            plane_points : (list of floats) a list of points on the surface of
+                the mesh used to define the boundary conditions of said mesh.
+            z_median : (float) the median z-coordinate value of the original
+                cloud of data points.
+            
+            Returns:
+            --------
+            upper_bounds : (ndarray of floats) an array of the upper bound
+                coordinates for the given mesh.
+            lower_bounds : (ndarray of floats) and array of the lower bound
+                coordinates for the given mesh.
+            """
+
+            #Determining plane eqn to cut along
+            use_nondefault = input("Would you like to chose a plane to split \
+                                   the boundary conditions on? Enter 'y' \
+                                   for yes or 'n' for no.")
+            if use_nondefault == "y":
+                a, b, c, d = input("Please enter the coefficients a, b, c, d \
+                                   for the plane equation, ax + by + cz + d =\
+                                   0 With each value separated by a comma")
+            elif use_nondefault == "n":
+                a, b, c, d = 0, 0, z_median, 0
+            
+            upper_bounds = []
+            lower_bounds = []
+
+            for entry in plane_points:
+                if entry[0][0] >= a and entry[0][1] >= b and entry[0][2] >= c:
+                    upper_bounds.append(entry)
+                else:
+                    lower_bounds.append(entry)
+            
+            return upper_bounds, lower_bounds
+            
+        upper_boundaries, lower_boundaries = split_bounds(plane_points, z_median)
+        return (upper_boundaries, lower_boundaries)
+    
+
+class Dim_reduction:
+    """Class for reducing the dimensionality of 3D geometries into lower 
+    dimensional planes.
+
+    Operates on the data points of a loaded meshio mesh and the associated
+    boundaries in order to reduce the number of dimensions.
+    """
+
+
     def BPCA_data_prep(self, loaded_mesh: MeshReader, point_sets: list(),
-                       point_data: list()) -> np.ndarray[float]:
+                        measureable: str) -> np.ndarray[float]:
         """Prepares input data to be handled by the BPCA function, i.e.
         matrices with columns "X,Y,Z" and "I" where I is the property being
         measured, temperature for example. Iterates over the different
@@ -92,126 +218,28 @@ class Unfolder:
 
         Args:
         ----
-        pos_3D : (np.ndarray[float]) n by 3 array of n 3D position vectors.
+        loaded_mesh : (meshio file that has been read in)
+        sim_reader.MeshReader object containing 3D points and associated
+        values.
+        point_sets : (list of strings) the names of the different sections of
+        the data mesh, needed to access said data.
+        measurable : (string) the name of the measured property, i.e.
+        'temperature'
 
         Returns:
         -------
         reduced_matrix : (np.ndarray[float]) n by 2 array of n 2D position vectors.
         """
         
-        points = []
+        data_matrix = []
+        upper_bound_matrix = []
+        lower_bound_matrix = []
         for pos in point_sets:
             pos_3D = loaded_mesh.read_pos(pos)
-            #bounds 
-        #     pos_2D.append(np.array([pos[2], pos[1]]))
+            bounds = Unfolder.find_bounds(pos_3D, 10)
+            data_matrix.append(pos_3D)
+
+
 
         #return reduced_matrix
 
-
-    def compress_2D(self, pos_3D: np.ndarray[float]) -> np.ndarray[float]:
-         #To be deleted
-         """Compress an array of 3D points into 2D points.
-
-         Simple implementation by: (x, y, z) -> (z, y).
-
-         Args:
-             pos_3D (np.ndarray[float]): n by 3 array of n 3D position vectors.
-
-         Returns:
-             np.ndarray[float]: n by 2 array of n 2D position vectors.
-         """
-         pos_2D = []
-         for pos in pos_3D:
-             pos_2D.append(np.array([pos[2], pos[1]]))
-         return np.array(pos_2D)
-
-    def compress_1D(self, points: np.ndarray[float]) -> np.ndarray[float]:
-        #Should be replaced by a more flexible function that calls the BPCA
-         """Compress an array of 2D/3D points into 1D points.
-
-         Works by considering the distances between each point vector.
-
-         Args:
-             points (np.ndarray[float]): n by 2 (or 3) array of n 2D (or 3D)
-                 position vectors.
-
-         Returns:
-             np.ndarray[float]: n by 1 array of n 1D position vectors.
-         """
-         sub = np.zeros(points.shape)
-         for i, pos in enumerate(points[:-1]):
-             sub[i + 1] = pos
-         diff = points - sub
-         diff[0] = np.zeros(diff[0].shape)
-         out_arr = np.sqrt((diff * diff).sum(axis=1))
-         out_arr = np.cumsum(out_arr)
-         return out_arr.reshape(-1, 1)
-
-    def generate_grid(
-        self, bounds: np.ndarray[float], num_x: int, num_y: int
-    ) -> np.ndarray[float]:
-        #Need to make 3D
-        """Generate a rectangular grid of values in the bounded region.
-
-        Args:
-            bounds (np.ndarray[float]): of the form [[x1, y1], [x2, y2]].
-            num_x (int): number of points in the x direction.
-            num_y (int): number of points in the y direction.
-
-        Returns:
-            np.ndarray[float]: array of 2D positions.
-        """
-        (min_x, min_y), (max_x, max_y) = bounds
-        x_values = np.linspace(min_x, max_x, num_x).reshape(-1)
-        y_values = np.linspace(min_y, max_y, num_y).reshape(-1)
-
-        grid_pos = []
-        for x in x_values[1:-1]:
-            for y in y_values[1:-1]:
-                grid_pos.append(np.array([x, y]))
-        return np.array(grid_pos)
-
-    def generate_line(
-        self, pos1: np.ndarray[float], pos2: np.ndarray[float], num_points: int
-    ) -> np.ndarray[float]:
-        #Not sure the purpose of this)
-        """Generate a 2D line between two 3D positions.
-
-        Args:
-            pos1 (np.ndarray[float]): start position of the form [x1, y1, z1].
-            pos2 (np.ndarray[float]): end position of the form [x2, y2, z2].
-            num_points (int): number of points in the line.
-
-        Returns:
-            np.ndarray[float]: n by 2 array where n=num_points.
-        """
-        x_values = np.linspace(pos1[0], pos2[0], num_points).reshape(-1, 1)
-        y_values = np.linspace(pos1[1], pos2[1], num_points).reshape(-1, 1)
-        line_pos = np.concatenate((x_values, y_values), axis=1)
-        return line_pos
-
-    def find_bounds(self, point_cloud: np.ndarray) -> np.ndarray[float]:
-        #Need to make 3D and cover non rectangular shapes
-        """Return the rectangular bounds enclosing an array of positions.
-
-        Args:
-            pos_2D (np.ndarray): n by 2 array.
-
-        Returns:
-            np.ndarray[float]: of the form [[x1, y1], [x2, y2]].
-        """
-        #Find optimal polygon to encompass points
-        alpha_shape = alphashape.alphashape(point_cloud)
-        shape_points = alpha_shape.vertices
-        
-        #Get plane equation for each constituent plane
-        for triangle in alpha_shape.triangles:
-            plane = Plane.best_fit(triangle)
-            coefficients = plane.cartesian()
-
-
-        # min_x = np.min(shape_points[:, 0])
-        # max_x = np.max(shape_points[:, 0])
-        # min_y = np.min(shape_points[:, 1])
-        # max_y = np.max(shape_points[:, 1])
-        # return np.array([[min_x, min_y], [max_x, max_y]])
