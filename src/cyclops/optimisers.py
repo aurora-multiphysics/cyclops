@@ -25,7 +25,7 @@ class Problem(ElementwiseProblem):
         num_obj: int,
         loss_function: callable,
         bounds: np.ndarray,
-        **kwargs
+        **kwargs,
     ) -> None:
         """Set up the problem.
 
@@ -38,20 +38,12 @@ class Problem(ElementwiseProblem):
                 domain.
         """
         super().__init__(
-            n_var=num_dim,
-            n_obj=num_obj,
-            xl=bounds[0],
-            xu=bounds[1],
-            **kwargs
+            n_var=num_dim, n_obj=num_obj, xl=bounds[0], xu=bounds[1], **kwargs
         )
         self.__loss_function = loss_function
 
     def _evaluate(
-        self,
-        optim_array: np.ndarray[float],
-        out: dict,
-        *args: any,
-        **kwargs: any
+        self, optim_array: np.ndarray[float], out: dict, *args: any, **kwargs: any
     ) -> None:
         """Evaluate the loss function.
 
@@ -73,7 +65,7 @@ class Optimiser:
             time_limit (str): the maximum time the optimiser should run for.
             algorithm (any): the kind of optimiser.
         """
-        #Remove time_limit and replace with convergence conditions
+        # Remove time_limit and replace with convergence conditions
         self._limit = get_termination("time", time_limit)
         self._algorithm = algorithm
 

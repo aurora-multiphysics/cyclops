@@ -112,22 +112,16 @@ class PlotManager:
         max_val = max(np.max(true_temps), np.max(model_temps))
         value_range = (min_val, max_val)
         ax_1.set_title("Simulation field")
-        self.plot_contour_field(
-            ax_1, all_positions, true_temps, value_range
-        )
+        self.plot_contour_field(ax_1, all_positions, true_temps, value_range)
 
         ax_2.set_title("Predicted field")
         ax_2.sharey(ax_1)
-        cp_2 = self.plot_contour_field(
-            ax_2, all_positions, model_temps, value_range
-        )
+        cp_2 = self.plot_contour_field(ax_2, all_positions, model_temps, value_range)
         self.plot_sensor_positions(ax_2, sensor_positions)
 
         ax_3.set_title("Errors in field reconstruction")
         differences = np.abs(true_temps - model_temps)
-        cp_3 = self.plot_field_errors(
-            ax_3, all_positions, differences.reshape(-1)
-        )
+        cp_3 = self.plot_field_errors(ax_3, all_positions, differences.reshape(-1))
 
         fig_1.colorbar(cp_2, ax=[ax_1, ax_2])
         fig_1.colorbar(cp_3)
@@ -151,12 +145,8 @@ class PlotManager:
         )
         return fig
 
-    def scatter_sensors(
-        self, ax, sensor_positions, sensor_values, pen=("black", "*")
-    ):
-        ax.scatter(
-            sensor_positions, sensor_values, s=20, color=pen[0], marker=pen[1]
-        )
+    def scatter_sensors(self, ax, sensor_positions, sensor_values, pen=("black", "*")):
+        ax.scatter(sensor_positions, sensor_values, s=20, color=pen[0], marker=pen[1])
         ax.legend()
 
     def plot_contour_field(self, ax, positions, field_values, value_range):
@@ -209,9 +199,7 @@ class PlotManager:
 
     def build_optimisation(self, history):
         # Draw the optimisation progress chart
-        n_evals, average_loss, min_loss = self.get_optimisation_history(
-            history
-        )
+        n_evals, average_loss, min_loss = self.get_optimisation_history(history)
         fig, ax = plt.subplots(figsize=(8, 6))
         ax.set_yscale("log")
         ax.plot(n_evals, average_loss, label="average loss")
@@ -223,9 +211,7 @@ class PlotManager:
 
     def build_pareto(self, F):
         fig, ax = plt.subplots(figsize=(8, 6))
-        ax.scatter(
-            F[:, 0], F[:, 1], s=30, facecolors="none", edgecolors="blue"
-        )
+        ax.scatter(F[:, 0], F[:, 1], s=30, facecolors="none", edgecolors="blue")
         ax.set_xlabel("Expected loss")
         ax.set_ylabel("Failed experiment chance")
         ax.set_title("Pareto front")

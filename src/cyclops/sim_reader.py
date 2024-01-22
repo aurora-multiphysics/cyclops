@@ -8,9 +8,11 @@ Handle reading simulation data into usable planes.
 import alphashape
 import numpy as np
 import meshio
-#from descartes import PolygonPatch
+
+# from descartes import PolygonPatch
 from skspatial.objects import Plane
-#from scipy.spatial import Delaunay
+
+# from scipy.spatial import Delaunay
 from random import uniform
 
 
@@ -54,9 +56,7 @@ class MeshReader:
         print("                        ")
         return np.array(points)
 
-    def read_scalar(
-        self, set_name: str, scalar_name: str
-    ) -> np.ndarray[float]:
+    def read_scalar(self, set_name: str, scalar_name: str) -> np.ndarray[float]:
         """Find values of named scalar at the points specified by region name.
 
         Args:
@@ -82,8 +82,10 @@ class Unfolder:
     Performs a number of operations on the position arrays produced by
     reading in a given mesh.
     """
-    def find_bounds(self, point_cloud: np.ndarray, points_per_plane: int
-                    ) -> np.ndarray[float]:
+
+    def find_bounds(
+        self, point_cloud: np.ndarray, points_per_plane: int
+    ) -> np.ndarray[float]:
         """Function finds the the upper and lower bounds enclosing an array of
         points from a given mesh.
 
@@ -101,14 +103,13 @@ class Unfolder:
         """
         # Find optimal polygon to encompass points
         alpha_shape = alphashape.alphashape(point_cloud)
-        shape_points = alpha_shape.vertices
 
         def triangle_side(p1, p2, a, b):
             """Function to check if a point is on the correct side of two
             lines along a triangle to be inside that triangle."""
 
-            cp1 = np.cross(b-a, p1-a)
-            cp2 = np.cross(b-a, p2-a)
+            cp1 = np.cross(b - a, p1 - a)
+            cp2 = np.cross(b - a, p2 - a)
             if np.dot(cp1, cp2) >= 0:
                 return True
             else:
@@ -116,50 +117,53 @@ class Unfolder:
 
         def PointInTri(p, a, b, c):
             """Function to check if a point p is inside triangle abc"""
-            if triangle_side(p, a, b, c) and triangle_side(p, b, a, c) and \
-                triangle_side(p, c, a, b):
+            if (
+                triangle_side(p, a, b, c)
+                and triangle_side(p, b, a, c)
+                and triangle_side(p, c, a, b)
+            ):
                 return True
             else:
                 return False
 
-        #Get plane equation for each constituent plane
+        # Get plane equation for each constituent plane
         for triangle in alpha_shape.triangles:
-            x_vals = triangle[:,0]
-            y_vals = triangle[:,1]
-            z_vals = triangle[:,2]
+            x_vals = triangle[:, 0]
+            y_vals = triangle[:, 1]
+            z_vals = triangle[:, 2]
             plane = Plane.best_fit(triangle)
-            #coefficients in form, (a, b, c, d) where these correspond to the
-            #plane eqn ax + by + cz + d = 0
+            # coefficients in form, (a, b, c, d) where these correspond to the
+            # plane eqn ax + by + cz + d = 0
             a, b, c, d = plane.cartesian()
             plane_points = ()
             while len(plane_points) < points_per_plane:
                 x = uniform(min(x_vals), max(x_vals))
                 y = uniform(min(y_vals), max(y_vals))
-                z = (a*x + b*y + d)/c
+                z = (a * x + b * y + d) / c
                 tri_pt0 = (x_vals[0], y_vals[0], z_vals[0])
                 tri_pt1 = (x_vals[1], y_vals[1], z_vals[1])
                 tri_pt2 = (x_vals[2], y_vals[2], z_vals[2])
                 new_pt = (x, y, z)
                 if PointInTri(new_pt, tri_pt0, tri_pt1, tri_pt2):
                     plane_points.append(new_pt)
-            
-            z_median = np.median(point_cloud[:,2])
+
+            z_median = np.median(point_cloud[:, 2])
 
         def split_bounds(plane_points: list, z_median: float):
             """Function determines which surface points will be used as upper
             and lower bounds for the mesh. Default behaviour is to split along
-            the plane z = z_median, where z_median is the median value of the 
-            z coordinates of all the data points. User will be prompted to 
+            the plane z = z_median, where z_median is the median value of the
+            z coordinates of all the data points. User will be prompted to
             provide an alternative plane to cut along in the form of a plane
             eqn ax + by + cz + d = 0 should they wish to do so.
-            
+
             Args:
             -----
             plane_points : (list of floats) a list of points on the surface of
                 the mesh used to define the boundary conditions of said mesh.
             z_median : (float) the median z-coordinate value of the original
                 cloud of data points.
-            
+
             Returns:
             --------
             upper_bounds : (ndarray of floats) an array of the upper bound
@@ -168,17 +172,21 @@ class Unfolder:
                 coordinates for the given mesh.
             """
 
-            #Determining plane eqn to cut along
-            use_nondefault = input("Would you like to chose a plane to split \
+            # Determining plane eqn to cut along
+            use_nondefault = input(
+                "Would you like to chose a plane to split \
                                    the boundary conditions on? Enter 'y' \
-                                   for yes or 'n' for no.")
+                                   for yes or 'n' for no."
+            )
             if use_nondefault == "y":
-                a, b, c, d = input("Please enter the coefficients a, b, c, d \
+                a, b, c, d = input(
+                    "Please enter the coefficients a, b, c, d \
                                    for the plane equation, ax + by + cz + d =\
-                                   0 With each value separated by a comma")
+                                   0 With each value separated by a comma"
+                )
             elif use_nondefault == "n":
                 a, b, c, d = 0, 0, z_median, 0
-            
+
             upper_bounds = []
             lower_bounds = []
 
@@ -187,25 +195,30 @@ class Unfolder:
                     upper_bounds.append(entry)
                 else:
                     lower_bounds.append(entry)
-            
+
             return upper_bounds, lower_bounds
-            
-        upper_boundaries, lower_boundaries = split_bounds(plane_points, z_median)
+
+        upper_boundaries, lower_boundaries = split_bounds(plane_points,
+                                                          z_median)
         return (upper_boundaries, lower_boundaries)
-    
+
 
 class Dim_reduction:
-    """Class for reducing the dimensionality of 3D geometries into lower 
+    """Class for reducing the dimensionality of 3D geometries into lower
     dimensional planes.
 
     Operates on the data points of a loaded meshio mesh and the associated
     boundaries in order to reduce the number of dimensions.
     """
 
-
-    def BPCA_data_prep(self, loaded_mesh: MeshReader, point_sets: list(),
-                        measureable: str, vec_or_scale: str, k: float
-                        ) -> np.ndarray[float]:
+    def BPCA_data_prep(
+        self,
+        loaded_mesh: MeshReader,
+        point_sets: list(),
+        measureable: str,
+        vec_or_scale: str,
+        k: float,
+    ) -> np.ndarray[float]:
         """Prepares input data to be handled by the BPCA function, i.e.
         matrices with columns "X,Y,Z" and "I" where I is the property being
         measured, temperature for example. Iterates over the different
@@ -228,22 +241,22 @@ class Dim_reduction:
         k : (float) the number of points to generate on each triangle making
             up the shape of the mesh. These points will serve as boundary
             conditions for those triangles. A larger k will be more
-            representative but also take longer to calculate. 
+            representative but also take longer to calculate.
 
         Returns:
         --------
         reduced_matrix : (np.ndarray[float]) n by 2 array of n 2D position vectors.
         """
-        #Need to implement 'read_vector' correctly in MeshReader so that
-        #vectors can be processed.
+        # Need to implement 'read_vector' correctly in MeshReader so that
+        # vectors can be processed.
         data_matrix = np.c_()
         upper_bound_matrix = np.c_()
         lower_bound_matrix = np.c_()
         measured_field = np.c_()
         for pos in point_sets:
             pos_3D = loaded_mesh.read_pos(pos)
-            if vec_or_scale == 'scalar':
-                field = MeshReader.read_scalar(pos, measureable).reshape(-1,1)
+            if vec_or_scale == "scalar":
+                field = MeshReader.read_scalar(pos, measureable).reshape(-1, 1)
             measured_field.append(field)
             # elif vec_or_scale == 'vector':
             #     field = MeshReader.read_vector(pos, measureable)
@@ -258,5 +271,4 @@ class Dim_reduction:
         lower_bound_matrix = np.array(lower_bound_matrix)
         measured_field = np.array(measured_field)
 
-        #return reduced_matrix
-
+        # return reduced_matrix

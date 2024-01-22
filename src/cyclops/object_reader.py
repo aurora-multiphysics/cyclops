@@ -12,9 +12,7 @@ import pathlib
 class PickleManager:
     """Read and write .pickle files."""
 
-    def save_file(
-        self, file_path: str, object_to_save: object
-    ) -> None:
+    def save_file(self, file_path: str, object_to_save: object) -> None:
         """Serialise an object instance to a .pickle file.
 
         Args:

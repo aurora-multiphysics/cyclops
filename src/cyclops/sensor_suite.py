@@ -17,9 +17,8 @@ class SensorSuite:
     Holds the sensors and allows a field to be predicted from the sensor data.
     """
 
-    def __init__(
-        self, field: Field, sensors: np.ndarray[Sensor], symmetry=[]
-    ) -> None:
+    def __init__(self, field: Field, sensors: np.ndarray[Sensor], symmetry=[]
+                 ) -> None:
         """Initialise class instance.
 
         Args:
@@ -29,8 +28,8 @@ class SensorSuite:
             symmetry (list, optional): list of symmetry assumptions. Defaults
                 to [].
         """
-        #Either remove symmetry related variables or update them to check for
-        #a suitable symmetry in the points passed to it
+        # Either remove symmetry related variables or update them to check for
+        # a suitable symmetry in the points passed to it
         self.__field = field
         self.__sensors = sensors
         self.__num_sensors = len(self.__sensors)
@@ -38,8 +37,7 @@ class SensorSuite:
 
         self.__active_sensors = np.full(self.__num_sensors, True)
         self.__sensor_pos = np.zeros(
-            (self.__num_sensors, self.__field.get_dim())
-        )
+            (self.__num_sensors, self.__field.get_dim()))
 
     def set_active_sensors(self, active_sensors: np.ndarray[bool]):
         """Set which sensors are active.
@@ -48,7 +46,7 @@ class SensorSuite:
             active_sensors (np.ndarray[bool]): array of booleans to show which
                 sensors are off or on.
         """
-        #Change terminology to be clearer
+        # Change terminology to be clearer
         self.__active_sensors = active_sensors
 
     def set_sensor_pos(self, sensor_pos: np.ndarray[float]):
@@ -67,7 +65,7 @@ class SensorSuite:
             np.ndarray[float]: n by d array of n positions of d dimensions to
                 sample from.
         """
-        #Update docstring to reflect true output
+        # Update docstring to reflect true output
         absolute_sites = []
         for i, sensor in enumerate(self.__sensors):
             sites = sensor.get_input_sites(self.__sensor_pos[i])
@@ -162,7 +160,8 @@ class SymmetryManager:
     Allows assumptions about the symmetry of a field to be built into the
     predicted field.
     """
-    #Needs overhaul or removal
+
+    # Needs overhaul or removal
     def __init__(self) -> None:
         """Initialise class instance."""
         self.__x_point = 0
@@ -246,9 +245,7 @@ class SymmetryManager:
         """
         m = self.__grad
         reflect_matrix = (
-            1
-            / (1 + m ** 2)
-            * np.array([[1 - m ** 2, 2 * m], [2 * m, m ** 2 - 1]])
+            1 / (1 + m**2) * np.array([[1 - m**2, 2 * m], [2 * m, m**2 - 1]])
         )
         reflected_arr = np.apply_along_axis(reflect_matrix.dot, 0, pos.T)
         return np.concatenate((pos, reflected_arr.T), axis=0)

@@ -42,9 +42,7 @@ class Experiment:
         self.__true_field = true_field
         self.__num_dim = true_field.get_dim()
         self.__comparison_pos = comparison_pos
-        self.__comparison_values = true_field.predict_values(
-            self.__comparison_pos
-        )
+        self.__comparison_values = true_field.predict_values(self.__comparison_pos)
 
         self.__optimiser = optimiser
         self.__sensor_suite = None
@@ -183,9 +181,7 @@ class Experiment:
                 losses[i] = np.max(losses)
 
         expected_loss = np.mean(losses)
-        failure_chance = (
-            losses > self.__loss_limit
-        ).sum() / self.__repetitions
+        failure_chance = (losses > self.__loss_limit).sum() / self.__repetitions
         return [expected_loss, failure_chance]
 
     def calc_SOO_loss(self, sensor_array: np.ndarray[float]) -> list[float]:
@@ -223,14 +219,10 @@ class Experiment:
         site_values = self.__true_field.predict_values(sensor_sites)
         self.__sensor_suite.fit_sensor_model(site_values)
 
-        predicted_values = self.__sensor_suite.predict_data(
-            self.__comparison_pos
-        )
+        predicted_values = self.__sensor_suite.predict_data(self.__comparison_pos)
         return np.mean(np.square(predicted_values - self.__comparison_values))
 
-    def get_SOO_plotting_arrays(
-        self, sensor_array: np.ndarray[float]
-    ) -> tuple:
+    def get_SOO_plotting_arrays(self, sensor_array: np.ndarray[float]) -> tuple:
         """Find the necessary data to plot plots of the potential sensor setup.
 
         Args:
@@ -248,9 +240,7 @@ class Experiment:
         site_values = self.__true_field.predict_values(sensor_sites)
         self.__sensor_suite.fit_sensor_model(site_values)
 
-        predicted_values = self.__sensor_suite.predict_data(
-            self.__comparison_pos
-        )
+        predicted_values = self.__sensor_suite.predict_data(self.__comparison_pos)
         estimated_sensor_values = self.__sensor_suite.predict_data(sensor_pos)
         return (
             sensor_pos,

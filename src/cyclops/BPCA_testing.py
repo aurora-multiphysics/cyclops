@@ -19,12 +19,12 @@ def pad_matrices(matrix1: np.array, matrix2: np.array):
     Args:
     ----
     matrix1 : ndarray with shape (n, m) containing floats. Will be treated
-        as if it were the first matrix in a matrix multiplication, if dim m 
-        is less than the first dim of matrix2 it will be increased to match 
+        as if it were the first matrix in a matrix multiplication, if dim m
+        is less than the first dim of matrix2 it will be increased to match
         the first dim of matrix2 by the addition of columns of zeros.
     matrix2 : ndarray with shape (i, j) containing floats. Will be treated
         as if it were the second matrix in a matrix multiplication, if dim i
-        is less than the second dim of matrix1 it will be increased to match 
+        is less than the second dim of matrix1 it will be increased to match
         the second dim of matrix1 by the addition of rows of zeros.
 
     Returns:
@@ -58,13 +58,13 @@ def pad_matrices(matrix1: np.array, matrix2: np.array):
         zeros = np.zeros((zeros_to_add, cols2))
         padded_matrix2 = np.vstack((matrix2, zeros))
         return matrix1, padded_matrix2
-    
+
 
 def pad_to_subtract(matrix1, matrix2):
     """Function to allow subtraction between matrices of different sizes. Pads
     rows and columns of the matrices to ensure they have the same shape the
     returns these new padded matrices.
-    
+
     Args:
     ----
     matrix1 : (ndarray with shape (n, m) of floats) Will be treated as
@@ -77,7 +77,7 @@ def pad_to_subtract(matrix1, matrix2):
         is smaller than the first dim of matrix1 then it will be increased
         to match first dim of matrix1 by the addition of rows of zeros. The
         same will happen to the rows if there are less than in matrix1.
-    
+
     Returns:
     -------
     Returned variables dependent on relative sizes of input matrices, will
@@ -95,15 +95,13 @@ def pad_to_subtract(matrix1, matrix2):
     # Pad matrix1 with rows to match matrix2 if it has more
     if rows1 < rows2:
         zeros_to_add = rows2 - rows1
-        padded_matrix1 = np.pad(matrix1, pad_width=(
-                                            (0, zeros_to_add), (0, 0)))
+        padded_matrix1 = np.pad(matrix1, pad_width=((0, zeros_to_add), (0, 0)))
         padded_matrix2 = matrix2
     # Pad matrix2 with rows to match matrix1 if it has more
     elif rows1 > rows2:
         zeros_to_add = rows1 - rows2
         padded_matrix1 = matrix1
-        padded_matrix2 = np.pad(matrix2, pad_width=(
-                                            (0, zeros_to_add), (0, 0)))
+        padded_matrix2 = np.pad(matrix2, pad_width=((0, zeros_to_add), (0, 0)))
     else:
         padded_matrix1 = matrix1
         padded_matrix2 = matrix2
@@ -111,14 +109,12 @@ def pad_to_subtract(matrix1, matrix2):
     # Pad matrix1 with columns if matrix2 has more
     if cols1 < cols2:
         zeros_to_add = cols2 - cols1
-        padded_matrix1 = np.pad(padded_matrix1, pad_width=(
-                                                (0, 0), (0, zeros_to_add)))
+        padded_matrix1 = np.pad(padded_matrix1, pad_width=((0, 0), (0, zeros_to_add)))
     # Pad matrix2 with columns if matrix1 has more
     elif cols1 > cols2:
         zeros_to_add = cols1 - cols2
-        padded_matrix2 = np.pad(padded_matrix2, pad_width=(
-                                                (0, 0), (0, zeros_to_add)))
-    
+        padded_matrix2 = np.pad(padded_matrix2, pad_width=((0, 0), (0, zeros_to_add)))
+
     return padded_matrix1, padded_matrix2
 
 
@@ -126,12 +122,12 @@ def inverse_or_pseudo(matrix: np.array):
     """Function attempts to invert the matrix, if this results in an error
     then it finds the pseudo-inverse instead. Both methods used for these
     calculations are from NumPy's linalg module.
-    
+
     Args:
     ----
     matrix : (ndarray of floats) Function will attempt to invert this
         matrix or alternatively find the pseudo-inverse.
-    
+
     Returns:
     -------
     inv_matrix : (ndarray of floats) This is the true inverse of the input
@@ -152,12 +148,12 @@ def inverse_or_pseudo(matrix: np.array):
 def check_shape(n: np.array):
     """Function to ensure 1D arrays have two indices in order to perform
     calculations with them.
-    
+
     Args:
     ----
     n : (ndarray of floats) If n has dimension (m,) then it will be expanded
         to (m,1) in order to allow calculations.
-    
+
     Returns:
     -------
     n : (ndarray of floats) If the input array already had at least 2
@@ -170,10 +166,10 @@ def check_shape(n: np.array):
 
 
 def standardise(input_dims: np.array, X: np.array) -> np.array:
-    """ Takes a dataset and standardises the variance of the different
+    """Takes a dataset and standardises the variance of the different
     dimensions. This is done to prevent bias in a particular direction due to
     the values of the variables in it skewing higher than other directions.
-    
+
     Args:
     ----
     input_dims : (ndarray of floats) Data input with original number of
@@ -184,8 +180,8 @@ def standardise(input_dims: np.array, X: np.array) -> np.array:
         standardised to match the dataset it is associated with, having the
         mean of each of the data columns subtracted from the corresponding
         columns and being divided by the column standard deviation of the
-        same columns. 
-    
+        same columns.
+
     Returns:
     -------
     std_dims : (ndarray of floats) Standardised data created from the
@@ -223,21 +219,16 @@ def standardise(input_dims: np.array, X: np.array) -> np.array:
         array_mean_val = dim_array.mean()
         stdev = np.std(dim_array)
         standised_dim = np.subtract(dim_array, array_mean_val)
-        standised_dim = np.divide(
-                            standised_dim.astype(float), stdev.astype(float))
+        standised_dim = np.divide(standised_dim.astype(float), stdev.astype(float))
         std_dims[:, i] = standised_dim
         mean_val_list.append(array_mean_val)
         stdev_val_list.append(stdev)
         # Performing the same transform on boundary conditions
-        stdhi_cond = np.subtract(hi_array.astype(float),
-                                 array_mean_val.astype(float))
-        stdhi_cond = np.divide(stdhi_cond.astype(float),
-                               stdev.astype(float))
+        stdhi_cond = np.subtract(hi_array.astype(float), array_mean_val.astype(float))
+        stdhi_cond = np.divide(stdhi_cond.astype(float), stdev.astype(float))
         std_hi[:, i] = stdhi_cond
-        stdlo_cond = np.subtract(lo_array.astype(float),
-                                 array_mean_val.astype(float))
-        stdlo_cond = np.divide(stdlo_cond.astype(float),
-                               stdev.astype(float))
+        stdlo_cond = np.subtract(lo_array.astype(float), array_mean_val.astype(float))
+        stdlo_cond = np.divide(stdlo_cond.astype(float), stdev.astype(float))
         std_lo[:, i] = stdlo_cond
         i += 1
     mean_val_list = np.array(mean_val_list)
@@ -253,7 +244,7 @@ def problem_setup(data: np.array, X: np.array, n: int):
     variables for the BPCA algorithm, including performing standardisation,
     SVD and calculation of the component scores and component loading
     matrices.
-        
+
     Args:
     ----
     data : (ndarray of floats) This is the standardised data matrix input to
@@ -262,10 +253,10 @@ def problem_setup(data: np.array, X: np.array, n: int):
         arrays that has been standardised based on the data matrix.
     n : (int) This is the number of dimensions to keep when performing the
         PCA.
-    
+
     Returns:
     -------
-    s : (ndarray of floats) This is the matrix of singular values found when 
+    s : (ndarray of floats) This is the matrix of singular values found when
         performing SVD on the data input.
     component_scores : (ndarray of floats) This is an array containing the
         component_scores found when performing PCA on the data input.
@@ -281,10 +272,10 @@ def problem_setup(data: np.array, X: np.array, n: int):
         dataset."""
 
     std_input, std_conds, rev_std = standardise(data, X)
-    #Performing SVD on standardised, mean-centered data
+    # Performing SVD on standardised, mean-centered data
     U, s, Vt = svd(std_input, full_matrices=True)
     s = diagsvd(s, U.shape[0], Vt.shape[-1])
-    #Performing PCA on same data
+    # Performing PCA on same data
     pca = decomp.PCA(n_components=n)
     pca.fit(std_input)
     # A (Component Scores/ Principal Components)
@@ -296,8 +287,9 @@ def problem_setup(data: np.array, X: np.array, n: int):
     return s, component_scores, pca_clm, pca_PAs, std_conds, rev_std
 
 
-def solve_for_A_B(A: np.array, B: np.array, X: np.array, org_dat: np.array,
-                  epsilon: float):
+def solve_for_A_B(
+    A: np.array, B: np.array, X: np.array, org_dat: np.array, epsilon: float
+):
     """Function to perform BPCA on a dataset 'org_dat'. Will find optimal
     matrices A and B to reconstruct the original dataset. Finds a new row for
     A and B in alternating turns until all have been updated, then checks the
@@ -315,8 +307,8 @@ def solve_for_A_B(A: np.array, B: np.array, X: np.array, org_dat: np.array,
         standardised data to have BPCA performed on.
     epsilion : (float) This value is used to determine whether convergence
         has been reached in a given iteration. The smaller this value is the
-        stricter the requirement for convergence. 
-    
+        stricter the requirement for convergence.
+
     Returns:
     -------
     A : (ndarray of floats) The final matrix, A, that holds the reduced
@@ -329,24 +321,23 @@ def solve_for_A_B(A: np.array, B: np.array, X: np.array, org_dat: np.array,
         it back to an approximation of the original dataset. Reconstruction
         requires that B is left-multiplied."""
 
-    A = check_shape(A) 
-    B = check_shape(B) 
-    A, B_T = pad_matrices(A, B.T) 
+    A = check_shape(A)
+    B = check_shape(B)
+    A, B_T = pad_matrices(A, B.T)
     AB_T = np.matmul(A, B_T)
-    X_lo = X[0] 
+    X_lo = X[0]
     X_hi = X[1]
     # f or i in range(X_hi.shape(-1)):
     lo_check = X_lo <= AB_T
     hi_check = X_hi >= AB_T
-    contains_false = ((lo_check is False).any() or
-                      (hi_check is False).any()) 
+    contains_false = (lo_check is False).any() or (hi_check is False).any()
     if contains_false is True:
         raise ValueError("Boundary conditions violated in 'solve_for_A_B'!")
 
     def F(A: np.array, B: np.array, X: np.array):
         """Calculates the loss function for the matrices A and B according to
         F = ||X-AB.T||**2
-        
+
         Args:
         ----
         A : (ndarray of floats) This should be the result of the updates to
@@ -357,29 +348,30 @@ def solve_for_A_B(A: np.array, B: np.array, X: np.array, org_dat: np.array,
             solve_A_B function.
         X : (ndarray of floats) This should contain the transformed lower
             and upper bounds to be applied to the dataset.
-        
+
         Returns:
         -------
         f : (float) This is the newly calculated cost function value for the
             updated A and B matrices.
         """
 
-        A, B_T = pad_matrices(A, B.T) 
+        A, B_T = pad_matrices(A, B.T)
         AB_T = np.matmul(A, B_T)
         X_pad, AB_T_pad = pad_to_subtract(X, AB_T)
         XminAB_T = np.subtract(X_pad, AB_T_pad)
-        f = (norm(XminAB_T))**2
+        f = (norm(XminAB_T)) ** 2
 
         return float(f)
 
     f = F(A, B, org_dat)
-    new_f = f-1
+    new_f = f - 1
     # Loop calculates an update row for A then B in succession
-    while abs(f-new_f) > epsilon:
-        print("Difference between current and previous f value is {0}".format(
-            f-new_f))
+    while abs(f - new_f) > epsilon:
+        print(
+            "Difference between current and previous f value is {0}".format(f - new_f)
+        )
         f = new_f
-        for i, j in zip(range(len(A)-1), range(len(B)-1)):
+        for i, j in zip(range(len(A) - 1), range(len(B) - 1)):
             new_row_a, resid = update_row(A, B, X, i, 0)
             new_row_a = np.array(new_row_a)
             A_shape = A.shape
@@ -388,18 +380,17 @@ def solve_for_A_B(A: np.array, B: np.array, X: np.array, org_dat: np.array,
                 zeros_to_add = len(new_row_a) - A_shape[1]
                 A = np.pad(A, pad_width=((0, 0), (0, zeros_to_add)))
                 A[i] = new_row_a.flatten()
-            
+
             elif A.shape[1] > new_row_a.shape[0]:
                 zeros_to_add = A.shape[1] - len(new_row_a)
-                new_row_a = np.pad(new_row_a, pad_width=((0, 0), 
-                                                         (0, zeros_to_add)))
+                new_row_a = np.pad(new_row_a, pad_width=((0, 0), (0, zeros_to_add)))
                 A[i] = new_row_a
             if len(new_row_a.shape) > 1:
                 A[i] = new_row_a.flatten()
             else:
                 A[i] = new_row_a
-            #Check boundary conditions apply:
-            #row(X_i).T =< A_i.T * B.T =< col(X_i).T    
+            # Check boundary conditions apply:
+            # row(X_i).T =< A_i.T * B.T =< col(X_i).T
             check_xi_bounds(X, i, A, B, row_col=0)
 
             new_row_b, resid = update_row(B, A, X, j, 1)
@@ -410,18 +401,17 @@ def solve_for_A_B(A: np.array, B: np.array, X: np.array, org_dat: np.array,
                 zeros_to_add = len(new_row_b) - B_shape[1]
                 B = np.pad(B, pad_width=((0, 0), (0, zeros_to_add)))
                 B[i] = new_row_b.flatten()
-            
+
             elif B.shape[1] > new_row_b.shape[0]:
                 zeros_to_add = B.shape[1] - len(new_row_b)
-                new_row_b = np.pad(new_row_b, pad_width=((0, 0),
-                                                         (0, zeros_to_add)))
+                new_row_b = np.pad(new_row_b, pad_width=((0, 0), (0, zeros_to_add)))
                 B[i] = new_row_b
             if len(new_row_b.shape) > 1:
                 B[i] = new_row_b.flatten()
             else:
                 B[i] = new_row_b
-            #Check boundary conditions apply:
-            #row(X_i).T =< B_i.T * B.T =< col(X_i).T 
+            # Check boundary conditions apply:
+            # row(X_i).T =< B_i.T * B.T =< col(X_i).T
             check_xi_bounds(X, j, B, A, row_col=1)
         print("old f ", f)
         new_f = F(A, B, org_dat)
@@ -434,31 +424,31 @@ def update_row(M1: np.array, M2: np.array, X: np.array, R: int, col_row: int):
     """Function updates row I of matrix M1 according to the BPCA algorithm
     found in Chemometrics 2007; 21: 547–556 #DOI: 10.1002/cem . This is used
     to update rows in both "A" and "B", if updating A then M1=A and col_row=0,
-    if updating B then M1=B and col_row=1. 
-    
+    if updating B then M1=B and col_row=1.
+
     Args:
     ----
-    M1 : (ndarray of floats) the matrix to update the row of, either A or B. 
+    M1 : (ndarray of floats) the matrix to update the row of, either A or B.
     M2 : (ndarray of floats) the 'partner matrix' i.e. either B or A, needed
         to calculate the update to the first matrix.
-    
+
     Returns:
     -------
     sol_vec_x : (ndarray of floats) Current solution vector X for
         ||X-AB.T||**2 .
     resid : (float) Residual for the current solution vector X."""
 
-    #Seperating the matrices for the lower and upper bounds as they are passed
-    #in a single array
+    # Seperating the matrices for the lower and upper bounds as they are passed
+    # in a single array
     X_low = X[0]
     X_high = X[1]
 
-    #Determining if function needs to calculate a row of the original matrix A
-    #or a row of the original matrix B which are col_row=0,1 respectively
+    # Determining if function needs to calculate a row of the original matrix A
+    # or a row of the original matrix B which are col_row=0,1 respectively
     if col_row == 0:
-        #Algorithm requires rows of X bounds
+        # Algorithm requires rows of X bounds
         X_low = X_low[R]
-        X_high = X_high[R]      
+        X_high = X_high[R]
     elif col_row == 1:
         # Algorithm requires columns of X bounds
         X_low = X_low[:, R]
@@ -468,7 +458,7 @@ def update_row(M1: np.array, M2: np.array, X: np.array, R: int, col_row: int):
     W = M1[R]
     # Initial guess for V, not expected to be accurate
     V = np.zeros((10, 1))
-    G = np.c_[M2, -M2] 
+    G = np.c_[M2, -M2]
     h = np.c_[X_low, -X_high]
     # As in paper, let S = Qy-P_i.T*v to get to a LDP problem as follows
     # min||s||**2 + ||p_2.T*v||**2 s.t. GRQ^1s > h -GRQ^-1P_1'*v
@@ -477,32 +467,32 @@ def update_row(M1: np.array, M2: np.array, X: np.array, R: int, col_row: int):
     # LDP problem Rz>=L is r = Eu -f where column vec E= [R.T, L.T], f = vec
     # let R=new_bounds[1], L=new_bounds[0], can use to find Z
     u_vec, r_vec, resid = LDP_to_NNLS_sol(new_bounds[1], new_bounds[0])
-    
-    #Algorithm from "Solving Least Squares Problems indicates that vector Z is
-    #given by R.T * u_vec * norm(r_vec)**-2"
+
+    # Algorithm from "Solving Least Squares Problems indicates that vector Z is
+    # given by R.T * u_vec * norm(r_vec)**-2"
     r_norm = norm(r_vec)
-    r_minus2 = r_norm**(-2)
+    r_minus2 = r_norm ** (-2)
     Ur = np.multiply(u_vec, r_minus2)
     GT_padded, Ur_padded = pad_matrices(G.T, Ur)
     z_vec = np.matmul(GT_padded, Ur_padded)
 
-    #Can now use z_vec to find solution vector x = Ky = R-1(z_vec + f_1)
+    # Can now use z_vec to find solution vector x = Ky = R-1(z_vec + f_1)
     z_vec_padded, f_1_padded = pad_matrices(z_vec, f_1)
     z_f1 = np.matmul(z_vec_padded, f_1_padded)
-    R_min1_padded, z_f1_padded = pad_matrices(R_minus1, z_f1) 
+    R_min1_padded, z_f1_padded = pad_matrices(R_minus1, z_f1)
     sol_vec_x = np.matmul(R_min1_padded, z_f1_padded)
-    sol_vec_x += LDP_const 
-    
+    sol_vec_x += LDP_const
+
     return sol_vec_x, resid
 
 
 def LSI_to_LDP(G: np.array, h: np.array, E: np.array, w: np.array, F: np.array):
     """Transforms a bounded LSI problem to a bounded LDP one with use of SVD on
-    E, rewriting the problem as an LDP + constant with new bounds. See 
+    E, rewriting the problem as an LDP + constant with new bounds. See
     'Principal component analysis with boundary constraints' by Paolo Giordani
      and Henk A. L. Kiers. This does not aim to *solve* the problem, simply
      return the components of the transformed form of it.
-     
+
     Args:
     ----
     G : (ndarray of floats) This should be a column array containing a matrix
@@ -514,28 +504,28 @@ def LSI_to_LDP(G: np.array, h: np.array, E: np.array, w: np.array, F: np.array):
     E: (ndarray of floats) This should be a matrix corresponding to either A
         or B from the bounded problem |X - AB.T|**2, specifically it should be
         the one that is NOT currently being updated.
-    w: (ndarray of floats) This should be a row array taken from either A or 
+    w: (ndarray of floats) This should be a row array taken from either A or
         B from the bounded problem |X - AB.T|**2, specifically it should be
         the row that is currently being updated.
     F: (ndarray of floats) This is an initial guess for what w should be
         updated to, it will be used to calculate an improved guess.
-    
+
     Returns:
     -------
     Z : (list of ndarrays) This contains two ndarrays of floats which are
         needed to calculate the solution vector to the original LSI problem.
-        The first is the matrix of singular values accquired through the 
+        The first is the matrix of singular values accquired through the
         decomposition of input E, multiplied by y, which is the result of
         the right-singular vectors of the decomposition multiplied by the
         input w. The second array is the transpose of the top n rows of the
         left-singular vectors of the decomposition of E multiplied by input
-        array F 
+        array F
     R_minus1 : (ndarray of floats) This is the inverse (or if this does not
         exist, pseudo-inverse) of the matrix of singular values that comes
         from performing SVD on input matrix E.
     f_1 : (ndarray of floats) This is the transpose of the top n rows of the
         left-singular vectors of the decomposition of E multiplied by input
-        array F. 
+        array F.
     LDP_const : (ndarray of floats) This is the result of subtracting the two
         components of Z from one another. It is a constant that will be added
         to the solution row to the current problem once it is found to obtain
@@ -545,8 +535,8 @@ def LSI_to_LDP(G: np.array, h: np.array, E: np.array, w: np.array, F: np.array):
     """
 
     # Decompose matrix E
-    Q, R, K_t = np.linalg.svd(E, full_matrices=True) 
-    R = diagsvd(R, Q.shape[-1], K_t.shape[0]) 
+    Q, R, K_t = np.linalg.svd(E, full_matrices=True)
+    R = diagsvd(R, Q.shape[-1], K_t.shape[0])
     reconst = np.matmul(R, K_t)
     reconst = np.matmul(Q, reconst)
     n_size = K_t.shape[0]  # m
@@ -555,23 +545,23 @@ def LSI_to_LDP(G: np.array, h: np.array, E: np.array, w: np.array, F: np.array):
     # Richard Henson, chapter 23"
     K_t, w = pad_matrices(K_t, w)
     y = np.matmul(K_t, w)
- 
+
     # Let z = Ry-Q_1.T*f  s.t. our problem is now min z ||z||**2 ||Q_2.T v||**2
     # s.t. GK(R^-1)*z >= h - GK(R^-1)*(Q_1.T)*f
-    h_padded, g_padded = pad_to_subtract(h.T, G.T) 
- 
-    #Note the shapes of Q_1 and Q_2 are (nxm) and (nx(n-m)) where Q from 
+    h_padded, g_padded = pad_to_subtract(h.T, G.T)
+
+    # Note the shapes of Q_1 and Q_2 are (nxm) and (nx(n-m)) where Q from
     # earlier is (mxm) and K_t is (nxn)
-    Q_1 = Q[:, :n_size] 
+    Q_1 = Q[:, :n_size]
     Q_2 = Q[:, n_size:]
 
     Ry = np.matmul(R, y)
     F = check_shape(F)
-    Q_1_padded_T, F_padded = pad_matrices(Q_1.T, F) 
-    f_1 = np.matmul(Q_1_padded_T, F_padded) 
+    Q_1_padded_T, F_padded = pad_matrices(Q_1.T, F)
+    f_1 = np.matmul(Q_1_padded_T, F_padded)
     Ry_padded, f1_padded = pad_to_subtract(Ry, f_1)
     z_LDP = np.subtract(Ry_padded, f1_padded)
-    Z = [Ry_padded, f1_padded]  # will be passed back to be treated as LDP 
+    Z = [Ry_padded, f1_padded]  # will be passed back to be treated as LDP
 
     # calc constant
     Q_2_padded_T, F_padded = pad_matrices(Q_2.T, F)
@@ -581,7 +571,7 @@ def LSI_to_LDP(G: np.array, h: np.array, E: np.array, w: np.array, F: np.array):
     # Calulate new, transformed boundaries
     G, K = pad_matrices(G, K_t.T)
     GK = np.matmul(G, K)
-    #R may not be square, check and calculate pseudoinverse instead of
+    # R may not be square, check and calculate pseudoinverse instead of
     # inverse if not
     R_minus1 = inverse_or_pseudo(R)
     R_minus1_z = np.matmul(R_minus1, z_LDP)
@@ -594,19 +584,20 @@ def LSI_to_LDP(G: np.array, h: np.array, E: np.array, w: np.array, F: np.array):
     GKR_minus1f1 = np.matmul(GK, R_minus1f1)
     h, GKR_minus1f1 = pad_to_subtract(h, GKR_minus1f1)
     lower_boundaries = np.subtract(h, GKR_minus1f1)
-    upper_boundaries, lower_boundaries = pad_to_subtract(upper_boundaries,
-                                                         lower_boundaries)
+    upper_boundaries, lower_boundaries = pad_to_subtract(
+        upper_boundaries, lower_boundaries
+    )
 
     new_boundaries = np.array((lower_boundaries, upper_boundaries))
 
-    return(Z, R_minus1, f_1, LDP_const, new_boundaries)
+    return (Z, R_minus1, f_1, LDP_const, new_boundaries)
 
 
 def LDP_to_NNLS_sol(G: np.array, h: np.array):
     """Function to calculate needed matrices and constants for the
     transformation of a problem between LDP form and that of NNLS then find
     the solution vector of the NNLS problem.
-    
+
     Args:
     ----
     G : (ndarray of floats) This should be a column array containing a matrix
@@ -615,7 +606,7 @@ def LDP_to_NNLS_sol(G: np.array, h: np.array):
     h : (ndarray of floats) This should be a column array containing the upper
         bound matrix in the top entry and the lower bound matrix on the
         bounded problem |X - AB.T|**2
-       
+
     Returns:
     -------
     u : (narray of floats) The solution vector to the NNLS problem
@@ -627,9 +618,9 @@ def LDP_to_NNLS_sol(G: np.array, h: np.array):
     ht_padded, gt_padded = h.T, G.T  # pad_to_subtract(h.T, G.T)
     E = np.vstack((gt_padded, ht_padded))
     n = E.shape[0]
-    f = np.zeros((n-1))
+    f = np.zeros((n - 1))
     f = np.append(f, [1])
-    f = f.T   
+    f = f.T
     # can now use NNLS to compute an m-vector, u, to solve NNLS problem:
     # Minimize ||Eu — f|| subject to  u>=0
     reg_nnls = lsq_linear(E, f, bounds=(0, np.inf))
@@ -647,23 +638,23 @@ def LDP_to_NNLS_sol(G: np.array, h: np.array):
 
 def check_xi_bounds(X: np.array, R: float, A: np.array, B: np.array, row_col: int):
     """Function to check if the new row found for matrix A obeys the
-    necessary boundary conditions for acceptance, else raises an error. row_col 
+    necessary boundary conditions for acceptance, else raises an error. row_col
     determines whether bounds are being checked using the rows or columns of X.
-        
+
     Args:
     ----
     X : (ndarray of arrays) Contains two matrices, the upper and lower bounds
-        on the update of either A or B. 
+        on the update of either A or B.
     R : (ndarray of floats) the 'partner matrix' i.e. either B or A, needed
         to calculate the update to the first matrix.
-    A : (ndarray of floats) The updated matrix, either A or B depending on 
+    A : (ndarray of floats) The updated matrix, either A or B depending on
         stage of algorithm.
-    B : (ndarray of floats) The 'partner matrix' either B or A, needed to 
+    B : (ndarray of floats) The 'partner matrix' either B or A, needed to
         calculate the update to the first matrix.
-    row_col : (int) Number to indicate whether it is a row in A or B being 
+    row_col : (int) Number to indicate whether it is a row in A or B being
         updated. 0 indicates A and 1 indicates B. Important as the calculation
         differs slightly between the two.
-        
+
     Returns:
     -------
     None"""
@@ -674,9 +665,9 @@ def check_xi_bounds(X: np.array, R: float, A: np.array, B: np.array, row_col: in
         X_low = X_low[R]
         X_high = X_high[R]
     elif row_col == 1:
-        X_low = X_low[:,R]
-        X_high = X_high[:,R]
-    
+        X_low = X_low[:, R]
+        X_high = X_high[:, R]
+
     Row_Xi = check_shape(X_low)
     Col_Xi = check_shape(X_high)
     A_i = A[R]
@@ -687,8 +678,7 @@ def check_xi_bounds(X: np.array, R: float, A: np.array, B: np.array, row_col: in
     X_high = check_shape(X_high)
     low_check = X_low <= AiB_T
     high_check = X_high >= AiB_T
-    contains_false = ((low_check is False).any() or
-                      (high_check is False).any())
+    contains_false = (low_check is False).any() or (high_check is False).any()
 
     if contains_false:
         raise ValueError("Boundary conditions violated during 'check_xi_bounds'!")
@@ -698,34 +688,34 @@ def check_xi_bounds(X: np.array, R: float, A: np.array, B: np.array, row_col: in
 # Current data is arbritary, for testing only
 data = np.array([2, 6, 2, 3, 3, 2, 3, 2, 7, 3])
 data2 = np.array([[2, 3, 3, 2.6, 2.7, 2, 3, 5, 3, 3], [2, 3, 6, 4, 2, 2, 3, 2, 3, 3]])
-data_temp = ((data[0] + data2[1])*80).T
+data_temp = ((data[0] + data2[1]) * 80).T
 data_temp = check_shape(data_temp)
 data = check_shape(data.T)
 data2 = data2.T
-data = np.hstack((data,data2,data_temp))
-#Number of dimensions to reduce to
+data = np.hstack((data, data2, data_temp))
+# Number of dimensions to reduce to
 n = 1
-#Boundary arrays
-low_col = np.ones((10,1))*-2
+# Boundary arrays
+low_col = np.ones((10, 1)) * -2
 low_bound = np.hstack((low_col, low_col, low_col, low_col))
-high_col = low_col*-10
-high_bound = np.hstack((high_col, high_col, high_col, high_col+900))
+high_col = low_col * -10
+high_bound = np.hstack((high_col, high_col, high_col, high_col + 900))
 bounds_vec = np.array((low_bound, high_bound))
 
-#Set up problem by standardising data and bounds (in accordance with Chemometrics 2007; 21: 547–556
-#DOI: 10.1002/cem) and performing initial PCA on data 
-s, CSs, CLM, PAs, bounds_vec, rev_stdise = problem_setup(data, bounds_vec, (4-n))
+# Set up problem by standardising data and bounds (in accordance with Chemometrics 2007; 21: 547–556
+# DOI: 10.1002/cem) and performing initial PCA on data
+s, CSs, CLM, PAs, bounds_vec, rev_stdise = problem_setup(data, bounds_vec, (4 - n))
 
-#Passing to function that carries out BPCA (as in Chemometrics 2007; 21: 547–556
-#DOI: 10.1002/cem)
-A, B = solve_for_A_B(CSs, CLM, bounds_vec, data, 10**(-12))
+# Passing to function that carries out BPCA (as in Chemometrics 2007; 21: 547–556
+# DOI: 10.1002/cem)
+A, B = solve_for_A_B(CSs, CLM, bounds_vec, data, 10 ** (-12))
 CLM = check_shape(CLM)
 A_pad, CLM_pad = pad_matrices(A, CLM)
 A, B_T = pad_matrices(A, B.T)
 partial = np.matmul(A, B_T)
 partial_artificial = np.matmul(A_pad, CLM_pad)
-reconst = (partial*rev_stdise[1])+rev_stdise[0]
-reconst_artificial = (partial_artificial*rev_stdise[1])+rev_stdise[0]
+reconst = (partial * rev_stdise[1]) + rev_stdise[0]
+reconst_artificial = (partial_artificial * rev_stdise[1]) + rev_stdise[0]
 print("reconstructed from {0}/4 dimensions ".format(n))
 print(reconst)
 print("original 4D")
