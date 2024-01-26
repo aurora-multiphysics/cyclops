@@ -7,8 +7,8 @@ Handles the various sensors employed by an experiment.
 """
 import numpy as np
 
-from cyclops.sensors import Sensor
-from cyclops.fields import Field
+from sensors import Sensor
+from fields import Field
 
 
 class SensorSuite:

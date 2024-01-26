@@ -5,13 +5,12 @@ Handle reading simulation data into usable planes.
 
 (c) Copyright UKAEA 2023-2024.
 """
-import alphashape
 import numpy as np
 import meshio
 
 # from descartes import PolygonPatch
 from skspatial.objects import Plane
-
+from scipy.spatial import ConvexHull
 # from scipy.spatial import Delaunay
 from random import uniform
 
@@ -53,10 +52,13 @@ class MeshReader:
         print("now reading positions in...")
         for point_index in self.__mesh.point_sets[set_name]:
             points.append(self.__mesh.points[point_index])
+        values = self.__mesh.points
+        print(values)
         print("                        ")
-        return np.array(points)
+        return (np.array(points), values)
 
-    def read_scalar(self, set_name: str, scalar_name: str) -> np.ndarray[float]:
+    def read_scalar(self, set_name: str, scalar_name: str
+                    ) -> np.ndarray[float]:
         """Find values of named scalar at the points specified by region name.
 
         Args:
@@ -84,8 +86,8 @@ class Unfolder:
     """
 
     def find_bounds(
-        self, point_cloud: np.ndarray, points_per_plane: int
-    ) -> np.ndarray[float]:
+        self, point_cloud: np.ndarray, points_per_plane: int,
+            vertices: np.ndarray) -> np.ndarray[float]:
         """Function finds the the upper and lower bounds enclosing an array of
         points from a given mesh.
 
@@ -102,11 +104,29 @@ class Unfolder:
             coordinates for the given points/mesh.
         """
         # Find optimal polygon to encompass points
-        alpha_shape = alphashape.alphashape(point_cloud)
+        # alpha_shape = ConvexHull(point_cloud, qhull_options='QJ')
+        # print('alpha_shape.points[1]', alpha_shape.points[1])
 
         def triangle_side(p1, p2, a, b):
             """Function to check if a point is on the correct side of two
-            lines along a triangle to be inside that triangle."""
+            lines along a triangle to be inside that triangle.
+
+            Args:
+            -----
+            p1 : (array of floats) the coordinates of the point to check.
+            p2 : (array of floats) the coordinates of a point known to be in
+                the triangle.
+            a : (array of floats) the coordinates of one of the triangle
+                vertices.
+            b : (array of floats) the coordinates of a second of the
+                triangle vertices.
+
+            Returns:
+            --------
+            A boolean value of "True" or "False", dependent on whether p1 and
+                p2 are found to be on the same side of the triangle lines
+                being tested.
+            """
 
             cp1 = np.cross(b - a, p1 - a)
             cp2 = np.cross(b - a, p2 - a)
@@ -116,7 +136,23 @@ class Unfolder:
                 return False
 
         def PointInTri(p, a, b, c):
-            """Function to check if a point p is inside triangle abc"""
+            """Function to check if a point p is inside triangle abc.
+
+            Args:
+            -----
+            p : (array of floats) the coordinates of the point to check.
+            a : (array of floats) the coordinates of one of the triangle
+                vertices
+            b : (array of floats) the coordinates of the second of the
+                triangle vertices
+            c : (array of floats) the coordinates of the third of the
+                triangle vertices
+
+            Returns:
+            --------
+            unamed : (tuple of arrays) contains the upper and lower boundary
+                points for the given mesh in the form of nx3 arrays.
+            """
             if (
                 triangle_side(p, a, b, c)
                 and triangle_side(p, b, a, c)
@@ -127,26 +163,42 @@ class Unfolder:
                 return False
 
         # Get plane equation for each constituent plane
-        for triangle in alpha_shape.triangles:
-            x_vals = triangle[:, 0]
-            y_vals = triangle[:, 1]
-            z_vals = triangle[:, 2]
-            plane = Plane.best_fit(triangle)
+        x_vals = vertices[:, 0]  # [0::3]
+        y_vals = vertices[:, 1]  # [1::3]
+        z_vals = vertices[:, 2]  # [2::3]
+        # vertices = []
+        # for i in range(0, len(alpha_shape.points)):
+        #     vertex = np.array(alpha_shape.points[i])
+        #     vertices.append(vertex)
+        # print(vertices)
+        # vertices = alpha_shape.points
+        for j in range(0, int(len(x_vals)/3), 3):
+            v1 = [x_vals[j], y_vals[j], z_vals[j]]
+            v2 = [x_vals[j+1], y_vals[j+1], z_vals[j+1]]
+            v3 = [x_vals[j+2], y_vals[j+2], z_vals[j+2]]
+            plane = Plane.best_fit((v1, v2, v3))
             # coefficients in form, (a, b, c, d) where these correspond to the
             # plane eqn ax + by + cz + d = 0
             a, b, c, d = plane.cartesian()
-            plane_points = ()
+            print("a", a)
+            plane_points = np.zeros([1, 3])
             while len(plane_points) < points_per_plane:
                 x = uniform(min(x_vals), max(x_vals))
                 y = uniform(min(y_vals), max(y_vals))
                 z = (a * x + b * y + d) / c
-                tri_pt0 = (x_vals[0], y_vals[0], z_vals[0])
-                tri_pt1 = (x_vals[1], y_vals[1], z_vals[1])
-                tri_pt2 = (x_vals[2], y_vals[2], z_vals[2])
-                new_pt = (x, y, z)
+                print("z", z)
+                tri_pt0 = np.array([x_vals[0], y_vals[0], z_vals[0]])
+                tri_pt1 = np.array([x_vals[1], y_vals[1], z_vals[1]])
+                tri_pt2 = np.array([x_vals[2], y_vals[2], z_vals[2]])
+                new_pt = np.array([x, y, z])
+                print("new_pt", new_pt)
                 if PointInTri(new_pt, tri_pt0, tri_pt1, tri_pt2):
-                    plane_points.append(new_pt)
+                    new_pt = new_pt.reshape(1, 3)
+                    plane_points = np.hstack((plane_points, new_pt))
 
+            # Remove intialising row that provided shape.
+            np.delete(plane_points, 0, 0)
+            print(plane_points)
             z_median = np.median(point_cloud[:, 2])
 
         def split_bounds(plane_points: list, z_median: float):
@@ -187,15 +239,19 @@ class Unfolder:
             elif use_nondefault == "n":
                 a, b, c, d = 0, 0, z_median, 0
 
-            upper_bounds = []
-            lower_bounds = []
+            upper_bounds = np.zeros([1, 3])
+            lower_bounds = np.zeros([1, 3])
 
             for entry in plane_points:
-                if entry[0][0] >= a and entry[0][1] >= b and entry[0][2] >= c:
+                if (a*entry[0][0] + b*entry[0][1] + c*entry[0][2]) >= -d:
                     upper_bounds.append(entry)
+                # if entry[0][0] >= a and entry[0][1] >= b and
+                # entry[0][2] >= c: upper_bounds.append(entry)
                 else:
                     lower_bounds.append(entry)
-
+            # Remove intialising row that provided shape.
+            np.delete(upper_bounds, 0, 0)
+            np.delete(lower_bounds, 0, 0)
             return upper_bounds, lower_bounds
 
         upper_boundaries, lower_boundaries = split_bounds(plane_points,
@@ -245,14 +301,21 @@ class Dim_reduction:
 
         Returns:
         --------
-        reduced_matrix : (np.ndarray[float]) n by 2 array of n 2D position vectors.
+        Bounds : (tuple of ndarrays) contains the numpy array of upper
+            boundaries in its' first entry and the numpy array of lower
+            boundaries in the second.
+        data_matrix : (ndarray of floats) contains the data points from the
+            mesh in the form (x, y, z) along a column matrix.
+        measured_field : (ndarray of floats) contains the measured property
+            from the mesh that corresponds to the coordinates in the
+            data_matrix at the same position.
         """
         # Need to implement 'read_vector' correctly in MeshReader so that
         # vectors can be processed.
-        data_matrix = np.c_()
-        upper_bound_matrix = np.c_()
-        lower_bound_matrix = np.c_()
-        measured_field = np.c_()
+        data_matrix = np.zeros([1, 3])
+        upper_bound_matrix = np.zeros([1, 3])
+        lower_bound_matrix = np.zeros([1, 3])
+        measured_field = np.zeros([1, 3])
         for pos in point_sets:
             pos_3D = loaded_mesh.read_pos(pos)
             if vec_or_scale == "scalar":
@@ -271,4 +334,10 @@ class Dim_reduction:
         lower_bound_matrix = np.array(lower_bound_matrix)
         measured_field = np.array(measured_field)
 
-        # return reduced_matrix
+        np.delete(data_matrix, 0, 0)
+        np.delete(upper_bound_matrix, 0, 0)
+        np.delete(lower_bound_matrix, 0, 0)
+        np.delete(measured_field, 0, 0)
+
+        Bounds = (upper_bound_matrix, lower_bound_matrix)
+        return Bounds, data_matrix, measured_field

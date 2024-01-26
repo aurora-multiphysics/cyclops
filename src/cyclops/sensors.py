@@ -7,7 +7,7 @@ Handle sensor properties and can emulate exact or noisy sensor readings.
 """
 import numpy as np
 
-from cyclops.regressors import PModel, CSModel
+from regressors import PModel, CSModel
 
 
 class Sensor:
