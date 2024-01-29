@@ -7,7 +7,7 @@ Handle sensor properties and can emulate exact or noisy sensor readings.
 """
 import numpy as np
 
-from regressors import PModel, CSModel
+from cyclops.regressors import PModel, CSModel
 
 
 class Sensor:
@@ -42,13 +42,12 @@ class Sensor:
         self._value_dim = len(value_range[0])
 
     def get_failure_chance(self) -> float:
-        # failure_change needs to be updated to take into account the
-        # conditions in each potential sensor spot rather than being a single,
-        # static value.
         """Return the chance of the sensor failing."""
         return self._failure_chance
 
-    def get_input_sites(self, actual_pos: np.ndarray[float]) -> np.ndarray[float]:
+    def get_input_sites(
+        self, actual_pos: np.ndarray[float]
+    ) -> np.ndarray[float]:
         """Get positions at which sensor takes readings.
 
         Args:
@@ -58,7 +57,9 @@ class Sensor:
         Returns:
             np.ndarray[float]: n by d array of the sensor sampling positions.
         """
-        return self._relative_sites + actual_pos * np.ones(self._relative_sites.shape)
+        return self._relative_sites + actual_pos * np.ones(
+            self._relative_sites.shape
+        )
 
     def get_output_values(
         self, site_values: np.ndarray[float], actual_pos: np.ndarray[float]
@@ -78,10 +79,14 @@ class Sensor:
         """
         mean_value = np.mean(site_values, axis=0).reshape(-1, self._value_dim)
         mean_value = self._squash_to_range(mean_value)
-        noise_array = np.random.normal(0, self._noise_dev, size=mean_value.shape)
+        noise_array = np.random.normal(
+            0, self._noise_dev, size=mean_value.shape
+        )
 
         out_pos = np.expand_dims(actual_pos, axis=0)
-        out_value = mean_value + noise_array + self._offset_function(mean_value)
+        out_value = (
+            mean_value + noise_array + self._offset_function(mean_value)
+        )
         return (out_value, out_pos)
 
     def _squash_to_range(self, array) -> np.ndarray[float]:
@@ -108,9 +113,6 @@ class Sensor:
 
 class PointSensor(Sensor):
     """Point sensor; samples one point only."""
-
-    # Value_range needs updating to the upper/lower bound matrices from the
-    # BPCA
 
     def __init__(
         self,
@@ -150,9 +152,6 @@ class RoundSensor(Sensor):
 
     Used for 2D fields.
     """
-
-    # Value_range needs updating to the upper/lower bound matrices from the
-    # BPCA
 
     def __init__(
         self,
@@ -201,9 +200,6 @@ class MultiSensor(Sensor):
     regardless of the actual_pos. Used for 1D or 2D fields.
     """
 
-    # Value_range needs updating to the upper/lower bound matrices from the
-    # BPCA
-
     def __init__(
         self,
         noise_dev: float,
@@ -222,9 +218,13 @@ class MultiSensor(Sensor):
             value_range (np.ndarray[float]): 2 by m array of lower and upper
                 bounds of values of dimension m.
         """
-        super().__init__(noise_dev, offset_function, failure_chance, value_range, grid)
+        super().__init__(
+            noise_dev, offset_function, failure_chance, value_range, grid
+        )
 
-    def get_input_sites(self, actual_pos: np.ndarray[float]) -> np.ndarray[float]:
+    def get_input_sites(
+        self, actual_pos: np.ndarray[float]
+    ) -> np.ndarray[float]:
         """Get positions at which sensor takes readings.
 
         Args:
@@ -253,9 +253,13 @@ class MultiSensor(Sensor):
                 taken.
         """
         squashed_values = self._squash_to_range(site_values)
-        noise_array = np.random.normal(0, self._noise_dev, size=squashed_values.shape)
+        noise_array = np.random.normal(
+            0, self._noise_dev, size=squashed_values.shape
+        )
         out_value = (
-            squashed_values + noise_array + self._offset_function(squashed_values)
+            squashed_values
+            + noise_array
+            + self._offset_function(squashed_values)
         )
         return (out_value, self._relative_sites)
 

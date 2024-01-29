@@ -24,8 +24,8 @@ class Problem(ElementwiseProblem):
         num_dim: int,
         num_obj: int,
         loss_function: callable,
-        # bounds: np.ndarray,
-        **kwargs,
+        bounds: np.ndarray,
+        **kwargs
     ) -> None:
         """Set up the problem.
 
@@ -38,13 +38,21 @@ class Problem(ElementwiseProblem):
                 domain.
         """
         super().__init__(
-            n_var=num_dim, n_obj=num_obj, **kwargs)
-        # xl=bounds[0], xu=bounds[1],
+            n_var=num_dim,
+            n_obj=num_obj,
+            xl=bounds[0],
+            xu=bounds[1],
+            **kwargs
+        )
         self.__loss_function = loss_function
 
     def _evaluate(
-        self, optim_array: np.ndarray[float], out: dict, *args: any,
-            **kwargs: any) -> None:
+        self,
+        optim_array: np.ndarray[float],
+        out: dict,
+        *args: any,
+        **kwargs: any
+    ) -> None:
         """Evaluate the loss function.
 
         Args:
@@ -58,15 +66,14 @@ class Problem(ElementwiseProblem):
 class Optimiser:
     """Optimiser base class."""
 
-    def __init__(self, cv_tol: str, algorithm: any) -> None:
+    def __init__(self, time_limit: str, algorithm: any) -> None:
         """Set up the optimisers.
 
         Args:
-            cv_tol (str): the convergence the optimiser should run to.
+            time_limit (str): the maximum time the optimiser should run for.
             algorithm (any): the kind of optimiser.
         """
-
-        self._limit = get_termination("cvtol", cv_tol)
+        self._limit = get_termination("time", time_limit)
         self._algorithm = algorithm
 
     def optimise(self, problem: Problem) -> any:
@@ -96,22 +103,21 @@ class NSGA2Optimiser(Optimiser):
     Simulates evolution.
     """
 
-    def __init__(self, ngen: int, pop: int, offspring: int) -> None:
+    def __init__(self, time_limit) -> None:
         """Initialise class instance.
 
         Args:
             time_limit (_type_): time the optimisation should run for.
         """
         algorithm = NSGA2(
-            pop_size=pop,
-            n_offsprings=offspring,
+            pop_size=40,
+            n_offsprings=10,
             sampling=FloatRandomSampling(),
-            n_gen=ngen,
             crossover=SBX(prob=0.9, eta=15),
             mutation=PM(eta=20),
             eliminate_duplicates=True,
         )
-        super().__init__(ngen, algorithm)
+        super().__init__(time_limit, algorithm)
 
 
 class PSOOptimiser(Optimiser):
@@ -120,13 +126,13 @@ class PSOOptimiser(Optimiser):
     Simulates birds searching for food.
     """
 
-    def __init__(self, time_limit, pop: int) -> None:
+    def __init__(self, time_limit) -> None:
         """Initialise class instance.
 
         Args:
             time_limit (_type_): time the optimisation should run for.
         """
-        algorithm = PSO(pop_size=pop, adaptive=True)
+        algorithm = PSO(pop_size=30, adaptive=True)
         super().__init__(time_limit, algorithm)
 
 
@@ -136,11 +142,11 @@ class GAOptimiser(Optimiser):
     Simulates evolution.
     """
 
-    def __init__(self, time_limit, pop: int) -> None:
+    def __init__(self, time_limit) -> None:
         """Initialise class instance.
 
         Args:
             time_limit (_type_): time the optimisation should run for.
         """
-        algorithm = GA(pop_size=pop, eliminate_duplicates=True)
-        super().__init__(time_limit, pop, algorithm)
+        algorithm = GA(pop_size=50, eliminate_duplicates=True)
+        super().__init__(time_limit, algorithm)
