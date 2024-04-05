@@ -16,6 +16,16 @@ from pymoo.operators.mutation.pm import PM
 from pymoo.optimize import minimize
 
 
+class MTOP():
+    """Class to hold Multitask Optimisation Problem, wherein each problem is a
+    Multi-Objective Optimisation Problem"""
+
+    def __init__(
+            self,
+            prob_array: np.array, 
+    )
+
+
 class Problem(ElementwiseProblem):
     """Problem class; allows a function to be minimised."""
 

@@ -8,10 +8,7 @@ Handle reading simulation data into usable planes.
 import numpy as np
 import meshio
 
-# from descartes import PolygonPatch
 from skspatial.objects import Plane
-from scipy.spatial import ConvexHull
-# from scipy.spatial import Delaunay
 from random import uniform
 
 

@@ -100,6 +100,7 @@ class RegressionModel:
         Raises:
             Exception: error to explain user's mistake.
         """
+        #Plan to remove function
         if dim != correct_dim:
             raise Exception(
                 data_name
@@ -339,7 +340,7 @@ class PModel(RegressionModel):
 
 class CSModel(RegressionModel):
     """Cubic spline regressor.
-    
+
     Uses cubic spline interpolation. Interpolates and extrapolates. Acts in
     1D only. Learns from any number of training data points n >= 2. Time
     complexity of around O(n).

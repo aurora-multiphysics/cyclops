@@ -1,4 +1,4 @@
-#!/home/cbyers/projects/working_branches/cyclops/venv_cyc/bin/python
+#!/home/cbyers/projects/working_branches/cyclops/venv_cyc/bin/python3.10
 # -*- coding: utf-8 -*-
 import re
 import sys

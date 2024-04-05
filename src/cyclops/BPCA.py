@@ -265,8 +265,8 @@ class solve_BPCA:
 
         Args:
         ----
-        data : (ndarray of floats) This is the standardised data matrix input to
-            the function.
+        data : (ndarray of floats) This is the standardised data matrix input
+            to the function.
         X : (ndarray of floats) This is the pair of lower and upper boundary
             arrays that has been standardised based on the data matrix.
         n : (int) This is the number of dimensions to keep when performing the
@@ -274,8 +274,8 @@ class solve_BPCA:
 
         Returns:
         -------
-        s : (ndarray of floats) This is the matrix of singular values found when
-            performing SVD on the data input.
+        s : (ndarray of floats) This is the matrix of singular values found
+            when performing SVD on the data input.
         component_scores : (ndarray of floats) This is an array containing the
             component_scores found when performing PCA on the data input.
         pca_clm : (ndarray of floats) This is the component loading matrix from
@@ -286,8 +286,8 @@ class solve_BPCA:
             (standardised) upper and lower bounds.
         rev_std : (ndarray of floats) Array contains two sub-arrays, the
             first contains the mean values for each column in the dataset, the
-            second contains the standard deviation values for each column in the
-            dataset."""
+            second contains the standard deviation values for each column in
+            the dataset."""
 
         std_input, std_conds, rev_std = MathsFunctions.standardise(data, X)
         # Performing SVD on standardised, mean-centered data
@@ -350,13 +350,15 @@ class solve_BPCA:
         # f or i in range(X_hi.shape(-1)):
         lo_check = X_lo <= AB_T
         hi_check = X_hi >= AB_T
-        contains_false = (lo_check == False).any() or (hi_check == False).any()
+        contains_false = (lo_check == False).any() or \
+            (hi_check == False).any()
         if contains_false is True:
-            raise ValueError("Boundary conditions violated in 'solve_for_A_B'!")
+            raise ValueError("Boundary conditions violated in 'solve_for_A_B'!"
+                             )
 
         def F(A: np.array, B: np.array, X: np.array):
-            """Calculates the loss function for the matrices A and B according to
-            F = ||X-AB.T||**2
+            """Calculates the loss function for the matrices A and B according
+            to F = ||X-AB.T||**2
 
             Args:
             ----
@@ -371,8 +373,8 @@ class solve_BPCA:
 
             Returns:
             -------
-            f : (float) This is the newly calculated cost function value for the
-                updated A and B matrices.
+            f : (float) This is the newly calculated cost function value for
+                the updated A and B matrices.
             """
 
             A, B_T = MathsFunctions.pad_matrices(A, B.T)
@@ -460,7 +462,7 @@ class solve_BPCA:
         sol_vec_x : (ndarray of floats) Current solution vector X for
             ||X-AB.T||**2 .
         resid : (float) Residual for the current solution vector X."""
-
+        print("For the test", M1, M2, X, R, col_row)
         # Seperating the matrices for the lower and upper bounds as they are
         # passed in a single array
         X_low = X[0]
@@ -487,15 +489,15 @@ class solve_BPCA:
         # As in paper, let S = Qy-P_i.T*v to get to a LDP problem as follows
         # min||s||**2 + ||p_2.T*v||**2 s.t. GRQ^1s > h -GRQ^-1P_1'*v
         Z, R_minus1, f_1, LDP_const, new_bounds = \
-            solve_BPCA.LSI_to_LDP(G,h, M2, W, V)
+            solve_BPCA.LSI_to_LDP(G, h, M2, W, V)
 
         # LDP problem Rz>=L is r = Eu -f where column vec E= [R.T, L.T], f =
         # vec let R=new_bounds[1], L=new_bounds[0], can use to find Z
         u_vec, r_vec, resid = solve_BPCA.LDP_to_NNLS_sol(new_bounds[1],
                                                          new_bounds[0])
 
-        # Algorithm from "Solving Least Squares Problems indicates that vector Z is
-        # given by R.T * u_vec * norm(r_vec)**-2"
+        # Algorithm from "Solving Least Squares Problems indicates that vector
+        # Z is given by R.T * u_vec * norm(r_vec)**-2"
         r_norm = norm(r_vec)
         r_minus2 = r_norm ** (-2)
         Ur = np.multiply(u_vec, r_minus2)
@@ -509,7 +511,7 @@ class solve_BPCA:
                                                                  z_f1)
         sol_vec_x = np.matmul(R_min1_padded, z_f1_padded)
         sol_vec_x += LDP_const
-
+        print("for the test", sol_vec_x, resid)
         return sol_vec_x, resid
 
     def LSI_to_LDP(G: np.array, h: np.array, E: np.array, w: np.array,
@@ -574,7 +576,8 @@ class solve_BPCA:
         K_t, w = MathsFunctions.pad_matrices(K_t, w)
         y = np.matmul(K_t, w)
 
-        # Let z = Ry-Q_1.T*f  s.t. our problem is now min z ||z||**2 ||Q_2.T v||**2
+        # Let z = Ry-Q_1.T*f  s.t. our problem is now to
+        # min z ||z||**2 ||Q_2.T v||**2
         # s.t. GK(R^-1)*z >= h - GK(R^-1)*(Q_1.T)*f
         h_padded, g_padded = MathsFunctions.pad_to_subtract(h.T, G.T)
 
@@ -627,22 +630,23 @@ class solve_BPCA:
 
         Args:
         ----
-        G : (ndarray of floats) This should be a column array containing a matrix
-            M2 in the top entry and -M2 in the bottom. This should correspond to
-            one of the matrices A or B in the bounded problem |X - AB.T|**2
-        h : (ndarray of floats) This should be a column array containing the upper
-            bound matrix in the top entry and the lower bound matrix on the
-            bounded problem |X - AB.T|**2
+        G : (ndarray of floats) This should be a column array containing a
+            matrix M2 in the top entry and -M2 in the bottom. This should
+            correspond to one of the matrices A or B in the bounded problem
+            |X - AB.T|**2
+        h : (ndarray of floats) This should be a column array containing the
+            upper bound matrix in the top entry and the lower bound matrix on
+            the bounded problem |X - AB.T|**2
 
         Returns:
         -------
         u : (narray of floats) The solution vector to the NNLS problem
             min u |Eu - f|**2 .
-        r : (ndarray of floats) The value of min u |Eu - f|**2, i.e. the solution
-            of the LDP problem that was converted to NNLS form.
+        r : (ndarray of floats) The value of min u |Eu - f|**2, i.e. the
+            solution of the LDP problem that was converted to NNLS form.
         resid : (float) The residual value for the solution vector u."""
 
-        ht_padded, gt_padded = h.T, G.T  # MathsFunctions.pad_to_subtract(h.T, G.T)
+        ht_padded, gt_padded = h.T, G.T
         E = np.vstack((gt_padded, ht_padded))
         n = E.shape[0]
         f = np.zeros((n - 1))
@@ -662,7 +666,7 @@ class solve_BPCA:
 
         return u, r, resid
 
-    def check_xi_bounds(X: np.array, R: float, A: np.array, B: np.array,
+    def check_xi_bounds(X: np.array, R: int, A: np.array, B: np.array,
                         row_col: int):
         """Function to check if the new row found for matrix A obeys the
         necessary boundary conditions for acceptance, else raises an error.
@@ -673,8 +677,7 @@ class solve_BPCA:
         ----
         X : (ndarray of arrays) Contains two matrices, the upper and lower
             bounds on the update of either A or B.
-        R : (ndarray of floats) the 'partner matrix' i.e. either B or A, needed
-            to calculate the update to the first matrix.
+        R : (int) the row number being updated in either A or B.
         A : (ndarray of floats) The updated matrix, either A or B depending on
             stage of algorithm.
         B : (ndarray of floats) The 'partner matrix' either B or A, needed to
@@ -714,9 +717,9 @@ class solve_BPCA:
 
 # Data needs to be organised as having samples in rows, variables in columns
 # for later calculations Current data is arbritary, for testing only
-data = np.array([2, 6, 2, 3, 3, 2, 3, 2, 7, 3])
-data2 = np.array([[2, 3, 3, 2.6, 2.7, 2, 3, 5, 3, 3],
-                  [2, 3, 6, 4, 2, 2, 3, 2, 3, 3]])
+data = np.array([6, 2, 3])
+data2 = np.array([[3, 2.6, 2.7],
+                  [3, 6, 3]])
 data_temp = ((data[0] + data2[1]) * 80).T
 data_temp = MathsFunctions.check_shape(data_temp)
 data = MathsFunctions.check_shape(data.T)
@@ -725,7 +728,7 @@ data = np.hstack((data, data2, data_temp))
 # Number of dimensions to reduce to
 n = 1
 # Boundary arrays
-low_col = np.ones((10, 1)) * -2
+low_col = np.ones((3, 1)) * -2
 low_bound = np.hstack((low_col, low_col, low_col, low_col))
 high_col = low_col * -10
 high_bound = np.hstack((high_col, high_col, high_col, high_col + 900))
