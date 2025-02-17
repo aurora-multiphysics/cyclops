@@ -8,6 +8,7 @@ Handle reading simulation data into usable planes.
 import numpy as np
 import meshio
 
+from collections import Counter
 
 class MeshReader:
     """Class to read mesh files using meshio."""
@@ -56,7 +57,170 @@ class MeshReader:
 
         for point_index in self.__mesh.point_sets[set_name]:
             set_values.append(all_values[point_index])
+        
+        print(list(self.__mesh.keys()))
+
         return np.array(set_values)
+    
+    def generate_grid(
+        self, bounds: np.ndarray[float], num_x: int, num_y: int
+    ) -> np.ndarray[float]:
+        """Generate a rectangular grid of values in the bounded region.
+
+        Args:
+            bounds (np.ndarray[float]): of the form [[x1, y1], [x2, y2]].
+            num_x (int): number of points in the x direction.
+            num_y (int): number of points in the y direction.
+
+        Returns:
+            np.ndarray[float]: array of 2D positions.
+        """
+        (min_x, min_y), (max_x, max_y) = bounds
+        x_values = np.linspace(min_x, max_x, num_x).reshape(-1)
+        y_values = np.linspace(min_y, max_y, num_y).reshape(-1)
+
+        grid_pos = []
+        for x in x_values[1:-1]:
+            for y in y_values[1:-1]:
+                grid_pos.append(np.array([x, y]))
+        return np.array(grid_pos)
+
+    def generate_line(
+        self, pos1: np.ndarray[float], pos2: np.ndarray[float], num_points: int
+    ) -> np.ndarray[float]:
+        """Generate a 2D line between two 3D positions.
+
+        Args:
+            pos1 (np.ndarray[float]): start position of the form [x1, y1, z1].
+            pos2 (np.ndarray[float]): end position of the form [x2, y2, z2].
+            num_points (int): number of points in the line.
+
+        Returns:
+            np.ndarray[float]: n by 2 array where n=num_points.
+        """
+        x_values = np.linspace(pos1[0], pos2[0], num_points).reshape(-1, 1)
+        y_values = np.linspace(pos1[1], pos2[1], num_points).reshape(-1, 1)
+        line_pos = np.concatenate((x_values, y_values), axis=1)
+        return line_pos
+
+    def find_bounds(self, pos_3D: np.ndarray) -> np.ndarray[float]:
+        """Return the rectangular bounds enclosing an array of positions.
+
+        Args:
+            pos_2D (np.ndarray): n by 2 array.
+
+        Returns:
+            np.ndarray[float]: of the form [[x1, y1], [x2, y2]].
+        """
+        min_x = np.min(pos_2D[:, 0])
+        max_x = np.max(pos_2D[:, 0])
+        min_y = np.min(pos_2D[:, 1])
+        max_y = np.max(pos_2D[:, 1])
+        return np.array([[min_x, min_y], [max_x, max_y]])
+    
+    def get_element_faces(element, element_type):
+        """ Return the faces of an element, given that element's type, where
+        the element is a cell from a mesh. 
+        
+        Args: 
+            element (mesh cell): an individual cell which forms part of a
+            meshio compatible mesh.
+            element_type : the type/shape of the cell provided.
+        
+        Returns:
+            faces : a list of the faces that make up the element originally
+            provided to the function, (in the form of a list of the points
+            which define that face).
+            """
+        faces = []
+
+        if element_type == "tetra":
+        # For Tetrahedral cells, which have 4 triangular faces
+            faces = [
+                [element[0], element[1], element[2]],
+                [element[0], element[1], element[3]],
+                [element[0], element[2], element[3]],
+                [element[1], element[2], element[3]]
+            ]
+        
+        elif element_type == "hexahedron":
+        # For Hexahedral (cuboid) cells, which have 6 quadrilateral faces
+            faces = [
+                [element[0], element[1], element[2], element[3]],
+                [element[4], element[5], element[6], element[7]],
+                [element[0], element[1], element[5], element[4]],
+                [element[1], element[2], element[6], element[5]],
+                [element[2], element[3], element[7], element[6]],
+                [element[3], element[0], element[4], element[7]]
+            ]
+
+        elif element_type == "wedge":
+            # For Wedge (prism) shaped cells, which have 5 faces, including 3
+            # quadrilaterals and 2 triangles)
+            faces = [
+                [element[0], element[1], element[2]],  # Tri
+                [element[3], element[4], element[5]],  # Tri
+                [element[0], element[1], element[4], element[3]],  # Quad
+                [element[1], element[2], element[5], element[4]],  # Quad
+                [element[2], element[0], element[3], element[5]]   # Quad
+            ]
+
+        elif element_type == "pyramid":
+            # Pyramid has 5 faces (1 quadrilateral, 4 triangles)
+            faces = [
+                [element[0], element[1], element[2], element[3]],  # Quad
+                [element[0], element[1], element[4]],  # Tri
+                [element[1], element[2], element[4]],  # Tri
+                [element[2], element[3], element[4]],  # Tri
+                [element[3], element[0], element[4]]   # Tri
+            ]
+        # Expect some 2D faces may appear on the boundaries of 3D meshes
+        elif element_type == "triangle":
+            faces = [element]
+        elif element_type == "quad":
+            faces = [element]
+        
+        return faces
+
+    def get_boundary_faces(self):
+        """ Function to find the faces of mesh cells that form the boundary of
+        that mesh.
+         
+        Args:
+            self : the mesh to find the boundary faces on (this should have
+            been read into the MeshReader class already)
+           
+        Returns:   """
+        # List to store boundary faces
+        boundary_faces = []
+
+        # Process all cells in mesh
+        for cell_block in self.__mesh.cells:
+            print("self__mesh ", self.__mesh)
+            element_type = cell_block.type
+            # Block type may have numeric ending, removing to make
+            # identifying shape easier
+            element_type = ''.join(filter(lambda x: x.isalpha(), element_type))
+
+            if element_type in [
+                "tetra", "hexahedron", "wedge", "pyramid", "triangle",
+                "quad"]:
+                # Get faces for each element in the current cell block
+                for element in cell_block.data:
+                    faces = MeshReader.get_element_faces(element,
+                                                         element_type)
+                    boundary_faces.extend(faces)
+
+        # Convert to tuples (for easier duplicates handling) and count them
+        boundary_faces_tuples = [
+            tuple(sorted(face)) for face in boundary_faces]
+        face_counts = Counter(boundary_faces_tuples)
+
+        # Boundary faces should appear only once, thus we filter for them
+        boundary_faces = [list(face) for face,
+                          count in face_counts.items() if count == 1]
+
+        return boundary_faces    
 
 
 class Unfolder:

@@ -127,6 +127,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+cyc_env/
 
 # Spyder project settings
 .spyderproject
@@ -165,3 +166,4 @@ results
 
 # Ignore user files (e.g. vs code settings)
 .vscode
+tutorials/old_tutorials/
