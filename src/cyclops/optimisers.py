@@ -5,6 +5,7 @@ Optimiser classes for cyclops. These handle optimisation of sensor placement.
 """
 import numpy as np
 
+from random import uniform
 from pymoo.algorithms.soo.nonconvex.pso import PSO
 from pymoo.algorithms.soo.nonconvex.ga import GA
 from pymoo.algorithms.moo.nsga2 import NSGA2
