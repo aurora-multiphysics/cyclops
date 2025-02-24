@@ -10,6 +10,7 @@ import meshio
 import pyvista as pv
 
 from collections import Counter
+from random import shuffle
 
 class MeshReader:
     """Class to read mesh files using meshio."""
@@ -25,17 +26,11 @@ class MeshReader:
             file_path (str): path to the mesh file e.g. 'simulation/mesh.e'.
         """
         self.__mesh = meshio.read(file_path)
-        self.__points = self.__mesh.points
-
-    def read_points(self) -> np.ndarray[float]:
-        """Read the points within the full mesh."""
-
-        points = self.__mesh.points
-
-        return points
 
     def read_pos(self, set_name: str) -> np.ndarray[float]:
-        """Record the points described by the region into a numpy array.
+        """Record the points described by the region into a numpy array. Mesh
+        may be split into 'sets', it is best to read points in by set so that 
+        the scalar/vector values for each set are easily matched up.
 
         Args:
             set_name (str): region name.
@@ -236,104 +231,49 @@ class MeshReader:
 
         return boundary_faces    
 
+    def _sensor_on_surface(self, model, sensor_idx: list):
+        """Function to ensure the sensor lies on the surface of the mesh and
+        cannot be free-floating inside the mesh. This is done using
+        barycentric coordinates)."""
+        bounding_faces = MeshReader.get_boundary_faces(self)
+        num_faces = len(bounding_faces)
+        
+        # use shuffle to randomise sensor-face pairings
+        shuffle(bounding_faces)
+        # leave order of sensor_idx so that sensor_spots will match
+        sensor_spots = []
+        for sensor, face in zip(sensor_idx, bounding_faces):
+            sensor_spots.append(face)
+ 
+        vertex_dict = {}
+        for j in range(0,len(sensor_spots)):
+            # get all of the vertices on the face
+            vertices = self.mesh.get_face_vertices(sensor_spots[j])
+            # 
+            vertex_dict = {f"{j}v{i+1}": vertex for i, vertex in enumerate(vertices)}
+            vertex_dict = {f"{j}p{i+1}": self.mesh.get_node(vertex) for i, vertex
+                           in enumerate(vertices)}
 
-class Unfolder:
-    """Class for unfolding 3D geometries into 2D planes.
+        #v1, v2, v3 = self.mesh.get_face_vertices(sensor_spots)
+        #p1, p2, p3 = self.mesh.get_node(v1), self.mesh.get_node(v2), self.mesh.get_node(v3)
+        
+        x_pos = model.x[sensor_idx]
+        y_pos = model.y[sensor_idx]
+        z_pos = model.z[sensor_idx]
+        
+        # Barycentric position calculation
+        return (
+            model.lambdas[sensor_idx, v1] * p1[0] + model.lambdas[sensor_idx, v2] * p2[0] + model.lambdas[sensor_idx, v3] * p3[0] == x_pos
+        ) & (
+            model.lambdas[sensor_idx, v1] * p1[1] + model.lambdas[sensor_idx, v2] * p2[1] + model.lambdas[sensor_idx, v3] * p3[1] == y_pos
+        ) & (
+            model.lambdas[sensor_idx, v1] * p1[2] + model.lambdas[sensor_idx, v2] * p2[2] + model.lambdas[sensor_idx, v3] * p3[2] == z_pos
+        )
+    
+    def get_node(self, index):
+        """Get the xyz coordinates of a node by index."""
+        return self.nodes[index]
 
-    Performs a number of operations on the arrays of positions produced by
-    reading the mesh. Will later be generalised to unfold 3D meshes into 2D
-    planes, and produce an array of boundaries describing their boundaries.
-    """
-
-    def compress_2D(self, pos_3D: np.ndarray[float]) -> np.ndarray[float]:
-        """Compress an array of 3D points into 2D points.
-
-        Simple implementation by: (x, y, z) -> (z, y).
-
-        Args:
-            pos_3D (np.ndarray[float]): n by 3 array of n 3D position vectors.
-
-        Returns:
-            np.ndarray[float]: n by 2 array of n 2D position vectors.
-        """
-        pos_2D = []
-        for pos in pos_3D:
-            pos_2D.append(np.array([pos[2], pos[1]]))
-        return np.array(pos_2D)
-
-    def compress_1D(self, points: np.ndarray[float]) -> np.ndarray[float]:
-        """Compress an array of 2D/3D points into 1D points.
-
-        Works by considering the distances between each point vector.
-
-        Args:
-            points (np.ndarray[float]): n by 2 (or 3) array of n 2D (or 3D)
-                position vectors.
-
-        Returns:
-            np.ndarray[float]: n by 1 array of n 1D position vectors.
-        """
-        sub = np.zeros(points.shape)
-        for i, pos in enumerate(points[:-1]):
-            sub[i + 1] = pos
-        diff = points - sub
-        diff[0] = np.zeros(diff[0].shape)
-        out_arr = np.sqrt((diff * diff).sum(axis=1))
-        out_arr = np.cumsum(out_arr)
-        return out_arr.reshape(-1, 1)
-
-    def generate_grid(
-        self, bounds: np.ndarray[float], num_x: int, num_y: int
-    ) -> np.ndarray[float]:
-        """Generate a rectangular grid of values in the bounded region.
-
-        Args:
-            bounds (np.ndarray[float]): of the form [[x1, y1], [x2, y2]].
-            num_x (int): number of points in the x direction.
-            num_y (int): number of points in the y direction.
-
-        Returns:
-            np.ndarray[float]: array of 2D positions.
-        """
-        (min_x, min_y), (max_x, max_y) = bounds
-        x_values = np.linspace(min_x, max_x, num_x).reshape(-1)
-        y_values = np.linspace(min_y, max_y, num_y).reshape(-1)
-
-        grid_pos = []
-        for x in x_values[1:-1]:
-            for y in y_values[1:-1]:
-                grid_pos.append(np.array([x, y]))
-        return np.array(grid_pos)
-
-    def generate_line(
-        self, pos1: np.ndarray[float], pos2: np.ndarray[float], num_points: int
-    ) -> np.ndarray[float]:
-        """Generate a 2D line between two 3D positions.
-
-        Args:
-            pos1 (np.ndarray[float]): start position of the form [x1, y1, z1].
-            pos2 (np.ndarray[float]): end position of the form [x2, y2, z2].
-            num_points (int): number of points in the line.
-
-        Returns:
-            np.ndarray[float]: n by 2 array where n=num_points.
-        """
-        x_values = np.linspace(pos1[0], pos2[0], num_points).reshape(-1, 1)
-        y_values = np.linspace(pos1[1], pos2[1], num_points).reshape(-1, 1)
-        line_pos = np.concatenate((x_values, y_values), axis=1)
-        return line_pos
-
-    def find_bounds(self, pos_2D: np.ndarray) -> np.ndarray[float]:
-        """Return the rectangular bounds enclosing an array of positions.
-
-        Args:
-            pos_2D (np.ndarray): n by 2 array.
-
-        Returns:
-            np.ndarray[float]: of the form [[x1, y1], [x2, y2]].
-        """
-        min_x = np.min(pos_2D[:, 0])
-        max_x = np.max(pos_2D[:, 0])
-        min_y = np.min(pos_2D[:, 1])
-        max_y = np.max(pos_2D[:, 1])
-        return np.array([[min_x, min_y], [max_x, max_y]])
+    def get_face_vertices(self, face_index):
+        """Get the vertices (node indices) of a face by index."""
+        return self.faces[face_index] 
