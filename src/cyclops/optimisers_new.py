@@ -12,6 +12,7 @@ class ProblemSetup(ConcreteModel):
         surf_pts: np.ndarray,
         surf_faces: list,
         loss_function: callable,
+        constraints: list, # list of pyomo exprs
         **kwargs
     ):
         """ Set up the problem
@@ -28,3 +29,4 @@ class ProblemSetup(ConcreteModel):
         self.__surf_pts = surf_pts
         self.__surf_faces = surf_faces
         self.__loss_function = loss_function
+        self.__constraints = constraints

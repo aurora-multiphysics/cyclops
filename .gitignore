@@ -165,5 +165,6 @@ results
 
 
 # Ignore user files (e.g. vs code settings)
+*.uxf
 .vscode
 tutorials/old_tutorials/

@@ -26,6 +26,20 @@ class MeshReader:
             file_path (str): path to the mesh file e.g. 'simulation/mesh.e'.
         """
         self.__mesh = meshio.read(file_path)
+        
+        # Extract the nodes (vertices) and faces (dict of faces by type)
+        self.__nodes = self.__mesh.points  # Shape (n_nodes, 3) for a 3D mesh
+        self.__faces = self.__mesh.cells_dict
+        
+        # Flatten faces into a single list with their vertex counts
+        self.__face_types = list(self.__faces.keys())
+
+        self.__all_faces = []
+        for face_type in self.__face_types:
+            self.__all_faces.extend(self.__faces[face_type])
+
+        # Store the number of faces
+        self.__num_faces = len(self.__all_faces)
 
     def read_pos(self, set_name: str) -> np.ndarray[float]:
         """Record the points described by the region into a numpy array. Mesh
@@ -60,72 +74,8 @@ class MeshReader:
 
         for point_index in self.__mesh.point_sets[set_name]:
             set_values.append(all_values[point_index])
-        
-        #print(list(self.__mesh.keys()))
 
         return np.array(set_values)
-    
-    def generate_grid(self, resolution: int) -> np.ndarray[float]:
-        """Generate a grid of values in the region bounded by a given mesh.
-
-        Args:
-            resolution (int): the resolution to generate the grid at, the
-            higher the value the finer the grid. (Note that this is not scaled to
-            the mesh, the resolution should be adjusted for the size of the mesh in
-            questioned)
-
-        Returns:
-            np.ndarray[float]: array of grid point positions.
-        """
-        faces = self.__mesh.cells_dict
-        vertices = MeshReader.read_points(self)
-
-        # Create a PyVista mesh from the vertices and faces
-        pyvista_mesh = pv.PolyData(vertices, faces)
-
-        # Get the bounding box of the mesh
-        min_bound = vertices.min(axis=0)
-        max_bound = vertices.max(axis=0)
-
-        # Create the 3D grid points using numpy's linspace
-        x = np.linspace(min_bound[0], max_bound[0], resolution)
-        y = np.linspace(min_bound[1], max_bound[1], resolution)
-        z = np.linspace(min_bound[2], max_bound[2], resolution)
-
-        # Generate grid
-        grid_x, grid_y, grid_z = np.meshgrid(x, y, z)
-        grid_points = np.vstack([grid_x.ravel(), grid_y.ravel(),
-                                 grid_z.ravel()]).T
-
-        # To do - check if there is a better method for this
-        def is_point_in_mesh(point, mesh):
-            # Using pyvista's method
-            return mesh.is_point_in_mesh(point)
-
-        # Filter grid points that lie inside the mesh
-        valid_points = [point for point in grid_points if is_point_in_mesh(point, pyvista_mesh)]
-
-        grid_pos = np.array(valid_points)
-
-        return grid_pos
-
-    def generate_line(
-        self, pos1: np.ndarray[float], pos2: np.ndarray[float], num_points: int
-    ) -> np.ndarray[float]:
-        """Generate a 2D line between two 3D positions.
-
-        Args:
-            pos1 (np.ndarray[float]): start position of the form [x1, y1, z1].
-            pos2 (np.ndarray[float]): end position of the form [x2, y2, z2].
-            num_points (int): number of points in the line.
-
-        Returns:
-            np.ndarray[float]: n by 2 array where n=num_points.
-        """
-        x_values = np.linspace(pos1[0], pos2[0], num_points).reshape(-1, 1)
-        y_values = np.linspace(pos1[1], pos2[1], num_points).reshape(-1, 1)
-        line_pos = np.concatenate((x_values, y_values), axis=1)
-        return line_pos
     
     def get_element_faces(element, element_type):
         """ Return the faces of an element, given that element's type, where
@@ -229,46 +179,51 @@ class MeshReader:
         boundary_faces = [list(face) for face,
                           count in face_counts.items() if count == 1]
 
-        return boundary_faces    
+        return boundary_faces
+        
+    def generate_grid(self, resolution: int) -> np.ndarray[float]:
+        """Generate a grid of values in the region bounded by a given mesh.
 
-    def _sensor_on_surface(self, model, sensor_idx: list):
-        """Function to ensure the sensor lies on the surface of the mesh and
-        cannot be free-floating inside the mesh. This is done using
-        barycentric coordinates)."""
-        bounding_faces = MeshReader.get_boundary_faces(self)
-        num_faces = len(bounding_faces)
-        
-        # use shuffle to randomise sensor-face pairings
-        shuffle(bounding_faces)
-        # leave order of sensor_idx so that sensor_spots will match
-        sensor_spots = []
-        for sensor, face in zip(sensor_idx, bounding_faces):
-            sensor_spots.append(face)
- 
-        vertex_dict = {}
-        for j in range(0,len(sensor_spots)):
-            # get all of the vertices on the face
-            vertices = self.mesh.get_face_vertices(sensor_spots[j])
-            # 
-            vertex_dict = {f"{j}v{i+1}": vertex for i, vertex in enumerate(vertices)}
-            vertex_dict = {f"{j}p{i+1}": self.mesh.get_node(vertex) for i, vertex
-                           in enumerate(vertices)}
+        Args:
+            resolution (int): the resolution to generate the grid at, the
+            higher the value the finer the grid. (Note that this is not scaled to
+            the mesh, the resolution should be adjusted for the size of the mesh in
+            questioned)
 
-        #v1, v2, v3 = self.mesh.get_face_vertices(sensor_spots)
-        #p1, p2, p3 = self.mesh.get_node(v1), self.mesh.get_node(v2), self.mesh.get_node(v3)
-        
-        x_pos = model.x[sensor_idx]
-        y_pos = model.y[sensor_idx]
-        z_pos = model.z[sensor_idx]
-        
-        # Barycentric position calculation
-        return (
-            model.lambdas[sensor_idx, v1] * p1[0] + model.lambdas[sensor_idx, v2] * p2[0] + model.lambdas[sensor_idx, v3] * p3[0] == x_pos
-        ) & (
-            model.lambdas[sensor_idx, v1] * p1[1] + model.lambdas[sensor_idx, v2] * p2[1] + model.lambdas[sensor_idx, v3] * p3[1] == y_pos
-        ) & (
-            model.lambdas[sensor_idx, v1] * p1[2] + model.lambdas[sensor_idx, v2] * p2[2] + model.lambdas[sensor_idx, v3] * p3[2] == z_pos
-        )
+        Returns:
+            np.ndarray[float]: array of grid point positions.
+        """
+        faces = self.__mesh.cells_dict
+        vertices = MeshReader.read_points(self)
+
+        # Create a PyVista mesh from the vertices and faces
+        pyvista_mesh = pv.PolyData(vertices, faces)
+
+        # Get the bounding box of the mesh
+        min_bound = vertices.min(axis=0)
+        max_bound = vertices.max(axis=0)
+
+        # Create the 3D grid points using numpy's linspace
+        x = np.linspace(min_bound[0], max_bound[0], resolution)
+        y = np.linspace(min_bound[1], max_bound[1], resolution)
+        z = np.linspace(min_bound[2], max_bound[2], resolution)
+
+        # Generate grid
+        grid_x, grid_y, grid_z = np.meshgrid(x, y, z)
+        grid_points = np.vstack([grid_x.ravel(), grid_y.ravel(),
+                                 grid_z.ravel()]).T
+
+        # To do - check if there is a better method for this
+        def is_point_in_mesh(point, mesh):
+            # Using pyvista's method
+            return mesh.is_point_in_mesh(point)
+
+        # Filter grid points that lie inside the mesh
+        valid_points = [point for point in grid_points if is_point_in_mesh(point, pyvista_mesh)]
+
+        grid_pts = np.array(valid_points)
+
+        return grid_pts
     
     def get_node(self, index):
         """Get the xyz coordinates of a node by index."""
@@ -276,4 +231,5 @@ class MeshReader:
 
     def get_face_vertices(self, face_index):
         """Get the vertices (node indices) of a face by index."""
-        return self.faces[face_index] 
+        face_vrts = self.__all_faces[face_index]
+        return face_vrts

@@ -288,6 +288,7 @@ class Experiment:
             losses[i] = self.get_MSE(sensor_pos)
         return [np.mean(losses)]
 
+    # This can potentially stay with little change
     def get_MSE(self, sensor_pos: np.ndarray[float]) -> float:
         """Calculate Mean Squared Error (MSE) from an array sensor positions.
 

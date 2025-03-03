@@ -9,6 +9,7 @@ import numpy as np
 
 from cyclops.regressors import PModel, CSModel
 
+#ToDo all sensor classes are currently unable to handle 3D fields
 
 class Sensor:
     """Abstract base class for sensors."""
@@ -18,8 +19,8 @@ class Sensor:
         noise_dev: float,
         offset_function: callable,
         failure_chance: float,
-        value_range: np.ndarray[float],
-        relative_sites: np.ndarray[float],
+        value_range: np.ndarray,
+        relative_sites: np.ndarray,
     ) -> None:
         """Initialise class instance.
 
@@ -28,17 +29,17 @@ class Sensor:
                 noise.
             offset_function (callable): systematic error addition function.
             failure_chance (float): chance of sensor failing.
-            value_range (np.ndarray[float]): 2 by m array of lower and upper
-                bounds of values of dimension m.
-            relative_sites (np.ndarray[float]): n by d array of n relative
-                positions of dimension d=1 or d=2 to measure sensor values at.
+            value_range : 
+            relative_sites : 
         """
         self._noise_dev = noise_dev
         self._offset_function = offset_function
         self._failure_chance = failure_chance
+        #ToDo this is a problem, its assuming symmetric shapes
         self._range = value_range
 
         self._relative_sites = relative_sites
+        # Assuming range has the shape (2,m)
         self._value_dim = len(value_range[0])
 
     def get_failure_chance(self) -> float:
@@ -89,6 +90,7 @@ class Sensor:
         )
         return (out_value, out_pos)
 
+    #ToDo unsure this should be kept as range is currently a problem
     def _squash_to_range(self, array) -> np.ndarray[float]:
         """Clip all values outside the range into the range.
 
@@ -99,16 +101,15 @@ class Sensor:
         Returns:
             np.ndarray[float]: clipped array.
         """
-        for i, value in enumerate(array):
-            if np.any(value < self._range[0]):
-                array[i] = self._range[0]
-            elif np.any(array > self._range[1]):
-                array[i] = self._range[1]
+        lower_bound = self._range[0]
+        upper_bound = self._range[1]
+        
+        np.clip(array, lower_bound, upper_bound, out=array)
         return array
 
-    def get_num_input_sites(self) -> int:
+    def get_num_input_sites(self, actual_pos: np.ndarray) -> np.ndarray:
         """Return number of sites needed to be considered for the sensor."""
-        return len(self._relative_sites)
+        return self._relative_sites + actual_pos
 
 
 class PointSensor(Sensor):
@@ -119,7 +120,7 @@ class PointSensor(Sensor):
         noise_dev: float,
         offset_function: callable,
         failure_chance: float,
-        value_range: np.ndarray[float],
+        value_range: np.ndarray,
         field_dim: int,
     ) -> None:
         """Initialise class instance.
@@ -129,15 +130,10 @@ class PointSensor(Sensor):
                 noise.
             offset_function (callable): systematic error addition function.
             failure_chance (float): chance of sensor failing.
-            value_range (np.ndarray[float]): 2 by m array of lower and upper
-                bounds of values of dimension m.
+            value_range np.ndarray: 
         """
-        if field_dim == 2:
-            measurement_sites = np.array([[0, 0]])
-        elif field_dim == 1:
-            measurement_sites = np.array([[0]])
-        else:
-            raise Exception("Can only have 1D or 2D field dimensions.")
+        measurement_sites = np.zeros((1, field_dim))
+
         super().__init__(
             noise_dev,
             offset_function,
@@ -158,7 +154,7 @@ class RoundSensor(Sensor):
         noise_dev: float,
         offset_function: callable,
         failure_chance: float,
-        value_range: np.ndarray[float],
+        value_range: np.ndarray,
         radius: float,
         field_dim: int,
     ) -> None:
@@ -181,6 +177,7 @@ class RoundSensor(Sensor):
         elif field_dim == 1:
             measurement_sites = np.array([[0], [0], [0], [-radius], [radius]])
         else:
+            #ToDo may need 3D fields at some point?
             raise Exception("Can only have 1D or 2D field dimensions.")
         super().__init__(
             noise_dev,
@@ -205,8 +202,8 @@ class MultiSensor(Sensor):
         noise_dev: float,
         offset_function: callable,
         failure_chance: float,
-        value_range: np.ndarray[float],
-        grid: np.ndarray[float],
+        value_range: np.ndarray,
+        grid: np.ndarray,
     ) -> None:
         """Initialise class instance.
 
@@ -215,16 +212,15 @@ class MultiSensor(Sensor):
                 noise.
             offset_function (callable): systematic error addition function.
             failure_chance (float): chance of sensor failing.
-            value_range (np.ndarray[float]): 2 by m array of lower and upper
-                bounds of values of dimension m.
+            value_range np.ndarray: 
         """
         super().__init__(
             noise_dev, offset_function, failure_chance, value_range, grid
         )
 
     def get_input_sites(
-        self, actual_pos: np.ndarray[float]
-    ) -> np.ndarray[float]:
+        self, actual_pos: np.ndarray
+    ) -> np.ndarray:
         """Get positions at which sensor takes readings.
 
         Args:
@@ -237,7 +233,7 @@ class MultiSensor(Sensor):
         return self._relative_sites
 
     def get_output_values(
-        self, site_values: np.ndarray[float], actual_pos: np.ndarray[float]
+        self, site_values: np.ndarray, actual_pos: np.ndarray
     ) -> tuple[np.ndarray]:
         """Get sensor reading value.
 
@@ -317,6 +313,6 @@ class Thermocouple(RoundSensor):
         Returns:
             np.ndarray[float]: error.
         """
-        voltage = self._interpolator.predict(temp)
+        voltage = self._interpolerrorator.predict(temp)
         new_temp = self._regressor.predict(voltage)
         return new_temp - temp
