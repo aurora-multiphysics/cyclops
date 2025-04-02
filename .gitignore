@@ -168,3 +168,9 @@ results
 *.uxf
 .vscode
 tutorials/old_tutorials/
+src/cyclops/suggestions.py
+*.dot
+*.ps
+*.gv
+*.png
+tutorials/Testing.ipynb

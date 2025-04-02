@@ -125,6 +125,226 @@ class RegressionModel:
             )
 
 
+class PModel(RegressionModel):
+    """Polynomial fit regressor.
+
+    Uses a polynomial fit. Interpolates and extrapolates. Acts in 1D only.
+    Learns from any number of training data points n >= degree. Time complexity
+    of around O(n^2).
+    """
+
+    def __init__(self, num_input_dim: int, degree=3) -> None:
+        """Initialise class instance.
+
+        Args:
+            num_input_dim (int): number of features (dimensions) for the
+                training data.
+
+        Raises:
+            Exception: error to explain user's mistake.
+        """
+        super().__init__(num_input_dim, degree)
+        if num_input_dim != 1:
+            raise Exception("Input data should have d = 1 dimensions.")
+        self._degree = degree
+
+    def fit(
+        self, train_x: np.ndarray[float], train_y: np.ndarray[float]
+    ) -> None:
+        """Fit the model to some training data.
+
+        Args:
+            train_x (np.ndarray[float]): n by d array of n training inputs with
+                d dimensions.
+            train_y (np.ndarray[float]): n by 1 array of n training outputs.
+        """
+        scaled_x = self.prepare_fit(train_x, train_y)
+        pos_val_matrix = np.concatenate(
+            (scaled_x, train_y.reshape(-1, 1)), axis=1
+        )
+        pos_val_matrix = pos_val_matrix[pos_val_matrix[:, 0].argsort()]
+
+        self._regressor = np.polynomial.polynomial.Polynomial.fit(
+            pos_val_matrix[:, 0].reshape(-1),
+            pos_val_matrix[:, 1].reshape(-1),
+            deg=self._degree,
+        )
+
+    def predict(self, predict_x: np.ndarray[float]) -> np.ndarray[float]:
+        """Return n predicted outputs of dimension 1 given inputs.
+
+        Args:
+            predict_x (np.ndarray[float]): n by d array of n input samples of d
+                dimensions.
+
+        Returns:
+            np.ndarray[float]: n by 1 array of n predicted 1D values.
+        """
+        scaled_x = self.prepare_predict(predict_x)
+        return self._regressor(scaled_x).reshape(-1, 1)
+
+
+class LModel(RegressionModel):
+    """Linear regressor.
+
+    Uses linear splines. Only interpolates. Acts in any dimension d > 1. Learns
+    from any number of training data points n >= 3. Time complexity of around
+    O(n).
+    """
+
+    def __init__(self, num_input_dim) -> None:
+        """Initialise class instance.
+
+        Args:
+            num_input_dim (int): number of features (dimensions) for the
+                training data.
+
+        Raises:
+            Exception: error to explain user's mistake.
+        """
+        super().__init__(num_input_dim, 3)
+        if num_input_dim <= 1:
+            raise Exception("Input data should have d >= 2 dimensions.")
+
+    def fit(
+        self, train_x: np.ndarray[float], train_y: np.ndarray[float]
+    ) -> None:
+        """Fit the model to some training data.
+
+        Args:
+            train_x (np.ndarray[float]): n by d array of n training inputs with
+                d dimensions.
+            train_y (np.ndarray[float]): n by 1 array of n training outputs.
+        """
+        scaled_x = self.prepare_fit(train_x, train_y)
+        self._regressor = LinearNDInterpolator(
+            scaled_x, train_y, fill_value=np.mean(train_y)
+        )
+
+    def predict(self, predict_x: np.ndarray[float]) -> np.ndarray[float]:
+        """Return n predicted outputs of dimension 1 given inputs.
+
+        Args:
+            predict_x (np.ndarray[float]): n by d array of n input samples of d
+                dimensions.
+
+        Returns:
+            np.ndarray[float]: n by 1 array of n predicted 1D values.
+        """
+        scaled_x = self.prepare_predict(predict_x)
+        value = self._regressor(scaled_x).reshape(-1, 1)
+        return value
+
+
+class CSModel(RegressionModel):
+    """Cubic spline regressor.
+    
+    Uses cubic spline interpolation. Interpolates and extrapolates. Acts in
+    1D only. Learns from any number of training data points n >= 2. Time
+    complexity of around O(n).
+    """
+
+    def __init__(self, num_input_dim: int) -> None:
+        """Initialise class instance.
+
+        Args:
+            num_input_dim (int): number of features (dimensions) for the
+                training data.
+
+        Raises:
+            Exception: error to explain user's mistake.
+        """
+        super().__init__(num_input_dim, 2)
+        if num_input_dim != 1:
+            raise Exception("Input data should have d = 1 dimensions.")
+
+    def fit(
+        self, train_x: np.ndarray[float], train_y: np.ndarray[float]
+    ) -> None:
+        """Fit the model to some training data.
+
+        Args:
+            train_x (np.ndarray[float]): n by d array of n training inputs with
+                d dimensions.
+            train_y (np.ndarray[float]): n by 1 array of n training outputs.
+        """
+        scaled_x = self.prepare_fit(train_x, train_y)
+        pos_val_matrix = np.concatenate(
+            (scaled_x, train_y.reshape(-1, 1)), axis=1
+        )
+        pos_val_matrix = pos_val_matrix[pos_val_matrix[:, 0].argsort()]
+
+        self._regressor = CubicSpline(
+            pos_val_matrix[:, 0], pos_val_matrix[:, 1]
+        )
+
+    def predict(self, predict_x: np.ndarray[float]) -> np.ndarray[float]:
+        """Return n predicted outputs of dimension 1 given inputs.
+
+        Args:
+            predict_x (np.ndarray[float]): n by d array of n input samples of d
+                dimensions.
+
+        Returns:
+            np.ndarray[float]: n by 1 array of n predicted 1D values.
+        """
+        scaled_x = self.prepare_predict(predict_x)
+        return self._regressor(scaled_x).reshape(-1, 1)
+
+
+class CTModel(RegressionModel):
+    """Clough Tocher regressor.
+
+    Uses a Clough Tocher interpolation. Interpolates only. Acts in 2D only,
+    Learns from any number of training data points n >= 3. Time complexity of
+    around O(n log(n)) due to the triangulation involved.
+    """
+
+    def __init__(self, num_input_dim: int) -> None:
+        """Initialise class instance.
+
+        Args:
+            num_input_dim (int): number of features (dimensions) for the
+                training data.
+
+        Raises:
+            Exception: error to explain user's mistake.
+        """
+        super().__init__(num_input_dim, 3)
+        if num_input_dim != 2:
+            raise Exception("Input data should have d = 2 dimensions.")
+        self._output_mean = 0
+
+    def fit(
+        self, train_x: np.ndarray[float], train_y: np.ndarray[float]
+    ) -> None:
+        """Fit the model to some training data.
+
+        Args:
+            train_x (np.ndarray[float]): n by d array of n training inputs with
+                d dimensions.
+            train_y (np.ndarray[float]): n by 1 array of n training outputs.
+        """
+        scaled_x = self.prepare_fit(train_x, train_y)
+        self._regressor = CloughTocher2DInterpolator(
+            scaled_x, train_y, fill_value=np.mean(train_y)
+        )
+
+    def predict(self, predict_x: np.ndarray[float]) -> None:
+        """Return n predicted outputs of dimension 1 given inputs.
+
+        Args:
+            predict_x (np.ndarray[float]): n by d array of n input samples of d
+                dimensions.
+
+        Returns:
+            np.ndarray[float]: n by 1 array of n predicted 1D values.
+        """
+        scaled_x = self.prepare_predict(predict_x)
+        value = self._regressor(scaled_x).reshape(-1, 1)
+        return value
+
+
 class RBFModel(RegressionModel):
     """Radial basis function regressor.
 
@@ -143,9 +363,11 @@ class RBFModel(RegressionModel):
         Raises:
             Exception: error to explain user's mistake.
         """
+        #ToDo possibly change "min_length" from 2 to a larger number?
         super().__init__(num_input_dim, 2)
         if num_input_dim <= 0:
             raise Exception("Input data should have d >= 1 dimensions.")
+        self._regressor = None
 
     def fit(
         self, train_x: np.ndarray[float], train_y: np.ndarray[float]
@@ -170,6 +392,10 @@ class RBFModel(RegressionModel):
         Returns:
             np.ndarray[float]: n by 1 array of n predicted 1D values.
         """
+        # Check model has been fitted
+        if self._regressor is None:
+            raise ValueError("Model is not fitted yet. 'fit()' must be called"
+            "before prediction.")
         scaled_x = self.prepare_predict(predict_x)
         return self._regressor(scaled_x).reshape(-1, 1)
 

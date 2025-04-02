@@ -1,16 +1,19 @@
 """
-MeshReader and Unfolder classes for cyclops.
+MeshReader classes for cyclops.
 
-Handle reading simulation data into usable planes.
+Handles reading in simulation data.
 
 (c) Copyright UKAEA 2023.
 """
 import numpy as np
 import meshio
 import pyvista as pv
+import warnings
 
 from collections import Counter
 from random import shuffle
+from scipy.spatial import ConvexHull
+from scipy.spatial import Delaunay
 
 class MeshReader:
     """Class to read mesh files using meshio."""
@@ -26,7 +29,15 @@ class MeshReader:
             file_path (str): path to the mesh file e.g. 'simulation/mesh.e'.
         """
         self.__mesh = meshio.read(file_path)
-        
+        self.point_data = self.__mesh.point_data
+
+        if not self.__mesh.point_sets:
+            warnings.warn("No named point sets found in mesh file.")
+        if self.__mesh.point_sets:
+            self.__point_set = self.__mesh.point_sets
+        else:
+            self.__point_set = {}
+
         # Extract the nodes (vertices) and faces (dict of faces by type)
         self.__nodes = self.__mesh.points  # Shape (n_nodes, 3) for a 3D mesh
         self.__faces = self.__mesh.cells_dict
@@ -37,11 +48,11 @@ class MeshReader:
         self.__all_faces = []
         for face_type in self.__face_types:
             self.__all_faces.extend(self.__faces[face_type])
-
+        
         # Store the number of faces
         self.__num_faces = len(self.__all_faces)
 
-    def read_pos(self, set_name: str) -> np.ndarray[float]:
+    def read_pos(self, set_name: str) -> np.ndarray:
         """Record the points described by the region into a numpy array. Mesh
         may be split into 'sets', it is best to read points in by set so that 
         the scalar/vector values for each set are easily matched up.
@@ -50,7 +61,7 @@ class MeshReader:
             set_name (str): region name.
 
         Returns:
-            np.ndarray[float]: n by d array of n positions with d dimensions.
+            np.ndarray: n by d array of n positions with d dimensions.
         """
         points = []
         for point_index in self.__mesh.point_sets[set_name]:
@@ -58,26 +69,58 @@ class MeshReader:
         return np.array(points)
 
     def read_scalar(
-        self, set_name: str, scalar_name: str
-    ) -> np.ndarray[float]:
+        self, set_name: str, scalar_name='all'
+    ) -> np.ndarray:
         """Find values of named scalar at the points specified by region name.
+        Note that vectors are split into their scalar components and should
+        also be read in with this method.
 
         Args:
             set_name (str): region name
             scalar_name (str): name of the scalar value to read
 
         Returns:
-            np.ndarray[float]: n long numpy array of n scalar values
+            np.ndarray: n long numpy array of n scalar values
         """
         set_values = []
+        if scalar_name not in self.__mesh.point_data:
+            raise KeyError("Scalar '{scalar_name}' not found in mesh"
+            "point data.")
+
         all_values = self.__mesh.point_data[scalar_name]
 
-        for point_index in self.__mesh.point_sets[set_name]:
-            set_values.append(all_values[point_index])
+        if set_name == 'all':
+            for region_name in self.read_region_names():
+                for point_index in self.__mesh.point_sets[region_name]:
+                    set_values.append(all_values[point_index])
+        # ToDo possibly add method to look at multiple, but not ALL regions
+        else:
+            for point_index in self.__mesh.point_sets[set_name]:
+                set_values.append(all_values[point_index])
 
         return np.array(set_values)
     
-    def get_element_faces(element, element_type):
+    def read_region_names(self) -> list:
+        """ Obtain the region names within the supplied mesh and return these
+          as a list.
+          
+          Args:
+          
+          Returns:"""
+        region_names = self.__point_set.keys()
+        region_blocks = list(region_names)
+
+        return region_blocks
+
+    def num_faces(self) -> int:
+        """Return the number of faces in the mesh."""
+        return self.__num_faces
+
+    def get_faces(self):
+        """Return all faces of the mesh."""
+        return self.__all_faces
+
+    def get_element_faces(self, element, element_type):
         """ Return the faces of an element, given that element's type, where
         the element is a cell from a mesh. 
         
@@ -155,7 +198,7 @@ class MeshReader:
 
         # Process all cells in mesh
         for cell_block in self.__mesh.cells:
-            #print("self__mesh ", self.__mesh)
+
             element_type = cell_block.type
             # Block type may have numeric ending, removing to make
             # identifying shape easier
@@ -166,7 +209,7 @@ class MeshReader:
                 "quad"]:
                 # Get faces for each element in the current cell block
                 for element in cell_block.data:
-                    faces = MeshReader.get_element_faces(element,
+                    faces = self.get_element_faces(element,
                                                          element_type)
                     boundary_faces.extend(faces)
 
@@ -181,7 +224,7 @@ class MeshReader:
 
         return boundary_faces
         
-    def generate_grid(self, resolution: int) -> np.ndarray[float]:
+    def generate_grid(self, resolution: int) -> np.ndarray:
         """Generate a grid of values in the region bounded by a given mesh.
 
         Args:
@@ -191,13 +234,17 @@ class MeshReader:
             questioned)
 
         Returns:
-            np.ndarray[float]: array of grid point positions.
+            np.ndarray: array of grid point positions.
         """
-        faces = self.__mesh.cells_dict
-        vertices = MeshReader.read_points(self)
+        faces = self.__all_faces
+        vertices = self.__mesh.points
 
-        # Create a PyVista mesh from the vertices and faces
-        pyvista_mesh = pv.PolyData(vertices, faces)
+        # Flatten into a single 1D list where each set 4 numbers represents a face
+        flattened_faces = []
+
+        for face in faces:
+            flattened_faces.append(len(face))  # First element: number of vertices
+            flattened_faces.extend(face) 
 
         # Get the bounding box of the mesh
         min_bound = vertices.min(axis=0)
@@ -210,26 +257,74 @@ class MeshReader:
 
         # Generate grid
         grid_x, grid_y, grid_z = np.meshgrid(x, y, z)
-        grid_points = np.vstack([grid_x.ravel(), grid_y.ravel(),
-                                 grid_z.ravel()]).T
+        grid_points = np.column_stack(np.meshgrid(x, y, z, indexing="ij")
+                                      ).reshape(-1, 3)
 
-        # To do - check if there is a better method for this
-        def is_point_in_mesh(point, mesh):
-            # Using pyvista's method
-            return mesh.is_point_in_mesh(point)
+        return grid_points
 
-        # Filter grid points that lie inside the mesh
-        valid_points = [point for point in grid_points if is_point_in_mesh(point, pyvista_mesh)]
+    # Potential problem here, will not work if shape is not convex this will not work
+    def clip_grid(self, grid_points):
+        """Takes an array of grid points and clips them to keep only those
+        that are contained within self.__mesh
+        
+        Args:
+            grid_points (np.ndarray): Grid points to filter.
 
-        grid_pts = np.array(valid_points)
+        Returns:
+            np.ndarray: Grid points inside the mesh.
+
+        Warnings:
+            This method assumes a convex mesh and may fail for non-convex meshes.
+        """
+        # Create a ConvexHull object from the vertices of the mesh
+        hull = ConvexHull(self.__nodes)
+
+        # Function to check if a point is inside the convex hull
+        def point_in_hull(point):
+            return Delaunay(hull.points[hull.vertices]).find_simplex(point) >= 0
+
+        # Filter grid points that lie inside mesh using convex hull
+        grid_pts = np.array([point for point in grid_points if point_in_hull(point)])
 
         return grid_pts
-    
+
     def get_node(self, index):
         """Get the xyz coordinates of a node by index."""
-        return self.nodes[index]
+        return self.__nodes[index]
 
     def get_face_vertices(self, face_index):
         """Get the vertices (node indices) of a face by index."""
         face_vrts = self.__all_faces[face_index]
         return face_vrts
+    
+    def get_face_vertex_coords(self, face_index):
+        """Get the 3D coordinates of vertices of a face by index."""
+        face_vrts = self.__all_faces[face_index]  # Indices of the face vertices
+        vertex_coords = self.__nodes[face_vrts]   # Convert indices to coordinates
+        return vertex_coords
+
+    def compute_face_normal(self, face_index):
+        """
+        Compute the normal vector of a triangular face.
+
+        Args:
+            vertices (np.ndarray): (N, 3) array of vertex positions.
+            face (np.ndarray): (3,) array of vertex indices defining the face.
+
+        Returns:
+            np.ndarray: Unit normal vector of the face.
+        """
+        # Get vertex coordinates for the face
+        v0, v1, v2 = self.get_face_vertex_coords(face_index)
+
+        # Compute two edge vectors
+        edge1 = v1 - v0
+        edge2 = v2 - v0
+
+        # Compute the cross product
+        normal = np.cross(edge1, edge2)
+
+        # Normalize the normal vector
+        norm_length = np.linalg.norm(normal)
+        return normal / norm_length if norm_length != 0 else normal
+

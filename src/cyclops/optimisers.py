@@ -63,6 +63,23 @@ class Problem(ElementwiseProblem):
         """
         out["F"] = self.__loss_function(optim_array)
 
+class MOOProblem(Problem):
+    """PyMOO wrapper for multi-objective optimization problem. Inherits from
+    pymoo.model.problem.Problem in PyMOO"""
+    
+    def __init__(self, pyomo_model, num_sensors):
+        """The pyomo_model should be coming from SensorPlacementOptimisation"""
+        super().__init__(n_var=num_sensors * 3, n_obj=2, n_constr=0)
+        self.pyomo_model = pyomo_model
+
+    def _evaluate(self, x, out, *args, **kwargs):
+        """Reshape the decision variables and update the Pyomo model"""
+        sensor_pos = x.reshape(-1, 3)  # Reshape to (num_sensors, 3) positions
+        self.pyomo_model.solve()  # This will internally use Pyomo to solve the problem
+
+        # Use Pyomo's objective function to get the two objective values
+        mse, risk = self.pyomo_model.solve()
+        out["F"] = np.array([mse, risk])
 
 class Optimiser:
     """Optimiser base class."""

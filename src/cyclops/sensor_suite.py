@@ -7,114 +7,109 @@ Handles the various sensors employed by an experiment.
 """
 import numpy as np
 
-from cyclops.sensors import Sensor
-from cyclops.fields import Field
+from cyclops.sensors import Sensor, PointSensor, RoundSensor
+from cyclops.fields import Field, ScalarField, VectorField
 
 
 class SensorSuite:
     """Class for a sensor suite.
-
-    Holds the sensors and allows a field to be predicted from the sensor data.
+    Holds the sensor postions & types and allows for a field to be predicted
+    from the sensor data.
     """
 
-    def __init__(
-        self, field: Field, sensors: np.ndarray[Sensor], symmetry=[]
-    ) -> None:
+    def __init__(self, true_field: Field, sensors: list, sensor_pos: list,
+                field_points: np.ndarray, field_vector_vals: np.ndarray) -> None:
         """Initialise class instance.
 
         Args:
-            field (Field): field to use as sensor field.
-            sensors (np.ndarray[Sensor]): array of sensors to measure the
-                field.
-            symmetry (list, optional): list of symmetry assumptions. Defaults
-                to [].
+            true_field (Field): the simulated field which acts as the ground
+                truth against which to compare the predicted field.
+            comparison_pos (np.ndarray[float]): the positions used to
+                compare the true field to the predicted field.
+            sensors (list): a list of sensor types to populate the suite with,
+            must be in the same order as the intended position appears in
+            'sensor_pos'
+            sensor_pos (list): a list of 3D positions, each representing the
+            centre point of the corresponding sensor in 'sensors'
         """
-        self.__field = field
+        self.__true_field = true_field
         self.__sensors = sensors
         self.__num_sensors = len(self.__sensors)
-        self.__symmetry = symmetry
+        #self.__active_sensors = np.full(self.__num_sensors, True)
+        #self.__sensor_pos = sensor_pos
+        self.__field_points = field_points
+        self.__field_vector_vals = field_vector_vals
 
-        self.__active_sensors = np.full(self.__num_sensors, True)
-        self.__sensor_pos = np.zeros(
-            (self.__num_sensors, self.__field.get_dim())
-        )
 
-    def set_active_sensors(self, active_sensors: np.ndarray[bool]):
-        """Set which sensors are active.
+    # def set_active_sensors(self, active_sensors: np.ndarray[bool]):
+    #     """Set which sensors are active.
 
-        Args:
-            active_sensors (np.ndarray[bool]): array of booleans to show which
-                sensors are off or on.
-        """
-        self.__active_sensors = active_sensors
+    #     Args:
+    #         active_sensors (np.ndarray[bool]): array of booleans to show which
+    #             sensors are off or on.
+    #     """
+    #     self.__active_sensors = active_sensors
 
-    def set_sensor_pos(self, sensor_pos: np.ndarray[float]):
-        """Set the positions of the sensors.
+    # def set_sensor_pos(self, sensor_pos: np.ndarray[float]):
+    #     """Set the positions of the sensors.
 
-        Args:
-            sensor_pos (np.ndarray[float]): n by d array of n positions of d
-                dimensions.
-        """
-        self.__sensor_pos = sensor_pos
+    #     Args:
+    #         sensor_pos (np.ndarray[float]): n by d array of n positions of d
+    #             dimensions.
+    #     """
+    #     self.__sensor_pos = sensor_pos
 
-    def get_sensor_sites(self) -> np.ndarray[float]:
+    def get_sensor_outputs(self) -> np.ndarray[float]:
         """Return the positions from which the sensors sample from.
 
         Returns:
             np.ndarray[float]: n by d array of n positions of d dimensions to
                 sample from.
         """
+        #Need the field values at sensor read in points
         absolute_sites = []
-        for i, sensor in enumerate(self.__sensors):
-            sites = sensor.get_input_sites(self.__sensor_pos[i])
-            for site in sites:
-                absolute_sites.append(site)
-        return np.array(absolute_sites)
+        all_observs = []
+        
+        for i in range(len(self.__sensors)):
 
-    def __measure_sensor_values(
-        self, site_values: np.ndarray[float]
-    ) -> tuple[np.ndarray]:
-        """Calculate sensor positions and values.
+            current_snr = self.__sensors[i]
 
-        Args:
-            site_values (np.ndarray[float]): s by t by m array of s*t values of
-                dimension m where s is number of sensors.
+            # Get the sampling sites for this sensor
+            sensor_read_in = current_snr.get_measurement_sites()
+            # Fit the true field to the sensor
+            if isinstance(self.__true_field, Field):
+                field_fit = self.__true_field
+                real_vals = field_fit.predict_values(sensor_read_in)
 
-        Returns:
-            tuple[np.ndarray]: contains the n by m array of field values and
-                the n by d array of the positions of those values.
-        """
-        field_values = []
-        field_pos = []
-        value_index = 0
-        for i, sensor in enumerate(self.__sensors):
-            num_input_sites = sensor.get_num_input_sites()
-            if self.__active_sensors[i] == True:  # noqa E712, "is" causes bug
-                known_values, known_pos = sensor.get_output_values(
-                    site_values[value_index: value_index + num_input_sites],
-                    self.__sensor_pos[i],
-                )
-                for i, value in enumerate(known_values):
-                    field_values.append(value)
-                    field_pos.append(known_pos[i])
-            value_index += num_input_sites
-        return np.array(field_values), np.array(field_pos)
+            # Get the sampled values and adjusted sampling sites
+            sensor_obvs, sensor_pos = current_snr.get_output_values( 
+                    true_site_values=real_vals,
+                    actual_pos=sensor_read_in)
+            
+            absolute_sites.append(sensor_read_in)
+            all_observs.append(sensor_obvs)
 
-    def fit_sensor_model(self, site_values: np.ndarray[float]):
-        """Fit the model based off the sensor data.
+        absolute_sites = np.array(absolute_sites, dtype=object)
+        all_observs = np.array(all_observs, dtype=object)
+
+        absolute_sites.flatten
+        all_observs.flatten
+
+        return (all_observs, absolute_sites)
+
+
+    def fit_sensor_model(self, known_pos: np.ndarray[float],
+                         known_values: np.ndarray[float]):
+        """Fit the model based on the sensor data.
 
         Args:
             site_values (np.ndarray[float]): n by m array of the n values of
                 dimension m at the sites specified.
         """
-        known_values, known_pos = self.__measure_sensor_values(site_values)
-        for transformation in self.__symmetry:
-            known_pos = transformation(known_pos)
-            known_values = np.concatenate((known_values, known_values), axis=0)
 
-        self.__field.fit_model(known_pos, known_values)
+        self.__true_field.fit_model(known_pos, known_values)
 
-    def predict_data(self, field_pos: np.ndarray[float]) -> np.ndarray[float]:
+    def predict_data(self, comparison_pos: np.ndarray[float]) -> np.ndarray[float]:
         """Predict values of the field at the points specified.
 
         Args:
@@ -124,127 +119,35 @@ class SensorSuite:
         Returns:
             np.ndarray[float]: n by m array of n values of dimension m.
         """
-        return self.__field.predict_values(field_pos)
+        target_field = self.__true_field
+        pos_3D = self.__field_points
+        field_vector_vals = self.__field_vector_vals
+        target_field.fit_model(pos_3D, field_vector_vals)
+        target_field.predict_values(comparison_pos)
 
-    def calc_keys(self, num_repetitions: int) -> np.ndarray[bool]:
-        """Calculate potential sensor arrays.
+        return target_field.predict_values(comparison_pos)
+#ToDo update and incorporate this aspect - may need to be in a different file/class
+    # def calc_keys(self, num_repetitions: int) -> np.ndarray[bool]:
+    #     """Calculate potential sensor arrays.
 
-        Calculate a number of potential arrays for the active sensors based
-        off the chances that the sensors fail.
+    #     Calculate a number of potential arrays for the active sensors based
+    #     off the chances that the sensors fail.
 
-        Args:
-            num_repetitions (int): number of keys needed.
+    #     Args:
+    #         num_repetitions (int): number of keys needed.
 
-        Returns:
-            np.ndarray[bool]: n by s array of n keys of dimension s where s is
-                the number of sensors.
-        """
-        keys = np.full((num_repetitions, self.__num_sensors), True)
-        for i, key in enumerate(keys):
-            for j in range(len(key)):
-                num = np.random.rand()
-                if num < self.__sensors[j].get_failure_chance():
-                    keys[i, j] = False
-        return keys
+    #     Returns:
+    #         np.ndarray[bool]: n by s array of n keys of dimension s where s is
+    #             the number of sensors.
+    #     """
+    #     keys = np.full((num_repetitions, self.__num_sensors), True)
+    #     for i, key in enumerate(keys):
+    #         for j in range(len(key)):
+    #             num = np.random.rand()
+    #             if num < self.__sensors[j].get_failure_chance():
+    #                 keys[i, j] = False
+    #     return keys
 
     def get_num_sensors(self):
         """Return the number of sensors."""
         return self.__sensors.size
-
-
-class SymmetryManager:
-    """Class for applying symmetry assumptions to fields.
-
-    Allows assumptions about the symmetry of a field to be built into the
-    predicted field.
-    """
-
-    def __init__(self) -> None:
-        """Initialise class instance."""
-        self.__x_point = 0
-        self.__x_line = 0
-        self.__y_line = 0
-        self.__grad = 0
-
-    def set_1D_x(self, value: float) -> None:
-        """Set the reflection point in 1D."""
-        self.__x_point = value
-
-    def set_2D_x(self, value: float) -> None:
-        """Set the reflection x-axis point in 2D."""
-        self.__x_line = value
-
-    def set_2D_y(self, value: float) -> None:
-        """Set the reflection y-axis point in 2D."""
-        self.__y_line = value
-
-    def set_2D_grad(self, value: float) -> None:
-        """Set the gradient of the line through the origin."""
-        self.__grad = value
-
-    def reflect_1D(self, x_pos: np.ndarray[float]) -> np.ndarray[float]:
-        """Reflect an array of positions about the reflection axis.
-
-        Returns both reflected and original positions.
-
-        Args:
-            x_pos (np.ndarray[float]): n by 1 array of n 1D points.
-
-        Returns:
-            np.ndarray[float]: 2n by 1 array of 2n 1D points.
-        """
-        axis = np.ones(x_pos.shape) * self.__x_point
-        reflected_arr = 2 * axis - x_pos
-        return np.concatenate((x_pos, reflected_arr), axis=0)
-
-    def reflect_2D_horiz(self, pos: np.ndarray[float]) -> np.ndarray[float]:
-        """Reflect an array of positions parallel to the x axis.
-
-        Returns both reflected and original positions.
-
-        Args:
-            pos (np.ndarray[float]): n by 2 array of n 2D original points.
-
-        Returns:
-            np.ndarray[float]: 2n by 2 array of 2n 2D points.
-        """
-        axis = np.ones(len(pos)) * self.__x_line
-        reflected_arr = np.copy(pos)
-        reflected_arr[:, 0] = 2 * axis - pos[:, 0]
-        return np.concatenate((pos, reflected_arr), axis=0)
-
-    def reflect_2D_vert(self, pos: np.ndarray[float]) -> np.ndarray[float]:
-        """Reflect an array of positions parallel to the y axis.
-
-        Returns both reflected and original positions.
-
-        Args:
-            pos (np.ndarray[float]): n by 2 array of n 2D original points.
-
-        Returns:
-            np.ndarray[float]: 2n by 2 array of 2n 2D points.
-        """
-        axis = np.ones(len(pos)) * self.__y_line
-        reflected_arr = np.copy(pos)
-        reflected_arr[:, 1] = 2 * axis - pos[:, 1]
-        return np.concatenate((pos, reflected_arr), axis=0)
-
-    def reflect_2D_line(self, pos: np.ndarray[float]) -> np.ndarray[float]:
-        """Reflect an array of positions across a specified line.
-
-        Returns both reflected and original positions.
-
-        Args:
-            pos (np.ndarray[float]): n by 2 array of n 2D original points.
-
-        Returns:
-            np.ndarray[float]: 2n by 2 array of 2n 2D points.
-        """
-        m = self.__grad
-        reflect_matrix = (
-            1
-            / (1 + m ** 2)
-            * np.array([[1 - m ** 2, 2 * m], [2 * m, m ** 2 - 1]])
-        )
-        reflected_arr = np.apply_along_axis(reflect_matrix.dot, 0, pos.T)
-        return np.concatenate((pos, reflected_arr.T), axis=0)
