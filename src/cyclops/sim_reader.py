@@ -49,6 +49,8 @@ class MeshReader:
         for face_type in self.__face_types:
             self.__all_faces.extend(self.__faces[face_type])
         
+        self.__boundary_faces = self.get_boundary_faces()
+        
         # Store the number of faces
         self.__num_faces = len(self.__all_faces)
 
@@ -111,6 +113,12 @@ class MeshReader:
         region_blocks = list(region_names)
 
         return region_blocks
+
+    def read_points(self) -> np.ndarray[float]:
+        """Read the points within the full mesh."""
+        points = self.__mesh.points
+
+        return points
 
     def num_faces(self) -> int:
         """Return the number of faces in the mesh."""
@@ -181,7 +189,7 @@ class MeshReader:
             faces = [element]
         elif element_type == "quad":
             faces = [element]
-        
+
         return faces
 
     def get_boundary_faces(self):
@@ -296,35 +304,84 @@ class MeshReader:
         """Get the vertices (node indices) of a face by index."""
         face_vrts = self.__all_faces[face_index]
         return face_vrts
-    
-    def get_face_vertex_coords(self, face_index):
-        """Get the 3D coordinates of vertices of a face by index."""
-        face_vrts = self.__all_faces[face_index]  # Indices of the face vertices
-        vertex_coords = self.__nodes[face_vrts]   # Convert indices to coordinates
-        return vertex_coords
 
-    def compute_face_normal(self, face_index):
+    def get_face_vertex_coords(self, boundary_face_index: int) -> np.ndarray:
         """
-        Compute the normal vector of a triangular face.
+        Get the coordinates of the vertices of a boundary face, using its index
+        in the cached boundary face list.
+        """
+        if not hasattr(self, "_MeshReader__boundary_faces"):
+            raise RuntimeError("Something went wrong, boundary faces has not been initialised yet.")
 
-        Args:
-            vertices (np.ndarray): (N, 3) array of vertex positions.
-            face (np.ndarray): (3,) array of vertex indices defining the face.
+        if boundary_face_index >= len(self.__boundary_faces):
+            raise IndexError(f"Face index {boundary_face_index} is out of"
+                             " bounds for {len(self.__boundary_faces)} boundary faces.")
+
+        face_node_indices = self.__boundary_faces[boundary_face_index]
+
+        return self.__nodes[face_node_indices]
+
+    def get_surface_triangles(self):
+        """Return a list of triangle faces on a mesh (in XYZ coords).
+        
+        This uses get_boundary_faces() to extract the surface of the mesh, and
+        triangulates any non-triangle faces (e.g., quads or polygons).
 
         Returns:
-            np.ndarray: Unit normal vector of the face.
+            List[List[np.ndarray]]: triangulated surface mesh (with each triangle defined by its' vertices)
         """
-        # Get vertex coordinates for the face
-        v0, v1, v2 = self.get_face_vertex_coords(face_index)
+        surface_faces = self.get_boundary_faces()  # These are index-based faces
+        mesh_points = self.__mesh.points           # All vertex coords
 
-        # Compute two edge vectors
-        edge1 = v1 - v0
-        edge2 = v2 - v0
+        surface_triangles = []
 
-        # Compute the cross product
-        normal = np.cross(edge1, edge2)
+        for face in surface_faces:
+            # Convert index-based face to coordinate-based
+            face_coords = [np.array(mesh_points[idx]) for idx in face]
 
-        # Normalize the normal vector
-        norm_length = np.linalg.norm(normal)
-        return normal / norm_length if norm_length != 0 else normal
+            # Triangulate this face if needed
+            tris = triangulate_face(face_coords)
+            surface_triangles.extend(tris)
 
+        return surface_triangles
+
+
+def compute_face_normal(vertex_coords: np.ndarray) -> np.ndarray:
+    """
+    Compute the normal vector to a triangular face given the vertex coordinates.
+    Works ONLY with triangular faces!
+
+    Args:
+        vertex_coords (np.ndarray): (3, 3) array of vertex coordinates.
+
+    Returns:
+        np.ndarray: Unit normal vector of the face.
+    """
+    # Get vertex coordinates for the face
+    print("vertex_coords", vertex_coords)
+    v0, v1, v2 = vertex_coords
+
+    # Compute two edge vectors
+    edge1 = v1 - v0
+    edge2 = v2 - v0
+
+    # Compute the cross product
+    normal = np.cross(edge1, edge2)
+
+    # Normalize the normal vector
+    norm_length = np.linalg.norm(normal)
+    return normal / norm_length if norm_length != 0 else normal
+
+
+def triangulate_face(face):
+    """
+    Triangulate a single polygon face (3+ vertices) into triangles.
+    """
+    triangles = []
+    if len(face) == 3:
+        triangles.append(face)
+    else:
+        v0 = face[0]
+        for i in range(1, len(face) - 1):
+            triangles.append([v0, face[i], face[i + 1]])
+    return triangles

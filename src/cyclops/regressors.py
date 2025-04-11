@@ -62,13 +62,8 @@ class RegressionModel:
             np.ndarray[float]: scaled n by d array of n input data values of
                 dimension d.
         """
-        self.check_dim(len(train_x[0]), self._x_dim, "Input")
+        #self.check_dim(len(train_x), self._x_dim, "Input")
         self.check_length(len(train_x))
-        if type(train_y[0]) != np.ndarray:
-            raise Exception(
-                "Output data should be a numpy array of shape (-1, 1)."
-            )
-        self.check_dim(len(train_y[0]), 1, "Output")
 
         self._scaler.fit(train_x)
         return self._scaler.transform(train_x)
@@ -379,8 +374,10 @@ class RBFModel(RegressionModel):
                 d dimensions.
             train_y (np.ndarray[float]): n by 1 array of n training outputs.
         """
+        # Ensure train_y is 1D (n,)
+        train_y = np.asarray(train_y).reshape(-1)
         scaled_x = self.prepare_fit(train_x, train_y)
-        self._regressor = RBFInterpolator(scaled_x, train_y)
+        self._regressor = RBFInterpolator(scaled_x, train_y, degree=0)
 
     def predict(self, predict_x: np.ndarray[float]) -> np.ndarray[float]:
         """Return n predicted outputs of dimension 1 given inputs.

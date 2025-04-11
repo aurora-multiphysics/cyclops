@@ -174,3 +174,10 @@ src/cyclops/suggestions.py
 *.gv
 *.png
 tutorials/Testing.ipynb
+src/cyclops/current_code.zip
+src/cyclops/current_code/
+tutorials/field.txt
+tutorials/fieldout.txt
+tutorials/mesh.txt
+tutorials/meshout.txt
+

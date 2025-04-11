@@ -19,7 +19,7 @@ from cyclops.fields import Field
 from cyclops.optimisers import Problem, Optimiser
 from cyclops.regressors import RegressionModel
 from cyclops.sensor_suite import SensorSuite
-from cyclops.sim_reader import MeshReader
+from cyclops.sim_reader import MeshReader, compute_face_normal
 from cyclops.pyomo_problem import SensorPlacementOptimisation
 
 class Experiment:
@@ -38,13 +38,10 @@ class Experiment:
         reader: MeshReader,
         no_sensors: int,
         sensor_types: list,
-        #sensor_regressors: list,
         field_regressor: RegressionModel,
-        #field_values: np.ndarray,
         field_positions: np.ndarray,
         optimiser: Optimiser,
         field_type: str,
-        noise_list: list
     ) -> None:
         """Initialise class instance.
 
@@ -56,48 +53,37 @@ class Experiment:
             optimiser (Optimiser):
                 the optimiser used to optimise sensor layout.
         """
-        self.__reader = reader
-        self.__field_type = field_type
-        self.__no_sensors = no_sensors
-        self.__sensor_types = sensor_types
-        self.__field_pos = field_positions
-        self.__regions = reader.read_region_names()
-        self.__point_dict = reader.point_data.keys()
-        print("self.__field_type ", self.__field_type)
-        self.__initialised_field = self.create_field(field_type=self.__field_type,
-                                              regressor=field_regressor)
-        sensor_pos, face_indices = self.get_initial_sensor_pos(
-                                boundary_faces=reader.get_boundary_faces(),
-                                            num_sensors=self.__no_sensors)
-        self.__sensor_pos = sensor_pos
-        self.__face_indices = face_indices
-        self.__num_dim = self.__initialised_field.get_dim()
+        self._reader = reader
+        self._field_type = field_type
+        self._no_sensors = no_sensors
+        self._sensor_types = sensor_types
+        self._field_pos = field_positions
 
-        #self.__true_field = true_field
-
-        #self.__noise_list = noise_list
-        self.__boundary_faces=reader.get_boundary_faces()
-        self.__face_indices = face_indices
-        #self.__comparison_values = true_field.predict_values(
-        #    self.__sensor_pos
-        #)
-
-        self.__optimiser = optimiser
-        self.__sensor_suite = None
-        #self.__repetitions = None
-        self.__problem = None
+        self._regions = reader.read_region_names()
+        self._point_dict = reader.point_data.keys()
+        self._boundary_faces=reader.get_boundary_faces()
+        self._initialised_field = self.create_field(
+                                        field_type=self._field_type,
+                                        regressor=field_regressor)
+        self._num_dim = self._initialised_field.get_dim()
+        
+        sensor_pos, face_indices, face_coords = self.get_initial_sensor_pos(
+                                        boundary_faces=self._boundary_faces,
+                                        num_sensors=self._no_sensors)
+        print("sensor_pos is ", sensor_pos)
+        print("face_face_indices is ",face_indices)
+        print("face_coords is ", face_coords)
+        self._sensor_pos = sensor_pos
+        self._face_indices = face_indices       
+        self._face_coords = face_coords
+        self._tri_boundary_faces = reader.get_surface_triangles()
+        self._optimiser = optimiser
+        self._sensor_suite = None
+        self._problem = None
 
         #self.__loss_limit = None
         #self.__min_active = None
         #self.__keys = None
-
-
-        #self.__file = file
-        #self.__readin = read_in
-
-        #self.__sensor_regressors = sensor_regressors
-        #self.__field_vals = field_values
-
 
     def create_field(self, field_type, regressor):
         """
@@ -106,9 +92,9 @@ class Experiment:
         # Wondering about alternative ways to set up field, currently require bounds
         # expect having so many extra points with no values present will cause problems
         # Will need to account for this or fix method somehow.
-        reader = self.__reader
-        point_dict = list(self.__point_dict)
-        set_name = self.__regions[:3]
+        reader = self._reader
+        point_dict = list(self._point_dict)
+        set_name = self._regions[:3]
 
        # Ensure the class exists in the sensors module
         if not hasattr(fields, field_type):
@@ -126,12 +112,13 @@ class Experiment:
         
         return new_field
     
-    def create_sensor(self, sensor_type, noise, failure_fn, radius=None,
+    def create_sensor(self, sensor_type, noise, failure_fn, sensor_index, radius=None,
                       norm_vector=None):
         """
         Function to initialise a sensor.
         """
-        initial_pos = self.__sensor_pos
+        initial_pos = self._sensor_pos[sensor_index]
+        print(initial_pos)
 
         # Ensure the class exists in the sensors module
         if not hasattr(sensors, sensor_type):
@@ -143,26 +130,27 @@ class Experiment:
         # Ensure it's a subclass of Sensor (to prevent incorrect lookups)
         if not issubclass(sensor_class, sensors.Sensor):
             raise ValueError(f"{sensor_type} is not a valid Sensor subclass.")
-
+        
         # Dynamically instantiate the correct sensor type
         if issubclass(sensor_class, sensors.PointSensor):
             new_sensor = sensor_class(centre_point=initial_pos,
-                                    field_dim=self.__num_dim,
-                                    field=self.__initialised_field,
+                                    field_dim=self._num_dim,
+                                    field=self._initialised_field,
                                     noise_dev=noise,
-                                    failure_chance=failure_fn)
+                                    failure_chance=failure_fn,
+                                    offset_function=None)
         
         elif issubclass(sensor_class, sensors.RoundSensor):
-            if radius is None or norm_vector is None:
-                raise ValueError("RoundSensor requires 'radius' and 'norm_vector'")
+            if norm_vector is None:
+                raise ValueError("RoundSensor requires 'norm_vector'")
             
-            new_sensor = sensor_class(field_dim=self.__num_dim,
-                                    field=self.__initialised_field,
+            new_sensor = sensor_class(field_dim=self._num_dim,
+                                    field=self._initialised_field,
                                     centre_point=initial_pos,
                                     noise_dev=noise,
                                     failure_chance=failure_fn,
-                                    radius=radius,
-                                    norm_vector=norm_vector)
+                                    norm_vector=norm_vector,
+                                    offset_function=None)
         
         return new_sensor
 
@@ -170,22 +158,35 @@ class Experiment:
         """Function to setup a pyomo problem to optimise the position of the
         various sensors on the surface of the given mesh."""
 
-        reader = self.__reader
-        boundary_faces = self.__boundary_faces
-        sensors = self.__sensor_types
+        reader = self._reader
+        tri_boundary_faces = self._tri_boundary_faces
+        boundary_faces = self._boundary_faces
+        sensors = self._sensor_types
         sensor_list = []
 
-        for snsr, face, noise, fail_rate in zip(sensors, self.__face_indices, noise_list, failure_percent):
+        # If failure_percent is a single value, expand it to match the length of noise_list
+        noise_list = np.full(len(sensors), noise_list)
+        
+        # If failure_percent is a single value, expand it to match the length of noise_list
+        failure_percent = np.full(len(sensors), failure_percent)
+
+        for index, snsr in enumerate(sensors):
+            face_coords = self._face_coords[index]
+            print("face_coords is ", face_coords)
+            noise = noise_list[index]           # Get noise for current sensor
+            fail_rate = failure_percent[index]  # Get failure rate for current sensor
+
             # Compute normal vector if needed
             norm_vector = None
             if snsr == "RoundSensor":
-                norm_vector = reader.compute_face_normal(face_index=face)
+                norm_vector = compute_face_normal(vertex_coords=face_coords)
 
             # Create sensor instance
             initialised_snsr = self.create_sensor(
                 sensor_type=snsr,
                 noise=noise,
                 failure_fn=fail_rate,
+                sensor_index=index,
                 norm_vector=norm_vector  # None for PointSensor, computed for RoundSensor
             )
             
@@ -193,11 +194,11 @@ class Experiment:
 
 
         new_pyomo_prob = SensorPlacementOptimisation(
-                                    mesh_faces = boundary_faces,
-                                    num_sensors = self.__no_sensors,
+                                    mesh_faces = tri_boundary_faces,
+                                    num_sensors = self._no_sensors,
                                     sensors = sensor_list,
-                                    pos_3D = self.__field_pos,
-                                    true_field = self.__initialised_field,
+                                    pos_3D = self._field_pos,
+                                    true_field_values = self._initialised_field,
                                     min_distance = min_dist
                                                      )
         
@@ -220,12 +221,12 @@ class Experiment:
             repetitions (int, optional): number of repetitions to average
                 error over. Defaults to 10.
         """
-        self.__sensor_suite = sensor_suite
+        self._sensor_suite = sensor_suite
         num_sensors = sensor_suite.get_num_sensors()
-        self.__problem = self.__build_problem(
+        self._problem = self._build_problem(
             sensor_bounds, num_sensors, 1, self.calc_SOO_loss, num_cores
         )
-        self.__repetitions = repetitions
+        self._repetitions = repetitions
 
     def plan_moo(
         self,
@@ -252,18 +253,19 @@ class Experiment:
             the maximum i.e. it is assumed the experiment would be invalidated.
             Defaults to 3.
         """
-        self.__sensor_suite = sensor_suite
+        self._sensor_suite = sensor_suite
         num_sensors = sensor_suite.get_num_sensors()
-        self.__problem = self.__build_problem(
+        self._problem = self._build_problem(
             boundary_faces, num_sensors, 2, self.calc_moo_loss, num_cores
         )
 
-        self.__keys = self.__sensor_suite.calc_keys(repetitions)
-        self.__repetitions = repetitions
-        self.__loss_limit = loss_limit
-        self.__min_active = min_active
+        self._keys = self._sensor_suite.calc_keys(repetitions)
+        self._repetitions = repetitions
+        self._loss_limit = loss_limit
+        self._min_active = min_active
 
-    def select_tri_point(self, v0, v1, v2) -> np.ndarray[float]:
+    @staticmethod
+    def select_tri_point(v0, v1, v2) -> np.ndarray[float]:
         """ Selects a random point on a triangular cell face for sensor
         placement.
         
@@ -274,7 +276,9 @@ class Experiment:
                    
         Returns:
             point: np.ndarray[float] 
+            face_coords: np.ndarray
         """
+        face_coords = [v0, v1, v2]
         # Generate random barycentric coordinates (r1, r2)
         r1 = uniform(0, 1)
         r2 = uniform(0, 1)
@@ -286,9 +290,10 @@ class Experiment:
 
         # Compute the point using barycentric coordinates
         point = r1 * np.array(v0) + r2 * np.array(v1) + r3 * np.array(v2)
-        return point
+        return point, face_coords
 
-    def select_quad_point(self, v0, v1, v2, v3) -> np.ndarray[float]:
+    @staticmethod
+    def select_quad_point(v0, v1, v2, v3) -> np.ndarray[float]:
         # To do - need to balance probabilities on triangle surfaces vs
         # quadrilateral by area, currently points are twice as likely to
         # generate on triangles
@@ -303,6 +308,7 @@ class Experiment:
                    
         Returns:
             point: np.ndarray[float] 
+            face_coords: np.ndarray
         """
         # Decompose quad into two triangles
         triangle = np.random.choice([1, 2])
@@ -310,11 +316,44 @@ class Experiment:
         point = []
 
         if triangle == 1:
-            point = self.select_tri_point(v0, v1, v2)
+            point, face_coords = Experiment.select_tri_point(v0, v1, v2)
         elif triangle == 2:
-            point = self.select_tri_point(v0, v2, v3)
+            point, face_coords = Experiment.select_tri_point(v0, v2, v3)
 
-        return point
+        return point, face_coords
+
+    @staticmethod
+    def select_hex_point(v0, v1, v2, v3, v4, v5) -> np.ndarray:
+        """ Selects a random point on a hexagonal cell face for sensor placement.
+
+        Args:
+            v0, v1, v2, v3, v4, v5 (list): 6 coordinates defining a given hexagonal cell face
+
+        Returns:
+            point: np.ndarray
+            face_coords: np.ndarray
+        """
+        # Decompose hexagon into 6 triangles by selecting the center point and 
+        # forming triangles with consecutive vertices
+
+        center = np.mean([v0, v1, v2, v3, v4, v5], axis=0)
+
+        # Randomly choose one of the 6 triangles
+        triangle_index = np.random.choice([0, 1, 2, 3, 4, 5])
+
+        # Select the corresponding triangle vertices
+        if triangle_index == 0:
+            return Experiment.select_tri_point(center, v0, v1)
+        elif triangle_index == 1:
+            return Experiment.select_tri_point(center, v1, v2)
+        elif triangle_index == 2:
+            return Experiment.select_tri_point(center, v2, v3)
+        elif triangle_index == 3:
+            return Experiment.select_tri_point(center, v3, v4)
+        elif triangle_index == 4:
+            return Experiment.select_tri_point(center, v4, v5)
+        elif triangle_index == 5:
+            return Experiment.select_tri_point(center, v5, v0)
 
     def get_initial_sensor_pos(self, boundary_faces: np.ndarray[list],
                                   num_sensors: int)-> np.ndarray[float]:
@@ -325,35 +364,55 @@ class Experiment:
             boundary_faces (list): list of cell faces
 
         Returns:
-            positions (np.ndarray): n long numpy array of point coordinates to
+            positions (np.ndarray): n-long np.ndarray of point coordinates to
             place sensors at
         """
         positions = []
         faces = []
+        face_coord_vertices =[]
 
         for _ in range(num_sensors):
             # Randomly select a boundary face (note that all cell types can
             # only have triangular or quadrilateral faces so we only need to cover two cases)
-            face = boundary_faces[np.random.randint(len(boundary_faces))]
-            vertices = MeshReader.read_points(self)
+            face_num = np.random.randint(len(boundary_faces))
+            face = boundary_faces[face_num]
+            vertices = MeshReader.read_points(self._reader)
+
             face_vertices = vertices[face]
+            if len(face_vertices) == 3:  # Tri
+                v0, v1, v2 = face_vertices
+                point, face_coords = self.select_tri_point(face, v0, v1, v2)
+                positions.append(point)
+                faces.append(face_num)
+                face_coord_vertices.append(face_coords)
 
-            if len(face) == 3:  # Tri
-                v0, v1, v2 = map(lambda idx: face_vertices[idx], [0, 1, 2])
-                point = Experiment.select_tri_point(face, v0, v1, v2)
-
-            elif len(face) == 4:  # Quad
-                v0, v1, v2, v3 = map(lambda idx: face_vertices[idx], [0, 1, 2, 3])
-                point = Experiment.select_quad_point(face, v0, v1, v2, v3)
+            elif len(face_vertices) == 4:  # Quad
+                v0, v1, v2, v3 = face_vertices
+                point, face_coords = self.select_quad_point(v0, v1, v2, v3)
+                positions.append(point)
+                faces.append(face_num)
+                face_coord_vertices.append(face_coords)
             
-            positions.append(point)
-            faces.append(face)
-
+            elif len(face_vertices) == 6:  # Hexagon
+                v0, v1, v2, v3, v4, v5 = face_vertices
+                point, face_coords = self.select_hex_point(v0, v1, v2, v3, v4, v5)
+                positions.append(point)
+                faces.append(face_num)
+                face_coord_vertices.append(face_coords)
+            
         positions = np.array(positions)
         faces = np.array(faces)
-        return positions, faces
+        face_coord_vertices = np.array(face_coord_vertices)
+        return positions, faces, face_coord_vertices
 
-    def __build_problem(self, boundary_faces: np.ndarray[list],
+    def get_norm_vector(self, face_coords):
+        """
+        Function to get the normal vector to a given, (triangular) mesh face.
+        """
+        normal_vector = compute_face_normal(vertex_coords=face_coords)
+        return normal_vector
+
+    def _build_problem(self, boundary_faces: np.ndarray[list],
         num_sensors: int,
         num_obj: int,
         loss_function: callable,
@@ -392,7 +451,7 @@ class Experiment:
             any: results object containing Pareto-optimal layouts and
                 optimisation history.
         """
-        return self.__optimiser.optimise(self.__problem)
+        return self._optimiser.optimise(self._problem)
 
     # def calc_moo_loss(self, sensor_array: np.ndarray[float]) -> list[float]:
     #     """Calculate the moo loss of a specific sensor layout.

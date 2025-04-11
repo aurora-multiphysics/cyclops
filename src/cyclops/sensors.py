@@ -205,6 +205,7 @@ class PointSensor(Sensor):
             failure_chance (float): chance of sensor failing.
             value_range np.ndarray: 
         """
+        print("centre_point is: ", centre_point)
         measurement_sites = centre_point
 
         super().__init__(offset_function, field_dim, field,
@@ -231,7 +232,7 @@ class RoundSensor(Sensor):
         field: Field,
         norm_vector: np.ndarray,
         centre_point: np.ndarray,
-        radius: float,
+        radius=0.05,
         noise_dev=0.012,
         failure_chance=0.01,
     ) -> None:
@@ -263,9 +264,10 @@ class RoundSensor(Sensor):
             measurement_sites = np.array([[0], [0], [0], [-radius], [radius]]
             )
 
-        rotated_sites = self.rotate_to_mesh_face(measurement_sites, norm_vector)
+        print("centre_point is: ", centre_point)
         #Shift centre to face centre
-        measurement_sites = centre_point + rotated_sites
+        measurement_sites = centre_point + measurement_sites
+        rotated_sites = self.rotate_to_mesh_face(measurement_sites, norm_vector)
 
         super().__init__(offset_function, field_dim, field, centre_point,
                          noise_dev, failure_chance)

@@ -7,6 +7,7 @@ Handles scalar and vector fields for the experiment.
 """
 import numpy as np
 from cyclops.sim_reader import MeshReader
+from copy import deepcopy
 
 
 class Field:
@@ -20,13 +21,13 @@ class Field:
     """
 
     @classmethod
-    def mesh_reader_init(cls, mesh_reader: MeshReader, set_name=None,
-                         field_2_measure=None, regression_type=None):
+    def mesh_reader_init(cls, mesh_reader: MeshReader, regression_type,
+                         set_name=None,
+                         field_2_measure=None):
         """Factory method to create a Field from a MeshReader.
         
         If no set_name is provided, it uses all points in the mesh.
         """
-
         # Convert set_name to list if necessary
         if set_name:
             if isinstance(set_name, str):
@@ -44,30 +45,43 @@ class Field:
         else:
             print("Reading all mesh nodes.")
             positions = mesh_reader._MeshReader__nodes
+            set_name = [None] # Treating as if single 'set'
         
+        # Read and handle field data
         field_data = []
+
         # Check no. of field components/fields to read, should be list or str
         if isinstance(field_2_measure, list):
             # If handling ScalarField there should only be one component
             if cls != VectorField:
                 raise ValueError("Only VectorFields can have multiple field "
                 "components.")
-            field_data = np.column_stack(
-                [mesh_reader.read_scalar(set_name,
-                                         comp) for comp in field_2_measure])
+            
+            all_components = []
+            for comp in field_2_measure:
+                comp_values = []
+                for s in set_name:
+                    comp_values.append(mesh_reader.read_scalar(s, comp))
+                all_components.append(np.concatenate(comp_values))
+            field_data = np.column_stack(all_components)
 
         elif isinstance(field_2_measure, str):
             # If handling VectorField there should be multiple components
             if cls != ScalarField:
                 raise ValueError("VectorFields should have multiple field "
                 "components.")
-            field_data = mesh_reader.read_scalar(set_name, field_2_measure)
+            
+            values = []
+            for s in set_name:
+                values.append(mesh_reader.read_scalar(s, field_2_measure))
+            field_data = np.concatenate(values)
+
         else:
             raise ValueError("Invalid field_2_measure format. Must be a string "
             "(scalar) or list (vector).")
 
         # Check if field_data has been read in
-        if field_data.any()==False:
+        if field_data.size == 0:
             raise ValueError("field_data is empty! Input mesh appears to have "
             "no field data!")
         
@@ -82,7 +96,7 @@ class Field:
 
         return field
 
-    def __init__(self, regression_type: callable, bound_grid: np.ndarray) -> None:
+    def __init__(self, regression_type, bound_grid: np.ndarray) -> None:
         """Initialise class instance.
 
         Args:
@@ -90,10 +104,39 @@ class Field:
             bound_grid (np.ndarray): array of gridpoints which fully
             contains the mesh object.
         """
+        if not hasattr(regression_type, "fit") or not hasattr(regression_type,
+                                                            "predict"):
+            raise TypeError("regression_type must be a regression model instance with fit() and predict() methods.")
         self._regression_type = regression_type
         self._bound_grid = bound_grid
         self._bounds = None  # This will be set by get_bounds()
         self._num_dim = bound_grid.shape[1]
+
+    @staticmethod
+    def safe_fit(model, X, y):
+        """
+        Fits any model safely, ensuring input shapes are compatible.
+
+        Args:
+            model: regression model with fit() and predict() methods.
+            X (np.ndarray): input features, shape (n_samples, n_features)
+            y (np.ndarray): target values, shape (n_samples,) or (n_samples, 1)
+        """
+        if not all(hasattr(model, method) for method in ["fit", "predict"]):
+            raise TypeError("Model must implement both 'fit' and 'predict' methods.")
+
+        X = np.atleast_2d(X)
+        if X.ndim != 2:
+            raise ValueError(f"X must be 2D. Got shape {X.shape}")
+
+        y = np.atleast_2d(y)
+        if y.shape[0] != X.shape[0]:
+            y = y.T
+
+        if y.shape[0] != X.shape[0]:
+            raise ValueError(f"Mismatch in shapes after adjustment: X={X.shape}, y={y.shape}")
+
+        model.fit(X, y)
 
     def get_bounds(self) -> np.ndarray:
         """Compute and return bounds for the field.
@@ -123,7 +166,7 @@ class Field:
 class ScalarField(Field):
     """Subclass for a scalar field."""
 
-    def __init__(self, regression_type: callable, bounds: np.ndarray) -> None:
+    def __init__(self, regression_type, bounds: np.ndarray) -> None:
         """
         Initialise class instance.
 
@@ -137,8 +180,7 @@ class ScalarField(Field):
         # This will be initialised later in 'fit_model'
         self._regressor = None
 
-    def fit_model(#ToDo rename these variables
-        self, positions: np.ndarray, scalar_values: np.ndarray
+    def fit_model(self, positions: np.ndarray, scalar_values: np.ndarray
     ) -> None:
         """
         Fit the regression model to the known field values.
@@ -148,8 +190,10 @@ class ScalarField(Field):
             scalar_values (np.ndarray): (n, 1) array of known scalar
             values.
         """
-        self._regressor = self._regression_type(self._num_dim)
-        self._regressor.fit(positions, scalar_values)
+
+        self._regressor = deepcopy(self._regression_type)
+        #self._regressor.fit(positions, scalar_values)
+        self.safe_fit(self._regressor, positions, scalar_values)
 
     def predict_values(self, pos: np.ndarray) -> np.ndarray:
         """
@@ -164,12 +208,37 @@ class ScalarField(Field):
         if self._regressor is None:
             raise ValueError("The regression model has not been fitted yet.")
         return self._regressor.predict(pos)
+    
+def get_rbf_parameters(self):
+    """
+    Extract RBF model parameters for symbolic reconstruction in Pyomo.
+
+    Returns:
+        centers (List[List[float]]): List of 3D coordinates used as RBF centers.
+        weights (List[float]): Corresponding RBF weights.
+        gamma (float): Kernel width squared (epsilon^2).
+    """
+    if self._regressor is None:
+        raise ValueError("RBF regressor has not been fitted yet.")
+
+    # Check if it's a RegressionModel with an RBFInterpolator inside
+    inner = getattr(self._regressor, "_regressor", None)
+    if inner is None or not hasattr(inner, 'coefficients'):
+        raise TypeError("Regressor does not contain a compatible RBFInterpolator.")
+
+    centers = inner.y.tolist()
+    weights = inner.coefficients.tolist()
+    gamma = inner.epsilon ** 2
+
+    return centers, weights, gamma
+
+
 
 
 class VectorField(Field):
     """Subclass for a vector field with regression-based interpolation."""
 
-    def __init__(self, regression_type: callable, bounds: np.ndarray) -> None:
+    def __init__(self, regression_type, bounds: np.ndarray) -> None:
         """
         Initialise class instance.
 
@@ -194,16 +263,19 @@ class VectorField(Field):
             positions (np.ndarray): (n, d) array of known positions.
             vector_values (np.ndarray): (n, m) array of known vector values.
         """
-        print("vector_values ", vector_values)
         vector_dim = vector_values.shape[1]
         # Reset regressor list each time we fit
         self._regressors = []
 
         # Fit a regressor for each vector component
         for i in range(vector_dim):
-            regressor = self._regression_type(self._num_dim)
-            regressor.fit(positions, vector_values[:, i].reshape(-1, 1))
+            regressor = deepcopy(self._regression_type)
+            self.safe_fit(regressor, positions, vector_values[:, i])
+            inner = getattr(regressor, "_regressor", None)
+            if inner is None:
+                raise RuntimeError(f"[fit_model] Component {i} regressor failed to fit.")
             self._regressors.append(regressor)
+
 
     def predict_values(self, pos: np.ndarray) -> np.ndarray:
         """
@@ -222,11 +294,46 @@ class VectorField(Field):
         if pos.ndim == 1:
             pos = pos.reshape(1, -1)
 
-        predictions = [regressor.predict(pos) for regressor in self._regressors]
-        predictions = np.stack(predictions, axis=-1)
-        predictions = predictions.flatten()
+        predictions = [reg.predict(pos) for reg in self._regressors]
+        predictions = np.hstack(predictions)
+
 
         return predictions # Return the predictions as a 2D array
+
+    def get_rbf_parameters(self):
+        """
+        Extract RBF model parameters for each component of a vector field.
+
+        Returns:
+            List of tuples (centers, weights, gamma) — one per vector component.
+        """
+        if not self._regressors:
+            raise ValueError("RBF regressors have not been fitted yet.")
+
+        all_params = []
+
+        for i, reg in enumerate(self._regressors):
+            print(f"[DEBUG] Regressor {i} outer type: {type(reg)}")
+            inner = getattr(reg, "_regressor", None)
+            print(f"[DEBUG] Regressor {i} inner: {inner}")
+            print(f"[DEBUG] Regressor {i} inner type: {type(inner)}")
+
+            if inner is None:
+                raise TypeError(f"Regressor {i} has no fitted inner model.")
+
+            missing = [attr for attr in ["coefficients", "y", "epsilon"] if not hasattr(inner, attr)]
+            if missing:
+                raise TypeError(f"Regressor {i}'s inner model is missing attributes: {missing}")
+
+            centers = inner.y.tolist()
+            weights = inner.coefficients.tolist()
+            gamma = inner.epsilon ** 2
+
+            all_params.append((centers, weights, gamma))
+
+        return all_params
+
+
 
     def get_regressors(self):
         """Return the list of regressors."""
