@@ -177,6 +177,13 @@ class PModel(RegressionModel):
         """
         scaled_x = self.prepare_predict(predict_x)
         return self._regressor(scaled_x).reshape(-1, 1)
+    
+    def get_parameters(self):
+        """Return polynomial coefficients"""
+        return {
+            "coefficients": self.model.coef_,
+            "intercept": self.model.intercept_
+        }
 
 
 class LModel(RegressionModel):
@@ -395,6 +402,15 @@ class RBFModel(RegressionModel):
             "before prediction.")
         scaled_x = self.prepare_predict(predict_x)
         return self._regressor(scaled_x).reshape(-1, 1)
+    
+    def get_parameters(self):
+        """Extract RBF kernel parameters (length_scale)"""
+        length_scale = self.model.kernel_.get_params()["length_scale"]
+        return {
+            "centers": self,
+            "weights": None,  # We don't need weights directly here
+            "gamma": 1 / (length_scale ** 2)  # Equivalent of gamma for RBF
+        }    
 
 
 class LModel(RegressionModel):
@@ -499,3 +515,12 @@ class GPModel(RegressionModel):
         """
         scaled_x = self.prepare_predict(predict_x)
         return self._regressor.predict(scaled_x).reshape(-1, 1)
+    
+    def get_parameters(self):
+        """Extract kernel parameters (length_scale)"""
+        length_scale = self.model.kernel_.get_params()["length_scale"]
+        return {
+            "centers": None,  # Gaussian Process doesn't use explicit centers
+            "weights": None,  # We don't need weights directly here
+            "gamma": 1 / (length_scale ** 2)
+        }

@@ -68,7 +68,7 @@ class MOOProblem(Problem):
     pymoo.model.problem.Problem in PyMOO"""
     
     def __init__(self, pyomo_model, num_sensors):
-        """The pyomo_model should be coming from SensorPlacementOptimisation"""
+        """The pyomo_model should be coming from SensorArrayOptimiser"""
         super().__init__(n_var=num_sensors * 3, n_obj=2, n_constr=0)
         self.pyomo_model = pyomo_model
 

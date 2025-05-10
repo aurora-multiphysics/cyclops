@@ -7,7 +7,7 @@ import numpy as np
 import unittest
 
 from cyclops.regressors import RBFModel, LModel, GPModel, CSModel, CTModel, PModel
-from cyclops.sensor_suite import SensorSuite, SymmetryManager
+from cyclops.sensor_suite import SensorSuite
 from cyclops.fields import ScalarField, VectorField
 from cyclops.sensors import Sensor
 

@@ -20,7 +20,7 @@ from cyclops.optimisers import Problem, Optimiser
 from cyclops.regressors import RegressionModel
 from cyclops.sensor_suite import SensorSuite
 from cyclops.sim_reader import MeshReader, compute_face_normal
-from cyclops.pyomo_problem import SensorPlacementOptimisation
+from cyclops.pyomo_problem import SensorArrayOptimiser
 
 class Experiment:
     """Manage the optimisers, true field and sensor suite.
@@ -193,7 +193,7 @@ class Experiment:
             sensor_list.append(initialised_snsr)
 
 
-        new_pyomo_prob = SensorPlacementOptimisation(
+        new_pyomo_prob = SensorArrayOptimiser(
                                     mesh_faces = tri_boundary_faces,
                                     num_sensors = self._no_sensors,
                                     sensors = sensor_list,
@@ -555,7 +555,7 @@ class Experiment:
     #     )
 
 # Using PyMOO to optimize the sensor placement
-# optimiser = SensorPlacementOptimisation(mesh, num_sensors=10, sensor_types=[sensor_type1, sensor_type2])
+# optimiser = SensorArrayOptimiser(mesh, num_sensors=10, sensor_types=[sensor_type1, sensor_type2])
 # moo_problem = MOOProblem(optimiser, num_sensors=10)
 # algorithm = GA(pop_size=100)
 # res = minimize(moo_problem, algorithm, termination=("n_gen", 200))

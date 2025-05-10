@@ -180,4 +180,7 @@ tutorials/field.txt
 tutorials/fieldout.txt
 tutorials/mesh.txt
 tutorials/meshout.txt
-
+pyomo_unittest.py
+regressionmodel.py
+simplifiedmodel.py
+unittest_pyomo_problem.py
